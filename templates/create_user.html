@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Create New User</title>
+  </head>
+  
+  <body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul>
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    <h2>Create New User</h2>
+    <form method="POST">
+        <input type="text" name="uid" placeholder="UID" required> <br>
+        <input type="text" name="username" placeholder="Username" required> <br>
+        <input type="text" name="password" placeholder="Password" required> <br>
+        <input type="text" name="fname" placeholder="First Name" required> <br>
+        <input type="text" name="lname" placeholder="Last Name" required> <br>
+        <input type="text" name="email" placeholder="Email" required> <br>
+        <select name="role" required>
+            <option value="">Select Role</option>
+            <option value="student">Student</option>
+            <option value="faculty">Faculty</option>
+            <option value="alumni">Alumni</option>
+            <option value="admin">Admin</option>
+            <option value="secretary">Secretary</option>
+        </select><br>
+        <input type="text" name="program" placeholder="Program (students)"><br>
+        <input type="text" name="degree" placeholder="Degree (alumni)"><br>
+        <input type="number" name="graduation_year" placeholder="Graduation Year (alumni)"><br>
+        <input type="text" name="address" placeholder="Address (alumni & students)"><br>
+        <button type="submit">Create User</button>
+    </form>
+    <a href="{{ url_for('admin') }}">Back to Admin Dashboard</a>
+  </body>
+</html>
