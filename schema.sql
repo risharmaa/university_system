@@ -36,6 +36,7 @@ CREATE TABLE students (
 DROP TABLE IF EXISTS faculty;
 CREATE TABLE faculty (
   uid   int(8) NOT NULL,
+  cac BOOLEAN,
   PRIMARY KEY (uid),
   FOREIGN KEY (uid) REFERENCES users(uid)
 );
@@ -65,10 +66,17 @@ CREATE TABLE alumni (
 );
 
 DROP TABLE IF EXISTS applicant;
-CREATE TABLE alumni (
+CREATE TABLE applicant (
   uid               int(8) NOT NULL,
+  ssn CHAR(11) NOT NULL UNIQUE,  -- Format: XXX-XX-XXXX
   degree            varchar(20),
   gre_verbal        INTEGER,
+  gre_quant INTEGER,  -- GRE quantitative score
+  gre_year INTEGER,  -- Year the GRE exam was taken
+  work_experience TEXT,  -- Prior work experience
+  areas_of_interest TEXT,  -- Areas of interest
+  transcript_received BOOLEAN DEFAULT FALSE,
+  status VARCHAR(50) DEFAULT 'incomplete',  -- e.g., 'incomplete', 'under review', 'admitted', 'rejected'
   PRIMARY KEY (uid),
   FOREIGN KEY (uid) REFERENCES users(uid)
 );
