@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>Update User</title>
+  </head>
+  
+  <body>
+    <h1>Update: {{ user.fname }} {{ user.lname }}</h1>
+    <form method ="POST">
+      <label>First Name:</label>
+      <input type="text" name="fname" value="{{ user.fname }}"><br>
+
+      <label>Last Name:</label>
+      <input type="text" name="lname" value="{{ user.lname }}"><br>
+
+      <label>Password:</label>
+      <input type="password" name="password"> (leave blank to keep current) <br>
+
+      {% if user.role == "student" and student_info %}
+        <label>Address:</label>
+        <input type="text" name="address" value="{{ student_info.address }}"><br>
+
+        <label>Program:</label>
+        <input type="text" name="program" value="{{ student_info.program }}"><br>
+
+      {% elif user.role == "alumni" and alumni_info %}
+        <label>Address:</label>
+        <input type="text" name="address" value="{{ alumni_info.address }}"><br>
+
+        <label>Degree:</label>
+        <input type="text" name ="degree" value="{{ alumni_info.degree }}"><br>
+
+        <label>Graduation Year:</label>
+        <input type="number" name="graduation_year" value="{{ alumni_info.graduation_year }}"><br>
+      {% endif %}
+
+      <br><button type="submit">Update User</button>
+    </form>
+    <br>
+    <a href="{{ url_for('admin') }}">Back to Admin Dashboard</a>
+  </body>
+
+</html>
