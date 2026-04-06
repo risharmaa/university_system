@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+</head>
+
+<body>
+
+    
+    <h1>Welcome, {{ session.user.fname }}</h1>
+    <br>
+
+    <h2>Admin:</h2>
+    <ul>
+        {% for ad in admins %}
+            <li>
+                <a href="{{ url_for('admin_update', uid=ad['uid']) }}">
+                    {{ ad['fname'] }} {{ ad["lname"] }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+    <br>
+
+    <h2>Secretary:</h2>
+    <ul>
+        {% for sec in secretary %}
+            <li>
+                <a href="{{ url_for('admin_update', uid=sec['uid']) }}">
+                    {{ sec['fname'] }} {{ sec["lname"] }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+    <br>
+
+    <h2>Faculty:</h2>
+    <ul>
+        {% for fac in faculty %}
+        <li>
+            <a href="{{ url_for('admin_update', uid=fac['uid']) }}">
+                {{ fac['fname'] }} {{ fac["lname"] }}
+            </a>
+        </ul>
+    <br>
+
+    <h2>Alumni:</h2>
+    <ul>
+        {% for alum in alumni %}
+            <li>
+                <a href="{{ url_for('admin_update', uid=alum['uid']) }}">
+                    {{ alum['fname'] }} {{ alum["lname"] }} 
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+    <br>
+
+    <h2>Students:</h2>
+    <ul>
+        {% for stu in students %}
+            <li>
+                <a href="{{ url_for('admin_update', uid=stu['uid']) }}">
+                    {{ stu['fname'] }} {{ stu["lname"] }} 
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+    <br>
+
+
+    <a href="{{ url_for('create_user')}}">
+      <button type="submit">Create New User</button>
+    </a>
+
+    <br>
+    <br>
+
+    <form action="{{ url_for('resetdb') }}">
+        <button type="submit">Reset Database</button>
+    </form>
+
+    <br>
+    <br>
+
+    <a href="/logout">
+      <button type="submit">Logout</button>
+    </a>
+</body>
+
+
+</html>
