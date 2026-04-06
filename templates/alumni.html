@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Alumni Portal</title>
+</head>
+<body>
+    <h1>Welcome, {{ alumni.fname }} {{ alumni.lname }}</h1>
+    <p>Degree: {{ alumni['degree'] }} (Class of {{ alumni['graduation_year'] }})</p>
+        <br>
+    <h2>Personal Information</h2>
+    <form method="POST" action="{{ url_for('alumni_update')}}">
+        <label>Address:</label>
+        <input type="text" name="address" value="{{ alumni.address }}"><br>
+        <br>
+        <label>Email:</label>
+        <input type="text" name="email" value="{{ alumni.email }}"><br>
+        <br>
+        <label>Password:</label>
+        <input type="text" name="password" value="{{ alumni.password }}"><br>
+        <br>
+        <button type="submit">Update Information</button>
+    </form>
+    <br> 
+    <a href="/logout">Logout</a>
+</body>
+</html>
