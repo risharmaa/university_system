@@ -103,6 +103,7 @@ def admin():
     return render_template("admin.html", students=students, faculty=faculty, alumni=alumni, admins=admins, secretary=secretary)
 
 
+
 @app.route('/logout', methods=['GET'])
 def logout():
   session.clear()
