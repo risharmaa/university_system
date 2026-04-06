@@ -60,7 +60,15 @@ CREATE TABLE alumni (
   uid               int(8) NOT NULL,
   degree            varchar(20),
   graduation_year   int(4),
-  address           varchar(50),
+  PRIMARY KEY (uid),
+  FOREIGN KEY (uid) REFERENCES users(uid)
+);
+
+DROP TABLE IF EXISTS applicant;
+CREATE TABLE alumni (
+  uid               int(8) NOT NULL,
+  degree            varchar(20),
+  gre_verbal        INTEGER,
   PRIMARY KEY (uid),
   FOREIGN KEY (uid) REFERENCES users(uid)
 );
@@ -96,8 +104,6 @@ CREATE TABLE form (
   uid                   int(8) NOT NULL,
   program_type          varchar(10) NOT NULL,
   advisor_approval      varchar(10),
-  -- Changed PK to form_id so form_courses FK (form_id) -> form(form_id) works in SQLite
-  -- Added UNIQUE on uid to still enforce one form per student
   PRIMARY KEY (form_id),
   UNIQUE (uid),
   FOREIGN KEY (uid) REFERENCES students(uid)
@@ -107,13 +113,11 @@ DROP TABLE IF EXISTS form_courses;
 CREATE TABLE form_courses (
   form_id                   int(8) NOT NULL,
   course_number             int(4) NOT NULL,
-  -- Added department with DEFAULT 'CSCI' to fix FK mismatch after courses got composite PK
   department                varchar(10) NOT NULL DEFAULT 'CSCI',
   semester_planned          varchar(10),
   year_planned              int(4),
   PRIMARY KEY (form_id, course_number, department),
   FOREIGN KEY (form_id) REFERENCES form(form_id),
-  -- Updated FK to match composite PK on courses table
   FOREIGN KEY (course_number, department) REFERENCES courses(course_number, department)
 );
 
@@ -130,8 +134,27 @@ CREATE TABLE programs (
   PRIMARY KEY (program_name)
 );
 
+DROP TABLE IF EXISTS future_phds;
+CREATE TABLE future_phds (
+  program_name              varchar(30) NOT NULL,
+  PRIMARY KEY (program_name)
+);
+
+SET FOREIGN_KEY_CHECKS=1;
+
+-- inserting future_phds
+INSERT INTO future_phds (program_name) VALUES ("Cybersecurity");
+INSERT INTO future_phds (program_name) VALUES ("Machine Learning");
+INSERT INTO future_phds (program_name) VALUES ("Cloud Computing");
+INSERT INTO future_phds (program_name) VALUES ("AI");
 
 
+-- inserting programs 
+INSERT INTO programs (program_name, core_courses, min_gpa, credits_required, credits_required_cs, max_outside_courses, max_grades_below_B, pass_thesis_defense) VALUES ('MS', 'CSCI 6212, CSCI 6221, CSCI 6461', 3.0, 30, NULL, 2, 2, NULL); 
+INSERT INTO programs (program_name, core_courses, min_gpa, credits_required, credits_required_cs, max_outside_courses, max_grades_below_B, pass_thesis_defense) VALUES ('PhD', NULL, 3.5, 36, 30, NULL, 1, 'required'); 
+
+
+-- INSERT SAMPLE DATA
 
 
 
