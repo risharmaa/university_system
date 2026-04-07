@@ -152,18 +152,18 @@ CREATE TABLE future_phds (
 
 DROP TABLE IF EXISTS courses_offered;
 CREATE TABLE courses_offered (
-  departmentname varchar(4),
-  coursenumber varchar(4),
-  roomno varchar(4),
+  departmentname varchar(10),
+  coursenumber int(4),
+  roomno int(4),
   day varchar(1),
   time varchar(9),
-  sectionnum varchar(2),
-  instructorid varchar(8),
+  sectionnum int(2),
+  instructorid int(8),
   buildingname varchar(10),
-  semester varchar(6),
-  year varchar(4),
+  semester varchar(10),
+  year int(4),
   primary key (departmentname, coursenumber, semester, sectionnum, year),
-  foreign key (departmentname, coursenumber) references courses(dpt,courseno),
+  foreign key (departmentname, coursenumber) references courses(department, course_number),
   foreign key (roomno, buildingname) references rooms(roomnum, building),
   foreign key (instructorid) references users(uid)
 );
@@ -171,7 +171,7 @@ CREATE TABLE courses_offered (
 DROP TABLE IF EXISTS rooms;
 CREATE TABLE rooms (
   capacity INTEGER,
-  roomnum varchar(4),
+  roomnum int(4),
   building varchar(10),
   primary key(roomnum, building)
 );
