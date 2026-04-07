@@ -101,7 +101,9 @@ CREATE TABLE enrollment (
   year          int(4),
   grade         varchar(2),
   credit_hours  int(2),
-  PRIMARY KEY (uid, course_number, department, semester, year),
+  sectionnum    int(2),
+  prof_added    BOOLEAN DEFAULT FALSE,
+  PRIMARY KEY (uid, course_number, department, semester, year, sectionnum),
   FOREIGN KEY (uid) REFERENCES users(uid),
   FOREIGN KEY (course_number, department) REFERENCES courses(course_number, department)
 );
@@ -146,6 +148,32 @@ DROP TABLE IF EXISTS future_phds;
 CREATE TABLE future_phds (
   program_name              varchar(30) NOT NULL,
   PRIMARY KEY (program_name)
+);
+
+DROP TABLE IF EXISTS courses_offered;
+CREATE TABLE courses_offered (
+  departmentname varchar(4),
+  coursenumber varchar(4),
+  roomno varchar(4),
+  day varchar(1),
+  time varchar(9),
+  sectionnum varchar(2),
+  instructorid varchar(8),
+  buildingname varchar(10),
+  semester varchar(6),
+  year varchar(4),
+  primary key (departmentname, coursenumber, semester, sectionnum, year),
+  foreign key (departmentname, coursenumber) references courses(dpt,courseno),
+  foreign key (roomno, buildingname) references rooms(roomnum, building),
+  foreign key (instructorid) references users(uid)
+);
+
+DROP TABLE IF EXISTS rooms;
+CREATE TABLE rooms (
+  capacity INTEGER,
+  roomnum varchar(4),
+  building varchar(10),
+  primary key(roomnum, building)
 );
 
 SET FOREIGN_KEY_CHECKS=1;
