@@ -303,3 +303,53 @@ INSERT INTO students (uid, program, advisor_id, address, graduation_status, enro
 
 --inserting faculty for regs
 INSERT INTO faculty(uid, cac) VALUES (12345678, false);
+
+--inserting rooms from regs
+INSERT INTO rooms VALUES (3, 1, 'SEH');
+INSERT INTO rooms VALUES (3, 2, 'SEH');
+INSERT INTO rooms VALUES (3, 3, 'SEH');
+INSERT INTO rooms VALUES (3, 4, 'SEH');
+INSERT INTO rooms VALUES (3, 5, 'SEH');
+INSERT INTO rooms VALUES (3, 6, 'SEH');
+INSERT INTO rooms VALUES (3, 7, 'SEH');
+INSERT INTO rooms VALUES (3, 8, 'SEH');
+INSERT INTO rooms VALUES (4, 9, 'SEH');
+INSERT INTO rooms VALUES (4, 10, 'SEH');
+INSERT INTO rooms VALUES (4, 11, 'SEH');
+INSERT INTO rooms VALUES (4, 12, 'SEH');
+INSERT INTO rooms VALUES (4, 13, 'SEH');
+INSERT INTO rooms VALUES (4, 14, 'SEH');
+INSERT INTO rooms VALUES (2, 15, 'SEH');
+INSERT INTO rooms VALUES (2, 16, 'SEH');
+INSERT INTO rooms VALUES (2, 17, 'SEH');
+INSERT INTO rooms VALUES (2, 18, 'SEH');
+INSERT INTO rooms VALUES (2, 19, 'SEH');
+INSERT INTO rooms VALUES (2, 20, 'SEH');
+INSERT INTO rooms VALUES (2, 21, 'SEH');
+INSERT INTO rooms VALUES (2, 22, 'SEH');
+
+--inserting courses offered from regs
+INSERT INTO courses_offered VALUES ('CSCI', 6221, 1, 'M', '1500-1730', 10, 22222222, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('CSCI', 6461, 2, 'T', '1500-1730', 11, 22222222, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('CSCI', 6212, 3, 'W', '1500-1730', 12, 12345678, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('CSCI', 6232, 5, 'M', '1800-2030', 13, 12345678, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('CSCI', 6233, 6, 'T', '1800-2030', 14, 12121212, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('CSCI', 6241, 7, 'W', '1800-2030', 15, 12121212, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('CSCI', 6242, 8, 'R', '1800-2030', 16, 22222222, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('CSCI', 6246, 9, 'T', '1500-1730', 17, 12345678, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('CSCI', 6251, 10, 'M', '1800-2030', 18, 12121212, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('CSCI', 6254, 11, 'M', '1530-1800', 19, 12121212, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('CSCI', 6260, 12, 'R', '1800-2030', 20, 12121212, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('CSCI', 6262, 13, 'W', '1800-2030', 21, 12345678, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('CSCI', 6283, 14, 'T', '1800-2030', 22, 22222222, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('CSCI', 6284, 15, 'M', '1800-2030', 23, 22222222, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('CSCI', 6286, 16, 'W', '1800-2030', 24, 12121212, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('CSCI', 6384, 18, 'W', '1500-1730', 25, 22222222, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('ECE', 6241, 19, 'M', '1800-2030', 26, 12345678, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('ECE', 6242, 20, 'T', '1800-2030', 27, 22222222, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('MATH', 6210, 21, 'W', '1800-2030', 28, 12345678, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('CSCI', 6339, 22, 'R', '1600-1830', 29, 22222222, 'SEH', 'Fall', 2026);
+
+--inserting enrollment for Billie Holiday from REGS
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (88888888, 6461, 'CSCI', 'Fall', 2026, 'IP', 3, 11, false);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (88888888, 6212, 'CSCI', 'Fall', 2026, 'IP', 3, 12, false);
