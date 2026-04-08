@@ -322,5 +322,76 @@ def applicant_register():
     return render_template("applicant_register.html")
 
 
+@app.route("/applicant/dashboard")
+def applicant_dashboard():
+    if "user" not in session or session["user"]["role"] != "applicant":
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    uid = session["user"]["uid"]
+    mydb.commit()
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT a.*, u.fname, u.lname, u.email, u.address FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid=%s", (uid,))
+    applicant = cursor.fetchone()
+    cursor.execute("SELECT * FROM recommendation_letter WHERE uid=%s ORDER BY id", (uid,))
+    letters = cursor.fetchall()
+    cursor.execute("SELECT * FROM prior_degree WHERE uid=%s ORDER BY year DESC", (uid,))
+    degrees = cursor.fetchall()
+    mydb.commit()
+    return render_template("applicant_dashboard.html", applicant=applicant, letters=letters, degrees=degrees)
+
+
+@app.route("/applicant/request_recommendation", methods=["POST"])
+def request_recommendation():
+    if "user" not in session or session["user"]["role"] != "applicant":
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    uid = session["user"]["uid"]
+    writer_name  = request.form.get("writer_name", "").strip()
+    writer_email = request.form.get("writer_email", "").strip()
+    writer_title = request.form.get("writer_title", "").strip()
+    institution  = request.form.get("institution_name", "").strip()
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute(
+        "INSERT INTO recommendation_letter (uid,writer_name,writer_email,writer_title,institution_name) VALUES (%s,%s,%s,%s,%s)",
+        (uid, writer_name, writer_email, writer_title, institution)
+    )
+    mydb.commit()
+    flash("Recommendation letter request sent.", "success")
+    return redirect(url_for("applicant_dashboard"))
+
+
+@app.route("/applicant/submit_letter/<int:letter_id>", methods=["GET", "POST"])
+def submit_letter(letter_id):
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM recommendation_letter WHERE id=%s", (letter_id,))
+    letter = cursor.fetchone()
+    if not letter:
+        return "Letter not found", 404
+    if letter["is_submitted"]:
+        return render_template("letter_submitted.html", already=True)
+    if request.method == "POST":
+        content = request.form.get("letter_content", "").strip()
+        cursor.execute(
+            "UPDATE recommendation_letter SET letter_content=%s, is_submitted=TRUE, submission_date=NOW() WHERE id=%s",
+            (content, letter_id)
+        )
+        mydb.commit()
+        _check_completeness(letter["uid"], cursor)
+        mydb.commit()
+        return render_template("letter_submitted.html", already=False)
+    return render_template("submit_letter.html", letter=letter)
+
+
+def _check_completeness(uid, cursor):
+    cursor.execute("SELECT transcript_received FROM applicant WHERE uid=%s", (uid,))
+    row = cursor.fetchone()
+    if not row:
+        return
+    cursor.execute("SELECT COUNT(*) AS cnt FROM recommendation_letter WHERE uid=%s AND is_submitted=TRUE", (uid,))
+    submitted = cursor.fetchone()["cnt"]
+    if row["transcript_received"] and submitted >= 1:
+        cursor.execute("UPDATE applicant SET status='under review' WHERE uid=%s AND status='incomplete'", (uid,))
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
