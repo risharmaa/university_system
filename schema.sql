@@ -301,19 +301,19 @@ INSERT INTO enrollment (uid, course_number, department, semester, year, grade, c
 
 -- inserting courses for George 
 -- George's Fall 2022 6242 is ECE (Information Theory, 2 credits) not CSCI (Database 2, 3 credits)
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6242, 'ECE', 'Fall', 2022, 'C', 2, 10, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6221, 'CSCI', 'Fall', 2022, 'B', 3, 10, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6461, 'CSCI', 'Fall', 2022, 'B', 3, 11, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6212, 'CSCI', 'Spring', 2023, 'B', 3, 10, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6232, 'CSCI', 'Spring', 2023, 'B', 3, 10, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6233, 'CSCI', 'Fall', 2023, 'B', 3, 11, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6241, 'CSCI', 'Fall', 2023, 'B', 3, 10, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6242, 'CSCI', 'Spring', 2024, 'B', 3, 10, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6283, 'CSCI', 'Spring', 2024, 'B', 3, 10, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6284, 'CSCI', 'Fall', 2024, 'B', 3, 10, false);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6242, 'ECE', 'Fall', 2022, 'C', 2, 10, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6221, 'CSCI', 'Fall', 2022, 'B', 3, 10, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6461, 'CSCI', 'Fall', 2022, 'B', 3, 11, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6212, 'CSCI', 'Spring', 2023, 'B', 3, 10, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6232, 'CSCI', 'Spring', 2023, 'B', 3, 10, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6233, 'CSCI', 'Fall', 2023, 'B', 3, 11, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6241, 'CSCI', 'Fall', 2023, 'B', 3, 10, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6242, 'CSCI', 'Spring', 2024, 'B', 3, 10, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6283, 'CSCI', 'Spring', 2024, 'B', 3, 10, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (66666666, 6284, 'CSCI', 'Fall', 2024, 'B', 3, 10, true);
 
 -- inserting courses for Ringo
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (87654321, 6221, 'CSCI', 'Fall', 2022, 'A', 3, 10, false);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (87654321, 6221, 'CSCI', 'Fall', 2022, 'A', 3, 10, true);
 INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (87654321, 6212, 'CSCI', 'Fall', 2022, 'A', 3, 10, true);
 INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (87654321, 6461, 'CSCI', 'Spring', 2023, 'A', 3, 11, true);
 INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (87654321, 6232, 'CSCI', 'Spring', 2023, 'A', 3, 11, true);
@@ -327,16 +327,16 @@ INSERT INTO enrollment (uid, course_number, department, semester, year, grade, c
 INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (87654321, 6286, 'CSCI', 'Spring', 2025, 'A', 3, 11, true);
 
 -- inserting courses for Eric
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6221, 'CSCI', 'Fall', 2010, 'B', 3, 10, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6212, 'CSCI', 'Fall', 2010, 'B', 3, 11, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6461, 'CSCI', 'Spring', 2011, 'B', 3, 10, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6232, 'CSCI', 'Spring', 2011, 'B', 3, 10, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6233, 'CSCI', 'Fall', 2011, 'B', 3, 11, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6241, 'CSCI', 'Fall', 2011, 'B', 3, 10, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6242, 'CSCI', 'Spring', 2012, 'B', 3, 10, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6283, 'CSCI', 'Spring', 2012, 'A', 3, 10, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6284, 'CSCI', 'Fall', 2013, 'A', 3, 11, false);
-INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6286, 'CSCI', 'Spring', 2013, 'A', 3, 10, false);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6221, 'CSCI', 'Fall', 2010, 'B', 3, 10, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6212, 'CSCI', 'Fall', 2010, 'B', 3, 11, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6461, 'CSCI', 'Spring', 2011, 'B', 3, 10, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6232, 'CSCI', 'Spring', 2011, 'B', 3, 10, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6233, 'CSCI', 'Fall', 2011, 'B', 3, 11, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6241, 'CSCI', 'Fall', 2011, 'B', 3, 10, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6242, 'CSCI', 'Spring', 2012, 'B', 3, 10, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6283, 'CSCI', 'Spring', 2012, 'A', 3, 10, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6284, 'CSCI', 'Fall', 2013, 'A', 3, 11, true);
+INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6286, 'CSCI', 'Spring', 2013, 'A', 3, 10, true);
 
 --INSERTING USERS FOR REGS
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (88888888,'88888888', 'pass', 'student','Billie', 'Holiday', 'billieholiday@gmail.com', 'Washington');
