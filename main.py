@@ -260,5 +260,67 @@ def logout():
   session.clear()
   return redirect("/")
 
+# ── APPS: Applicant routes ──────────────────────────────────────────────────
+
+import re, secrets
+
+def _is_valid_ssn(ssn):
+    return bool(re.match(r'^\d{3}-\d{2}-\d{4}$', ssn or ''))
+
+@app.route("/applicant/register", methods=["GET", "POST"])
+def applicant_register():
+    if request.method == "POST":
+        fname = request.form.get("fname", "").strip()
+        lname = request.form.get("lname", "").strip()
+        email = request.form.get("email", "").strip()
+        ssn   = request.form.get("ssn", "").strip()
+        address = request.form.get("address", "").strip()
+        degree  = request.form.get("degree", "").strip()
+        password = request.form.get("password", "")
+        gre_verbal = request.form.get("gre_verbal") or None
+        gre_quant  = request.form.get("gre_quant") or None
+        gre_year   = request.form.get("gre_year") or None
+        work_exp   = request.form.get("work_experience", "").strip()
+        interests  = request.form.get("areas_of_interest", "").strip()
+
+        if not _is_valid_ssn(ssn):
+            flash("SSN must be in XXX-XX-XXXX format.", "error")
+            return render_template("applicant_register.html")
+
+        uid = int(''.join([str(secrets.randbelow(10)) for _ in range(8)]))
+        hashed = generate_password_hash(password, method='pbkdf2:sha256')
+        username = str(uid)
+        cursor = mydb.cursor(dictionary=True)
+        try:
+            cursor.execute(
+                "INSERT INTO users (uid,username,password,role,fname,lname,email,address) VALUES (%s,%s,%s,'applicant',%s,%s,%s,%s)",
+                (uid, username, hashed, fname, lname, email, address)
+            )
+            cursor.execute(
+                "INSERT INTO applicant (uid,ssn,degree,gre_verbal,gre_quant,gre_year,work_experience,areas_of_interest) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_exp, interests)
+            )
+            mydb.commit()
+
+            # Save prior degrees
+            deg_types = request.form.getlist("deg_type[]")
+            deg_years = request.form.getlist("deg_year[]")
+            deg_gpas  = request.form.getlist("deg_gpa[]")
+            deg_univs = request.form.getlist("deg_univ[]")
+            for dt, dy, dg, du in zip(deg_types, deg_years, deg_gpas, deg_univs):
+                if dt and du:
+                    cursor.execute(
+                        "INSERT INTO prior_degree (uid,degree_type,year,gpa,university) VALUES (%s,%s,%s,%s,%s)",
+                        (uid, dt, dy or None, dg or None, du)
+                    )
+            mydb.commit()
+            flash(f"Registration successful! Your UID is {uid}. Please log in.", "success")
+            return redirect(url_for("login"))
+        except mysql.connector.Error as e:
+            mydb.rollback()
+            flash(f"Registration error: {e}", "error")
+    return render_template("applicant_register.html")
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
