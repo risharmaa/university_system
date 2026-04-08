@@ -1,3 +1,4 @@
+-- Active: 1773861604957@@regs26-sharma.ca1y0o4q8i1b.us-east-1.rds.amazonaws.com@3306@university
 import mysql
 import mysql.connector 
 
@@ -18,9 +19,9 @@ from werkzeug.security import check_password_hash, generate_password_hash
 app = Flask(__name__)
 app.secret_key ="secret_key"
 mydb = mysql.connector.connect(
-    host="ads26-gill.c5w0gocewai2.us-east-1.rds.amazonaws.com",
+    host="regs26-sharma.ca1y0o4q8i1b.us-east-1.rds.amazonaws.com",
     user="admin",
-    password="kirangill2006!",
+    password="14998riya",
     database="university"
 )
 
