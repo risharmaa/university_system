@@ -37,14 +37,8 @@ DROP TABLE IF EXISTS faculty;
 CREATE TABLE faculty (
   uid   int(8) NOT NULL,
   cac BOOLEAN,
-  PRIMARY KEY (uid),
-  FOREIGN KEY (uid) REFERENCES users(uid)
-);
-
--- ASK Aditya
-DROP TABLE IF EXISTS advisor;
-CREATE TABLE advisor (
-  uid   int(8) NOT NULL,
+  reviewer BOOLEAN,
+  advisor BOOLEAN,
   PRIMARY KEY (uid),
   FOREIGN KEY (uid) REFERENCES users(uid)
 );
@@ -254,8 +248,8 @@ INSERT INTO users (uid, username, password, role, fname, lname, email, address) 
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (44444444, '44444444', 'pass','admin','Ava', 'White', 'avawhite@gmail.com', 'Andover');
 
 -- inserting faculty/advisor from the sample data
-INSERT INTO faculty(uid, cac) VALUES (12121212, true);
-INSERT INTO faculty(uid, cac) VALUES (22222222, false);
+INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (12121212, true, false, true);
+INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (22222222, false, true, false);
 
 -- inserting students from the sample data
 INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year) VALUES(55555555, 'MS', 22222222, 'active', 2023);
@@ -354,7 +348,7 @@ INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_ye
 INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year) VALUES(99999999, 'MS', 12121212, 'active', 2025);
 
 --inserting faculty for regs
-INSERT INTO faculty(uid, cac) VALUES (12345678, false);
+INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (12345678, false, false, false);
 
 --inserting rooms from regs
 INSERT INTO rooms VALUES (3, 1, 'SEH');
