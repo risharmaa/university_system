@@ -68,8 +68,8 @@ def login():
                 return redirect(url_for("alumni"))
             elif user["role"] == "faculty":
                 return redirect(url_for("faculty"))
-            elif user["applicant"] == "applicant":
-                return redirect(url_for("applicant"))
+            elif user["role"] == "applicant":
+                return redirect(url_for("applicant_dashboard"))
             else:
                 flash("Invalid user or password", "error")
                 return redirect(url_for("login"))

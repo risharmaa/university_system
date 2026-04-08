@@ -81,6 +81,58 @@ CREATE TABLE applicant (
   FOREIGN KEY (uid) REFERENCES users(uid)
 );
 
+DROP TABLE IF EXISTS prior_degree;
+CREATE TABLE prior_degree (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  uid           int(8) NOT NULL,
+  degree_type   varchar(20),
+  year          int(4),
+  gpa           decimal(3,2),
+  university    varchar(100),
+  FOREIGN KEY (uid) REFERENCES applicant(uid)
+);
+
+DROP TABLE IF EXISTS gre_subject;
+CREATE TABLE gre_subject (
+  id      INT AUTO_INCREMENT PRIMARY KEY,
+  uid     int(8) NOT NULL,
+  subject varchar(50),
+  score   int(4),
+  year    int(4),
+  FOREIGN KEY (uid) REFERENCES applicant(uid)
+);
+
+DROP TABLE IF EXISTS recommendation_letter;
+CREATE TABLE recommendation_letter (
+  id               INT AUTO_INCREMENT PRIMARY KEY,
+  uid              int(8) NOT NULL,
+  writer_name      varchar(100),
+  writer_email     varchar(100),
+  writer_title     varchar(100),
+  institution_name varchar(100),
+  letter_content   TEXT,
+  is_submitted     BOOLEAN DEFAULT FALSE,
+  submission_date  DATETIME,
+  rating           int(1),
+  is_generic       CHAR(1),
+  is_credible      CHAR(1),
+  FOREIGN KEY (uid) REFERENCES applicant(uid)
+);
+
+DROP TABLE IF EXISTS app_review;
+CREATE TABLE app_review (
+  id                  INT AUTO_INCREMENT PRIMARY KEY,
+  uid                 int(8) NOT NULL,
+  reviewer_uid        int(8) NOT NULL,
+  rating              int(1),
+  deficiency_courses  TEXT,
+  reject_reasons      varchar(50),
+  comment             TEXT,
+  recommended_advisor int(8),
+  FOREIGN KEY (uid) REFERENCES applicant(uid),
+  FOREIGN KEY (reviewer_uid) REFERENCES users(uid)
+);
+
 DROP TABLE IF EXISTS courses;
 CREATE TABLE courses (
   course_number   int(4) NOT NULL,
