@@ -393,5 +393,50 @@ def _check_completeness(uid, cursor):
         cursor.execute("UPDATE applicant SET status='under review' WHERE uid=%s AND status='incomplete'", (uid,))
 
 
+def _is_staff():
+    return "user" in session and session["user"]["role"] in ("admin", "secretary", "faculty")
+
+
+@app.route("/applications")
+def applications():
+    if not _is_staff():
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    mydb.commit()
+    cursor = mydb.cursor(dictionary=True)
+    role = session["user"]["role"]
+    reviewer_uid = session["user"]["uid"]
+    if role == "faculty":
+        cursor.execute(
+            "SELECT a.uid, u.fname, u.lname, a.degree, a.status FROM applicant a JOIN users u ON a.uid=u.uid "
+            "WHERE a.status='under review' AND a.uid NOT IN (SELECT uid FROM app_review WHERE reviewer_uid=%s) "
+            "ORDER BY u.lname, u.fname", (reviewer_uid,)
+        )
+    else:
+        cursor.execute(
+            "SELECT a.uid, u.fname, u.lname, a.degree, a.status FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
+        )
+    applicants = cursor.fetchall()
+    mydb.commit()
+    return render_template("applications.html", applicants=applicants, role=role)
+
+
+@app.route("/applications/transcript/<int:uid>", methods=["POST"])
+def update_transcript(uid):
+    if not _is_staff() or session["user"]["role"] not in ("admin", "secretary"):
+        flash("Access denied.", "error")
+        return redirect(url_for("applications"))
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT transcript_received FROM applicant WHERE uid=%s", (uid,))
+    row = cursor.fetchone()
+    if row:
+        new_val = not row["transcript_received"]
+        cursor.execute("UPDATE applicant SET transcript_received=%s WHERE uid=%s", (new_val, uid))
+        mydb.commit()
+        _check_completeness(uid, cursor)
+        mydb.commit()
+    return redirect(url_for("applications"))
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
