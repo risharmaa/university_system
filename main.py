@@ -1,4 +1,4 @@
--- Active: 1773861604957@@regs26-sharma.ca1y0o4q8i1b.us-east-1.rds.amazonaws.com@3306@university
+# Active: 1773861604957@@regs26-sharma.ca1y0o4q8i1b.us-east-1.rds.amazonaws.com@3306@university
 import mysql
 import mysql.connector 
 
@@ -86,7 +86,7 @@ def admin():
         return redirect(url_for("login"))
     mydb.commit()
     cursor = mydb.cursor(dictionary=True)
-    cursor.execute("SELECT u.uid, u.fname, u.lname, u.email, s.program, s.address, s.graduation_status FROM users u JOIN students s ON u.uid = s.uid")
+    cursor.execute("SELECT u.uid, u.fname, u.lname, u.email, s.program, u.address, s.graduation_status FROM users u JOIN students s ON u.uid = s.uid")
     students = cursor.fetchall()
 
     cursor.execute("SELECT u.uid, u.fname, u.lname, u.email FROM users u JOIN faculty f ON u.uid = f.uid")
@@ -95,7 +95,7 @@ def admin():
     cursor.execute("SELECT u.uid, u.fname, u.lname, u.email FROM users u JOIN secretary s on u.uid = s.uid")
     secretary = cursor.fetchall()
 
-    cursor.execute("SELECT u.uid, u.fname, u.lname, a.degree, a.graduation_year, a.address FROM users u JOIN alumni a ON u.uid = a.uid")
+    cursor.execute("SELECT u.uid, u.fname, u.lname, a.degree, a.graduation_year, u.address FROM users u JOIN alumni a ON u.uid = a.uid")
     alumni = cursor.fetchall()
 
     cursor.execute("SELECT uid, fname, lname, email FROM users WHERE role='admin'")
@@ -225,7 +225,7 @@ def alumni():
     alumni_uid = session["user"]["uid"]
     mydb.commit()
     cursor = mydb.cursor(dictionary=True)
-    cursor.execute("SELECT u.uid, u.username, u.email, u.fname, u.lname, a.address, a.degree, a.graduation_year FROM users u JOIN alumni a ON u.uid = a.uid WHERE u.uid = %s", (alumni_uid,))
+    cursor.execute("SELECT u.uid, u.username, u.email, u.fname, u.lname, u.address, a.degree, a.graduation_year FROM users u JOIN alumni a ON u.uid = a.uid WHERE u.uid = %s", (alumni_uid,))
     alumni_info = cursor.fetchone()
     if alumni_info:
         session["user"]["fname"] = alumni_info["fname"]
