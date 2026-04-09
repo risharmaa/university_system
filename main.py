@@ -202,7 +202,7 @@ def admin_update(uid):
     mydb.commit()
     return render_template("admin_update.html", user=user, student_info=student_info, alumni_info=alumni_info)
 
-@app.route("/admin/reset")
+@app.route("/reset")
 def resetdb():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
