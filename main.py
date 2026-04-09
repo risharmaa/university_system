@@ -202,11 +202,8 @@ def admin_update(uid):
     mydb.commit()
     return render_template("admin_update.html", user=user, student_info=student_info, alumni_info=alumni_info)
 
-@app.route("/admin/reset")
+@app.route("/reset")
 def resetdb():
-    if "user" not in session or session["user"]["role"] != "admin":
-        flash("Access denied.", "error")
-        return redirect(url_for("login"))
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     with open("schema.sql", "r") as f:
