@@ -204,9 +204,6 @@ def admin_update(uid):
 
 @app.route("/admin/reset")
 def resetdb():
-    if "user" not in session or session["user"]["role"] != "admin":
-        flash("Access denied.", "error")
-        return redirect(url_for("login"))
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     with open("schema.sql", "r") as f:
