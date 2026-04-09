@@ -338,19 +338,19 @@ INSERT INTO enrollment (uid, course_number, department, semester, year, grade, c
 INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6284, 'CSCI', 'Fall', 2013, 'A', 3, 11, true);
 INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (77777777, 6286, 'CSCI', 'Spring', 2013, 'A', 3, 10, true);
 
---INSERTING USERS FOR REGS
+-- INSERTING USERS FOR REGS
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (88888888,'88888888', 'pass', 'student','Billie', 'Holiday', 'billieholiday@gmail.com', 'Washington');
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (99999999,'99999999', 'pass', 'student', 'Diana', 'Krall', 'dianakrall@gmail.com', 'Seattle');
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (12345678,'12345678', 'pass', 'faculty', 'Hyeong-Ah', 'Choi', 'hyeongahchoi@gmail.com', 'Norfolk');
 
---inserting students for regs
+-- inserting students for regs
 INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year) VALUES(88888888, 'MS', 22222222, 'active', 2024);
 INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year) VALUES(99999999, 'MS', 12121212, 'active', 2025);
 
---inserting faculty for regs
+-- inserting faculty for regs
 INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (12345678, false, false, false);
 
---inserting rooms from regs
+-- inserting rooms from regs
 INSERT INTO rooms VALUES (3, 1, 'SEH');
 INSERT INTO rooms VALUES (3, 2, 'SEH');
 INSERT INTO rooms VALUES (3, 3, 'SEH');
@@ -374,7 +374,7 @@ INSERT INTO rooms VALUES (2, 20, 'SEH');
 INSERT INTO rooms VALUES (2, 21, 'SEH');
 INSERT INTO rooms VALUES (2, 22, 'SEH');
 
---inserting courses offered from regs
+-- inserting courses offered from regs
 INSERT INTO courses_offered VALUES ('CSCI', 6221, 1, 'M', '1500-1730', 10, 22222222, 'SEH', 'Fall', 2026);
 INSERT INTO courses_offered VALUES ('CSCI', 6461, 2, 'T', '1500-1730', 11, 22222222, 'SEH', 'Fall', 2026);
 INSERT INTO courses_offered VALUES ('CSCI', 6212, 3, 'W', '1500-1730', 12, 12345678, 'SEH', 'Fall', 2026);
@@ -396,6 +396,6 @@ INSERT INTO courses_offered VALUES ('ECE', 6242, 20, 'T', '1800-2030', 27, 22222
 INSERT INTO courses_offered VALUES ('MATH', 6210, 21, 'W', '1800-2030', 28, 12345678, 'SEH', 'Fall', 2026);
 INSERT INTO courses_offered VALUES ('CSCI', 6339, 22, 'R', '1600-1830', 29, 22222222, 'SEH', 'Fall', 2026);
 
---inserting enrollment for Billie Holiday from REGS
+-- inserting enrollment for Billie Holiday from REGS
 INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (88888888, 6461, 'CSCI', 'Fall', 2026, 'IP', 3, 11, false);
 INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (88888888, 6212, 'CSCI', 'Fall', 2026, 'IP', 3, 12, false);

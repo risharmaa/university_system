@@ -19,14 +19,14 @@
 
       {% if user.role == "student" and student_info %}
         <label>Address:</label>
-        <input type="text" name="address" value="{{ student_info.address }}"><br>
+        <input type="text" name="address" value="{{ user.address }}"><br>
 
         <label>Program:</label>
         <input type="text" name="program" value="{{ student_info.program }}"><br>
 
       {% elif user.role == "alumni" and alumni_info %}
         <label>Address:</label>
-        <input type="text" name="address" value="{{ alumni_info.address }}"><br>
+        <input type="text" name="address" value="{{ user.address }}"><br>
 
         <label>Degree:</label>
         <input type="text" name ="degree" value="{{ alumni_info.degree }}"><br>
