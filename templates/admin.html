@@ -41,7 +41,9 @@
             <a href="{{ url_for('admin_update', uid=fac['uid']) }}">
                 {{ fac['fname'] }} {{ fac["lname"] }}
             </a>
-        </ul>
+        </li>
+        {% endfor %}
+    </ul>
     <br>
 
     <h2>Alumni:</h2>
@@ -72,16 +74,11 @@
     <a href="{{ url_for('create_user')}}">
       <button type="submit">Create New User</button>
     </a>
-
-    <br>
     <br>
 
     <form action="{{ url_for('resetdb') }}">
         <button type="submit">Reset Database</button>
     </form>
-
-    <br>
-    <br>
 
     <a href="/logout">
       <button type="submit">Logout</button>

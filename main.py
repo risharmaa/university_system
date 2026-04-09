@@ -89,16 +89,16 @@ def admin():
     cursor.execute("SELECT u.uid, u.fname, u.lname, u.email, s.program, u.address, s.graduation_status FROM users u JOIN students s ON u.uid = s.uid")
     students = cursor.fetchall()
 
-    cursor.execute("SELECT u.uid, u.fname, u.lname, u.email FROM users u JOIN faculty f ON u.uid = f.uid")
+    cursor.execute("SELECT u.uid, u.fname, u.lname, u.email, u.address FROM users u JOIN faculty f ON u.uid = f.uid")
     faculty = cursor.fetchall()
 
-    cursor.execute("SELECT u.uid, u.fname, u.lname, u.email FROM users u JOIN secretary s on u.uid = s.uid")
+    cursor.execute("SELECT u.uid, u.fname, u.lname, u.email , u.address FROM users u JOIN secretary s on u.uid = s.uid")
     secretary = cursor.fetchall()
 
     cursor.execute("SELECT u.uid, u.fname, u.lname, a.degree, a.graduation_year, u.address FROM users u JOIN alumni a ON u.uid = a.uid")
     alumni = cursor.fetchall()
 
-    cursor.execute("SELECT uid, fname, lname, email FROM users WHERE role='admin'")
+    cursor.execute("SELECT uid, fname, lname, email, address FROM users WHERE role='admin'")
     admins = cursor.fetchall()
     mydb.commit()
     return render_template("admin.html", students=students, faculty=faculty, alumni=alumni, admins=admins, secretary=secretary)
@@ -116,26 +116,27 @@ def create_user():
         fname = request.form.get("fname")
         lname = request.form.get("lname")
         email = request.form.get("email")
+        address = request.form.get("address")
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
 
         cursor = mydb.cursor(dictionary=True)
         try:
             cursor.execute(
-                "INSERT INTO users (uid, username, password, role, fname, lname, email) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                (uid, username, hashed_password, role, fname, lname, email),
+                "INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                (uid, username, hashed_password, role, fname, lname, email, address),
             )
             mydb.commit()
             if role == "student":
                 cursor.execute("INSERT INTO students (uid, program, graduation_status) VALUES (%s, %s, %s)", (uid, request.form.get("program"), "active"))
             elif role == "faculty":
-                cursor.execute("INSERT INTO faculty (uid) VALUES (%s)", (uid,))
+                cursor.execute("INSERT INTO faculty (uid, cac, reviewer, advisor) VALUES (%s, %s, %s, %s)", (uid, False, False, False))
             elif role == "secretary":
                 cursor.execute("INSERT INTO secretary (uid) VALUES (%s)", (uid,))
             elif role == "alumni":
                 degree = request.form.get("degree")
                 graduation_year = request.form.get("graduation_year")
                 address = request.form.get("address")
-                cursor.execute("INSERT INTO alumni (uid, degree, graduation_year, address) VALUES (%s, %s, %s, %s)", (uid, degree, graduation_year, address))
+                cursor.execute("INSERT INTO alumni (uid, degree, graduation_year) VALUES (%s, %s, %s, %s)", (uid, degree, graduation_year))
             mydb.commit()
             flash("New account created", "success")
         except mysql.connector.Error as e:
@@ -176,14 +177,16 @@ def admin_update(uid):
             cursor.execute("UPDATE users SET fname=%s, lname=%s, email=%s WHERE uid=%s", (fname, lname, email, uid))
 
         if role == "student" and student_info:
-            address = request.form.get("address") or student_info["address"]
+            address = request.form.get("address") or user["address"]
             program = request.form.get("program") or student_info["program"]
-            cursor.execute("UPDATE students SET address=%s, program=%s WHERE uid=%s", (address, program, uid))
+            cursor.execute("UPDATE users SET address=%s WHERE uid=%s", (address, uid))
+            cursor.execute("UPDATE students SET program=%s WHERE uid=%s", (program, uid))
         elif role == "alumni" and alumni_info:
-            address = request.form.get("address") or alumni_info["address"]
+            address = request.form.get("address") or user["address"]
             degree = request.form.get("degree") or alumni_info["degree"]
             graduation_year = request.form.get("graduation_year") or alumni_info["graduation_year"]
-            cursor.execute("UPDATE alumni SET address=%s, degree=%s, graduation_year=%s WHERE uid=%s", (address, degree, graduation_year, uid))
+            cursor.execute("UPDATE users SET address=%s WHERE uid=%", (address, uid))
+            cursor.execute("UPDATE alumni SET degree=%s, graduation_year=%s WHERE uid=%s", (degree, graduation_year, uid))
         
         mydb.commit()
         flash("User updated", "success")
