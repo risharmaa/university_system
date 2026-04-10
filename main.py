@@ -894,5 +894,127 @@ def _check_completeness(uid, cursor):
         cursor.execute("UPDATE applicant SET status='under review' WHERE uid=%s AND status='incomplete'", (uid,))
 
 
+def _is_staff():
+    return "user" in session and session["user"]["role"] in ("admin", "secretary", "faculty")
+
+
+@app.route("/applications")
+def applications():
+    if not _is_staff():
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    mydb.commit()
+    cursor = mydb.cursor(dictionary=True)
+    role = session["user"]["role"]
+    reviewer_uid = session["user"]["uid"]
+    if role == "faculty":
+        cursor.execute(
+            "SELECT a.uid, u.fname, u.lname, a.degree, a.status FROM applicant a JOIN users u ON a.uid=u.uid "
+            "WHERE a.status='under review' AND a.uid NOT IN (SELECT uid FROM app_review WHERE reviewer_uid=%s) "
+            "ORDER BY u.lname, u.fname", (reviewer_uid,)
+        )
+    else:
+        cursor.execute(
+            "SELECT a.uid, u.fname, u.lname, a.degree, a.status FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
+        )
+    applicants = cursor.fetchall()
+    mydb.commit()
+    return render_template("applications.html", applicants=applicants, role=role)
+
+
+@app.route("/applications/transcript/<int:uid>", methods=["POST"])
+def update_transcript(uid):
+    if not _is_staff() or session["user"]["role"] not in ("admin", "secretary"):
+        flash("Access denied.", "error")
+        return redirect(url_for("applications"))
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT transcript_received FROM applicant WHERE uid=%s", (uid,))
+    row = cursor.fetchone()
+    if row:
+        new_val = not row["transcript_received"]
+        cursor.execute("UPDATE applicant SET transcript_received=%s WHERE uid=%s", (new_val, uid))
+        mydb.commit()
+        _check_completeness(uid, cursor)
+        mydb.commit()
+    return redirect(url_for("applications"))
+
+
+@app.route("/applications/review/<int:uid>", methods=["GET", "POST"])
+def review_applicant(uid):
+    if not _is_staff() or session["user"]["role"] not in ("admin", "secretary", "faculty"):
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    reviewer_uid = session["user"]["uid"]
+    mydb.commit()
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT a.*, u.fname, u.lname, u.email FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid=%s", (uid,))
+    applicant = cursor.fetchone()
+    if not applicant:
+        flash("Applicant not found.", "error")
+        return redirect(url_for("applications"))
+    cursor.execute("SELECT * FROM prior_degree WHERE uid=%s", (uid,))
+    degrees = cursor.fetchall()
+    cursor.execute("SELECT * FROM recommendation_letter WHERE uid=%s", (uid,))
+    letters = cursor.fetchall()
+    cursor.execute("SELECT * FROM app_review WHERE uid=%s AND reviewer_uid=%s", (uid, reviewer_uid))
+    existing_review = cursor.fetchone()
+    cursor.execute("SELECT u.uid, u.fname, u.lname FROM users u JOIN faculty f ON u.uid=f.uid ORDER BY u.lname")
+    faculty_list = cursor.fetchall()
+    if request.method == "POST":
+        rating = request.form.get("rating")
+        deficiency = request.form.get("deficiency_courses", "").strip()
+        reasons = ",".join(request.form.getlist("reject_reasons"))
+        comment = request.form.get("comment", "").strip()
+        advisor = request.form.get("recommended_advisor") or None
+        if existing_review:
+            cursor.execute(
+                "UPDATE app_review SET rating=%s,deficiency_courses=%s,reject_reasons=%s,comment=%s,recommended_advisor=%s WHERE id=%s",
+                (rating, deficiency, reasons, comment, advisor, existing_review["id"])
+            )
+        else:
+            cursor.execute(
+                "INSERT INTO app_review (uid,reviewer_uid,rating,deficiency_courses,reject_reasons,comment,recommended_advisor) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                (uid, reviewer_uid, rating, deficiency, reasons, comment, advisor)
+            )
+        # Also handle per-letter ratings
+        for letter in letters:
+            lr = request.form.get(f"letter_rating_{letter['id']}")
+            lg = request.form.get(f"letter_generic_{letter['id']}")
+            lc = request.form.get(f"letter_credible_{letter['id']}")
+            if lr:
+                cursor.execute(
+                    "UPDATE recommendation_letter SET rating=%s, is_generic=%s, is_credible=%s WHERE id=%s",
+                    (lr, lg, lc, letter["id"])
+                )
+        mydb.commit()
+        flash("Review submitted.", "success")
+        return redirect(url_for("applications"))
+    mydb.commit()
+    return render_template("review_applicant.html", applicant=applicant, degrees=degrees,
+                           letters=letters, existing_review=existing_review, faculty_list=faculty_list)
+
+
+@app.route("/applications/decision/<int:uid>", methods=["GET", "POST"])
+def final_decision(uid):
+    if not _is_staff() or session["user"]["role"] not in ("admin", "secretary"):
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    mydb.commit()
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT a.*, u.fname, u.lname FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid=%s", (uid,))
+    applicant = cursor.fetchone()
+    cursor.execute("SELECT r.*, u.fname, u.lname FROM app_review r JOIN users u ON r.reviewer_uid=u.uid WHERE r.uid=%s", (uid,))
+    reviews = cursor.fetchall()
+    if request.method == "POST":
+        decision = request.form.get("decision")
+        if decision in ("admitted", "admitted_with_aid", "rejected"):
+            cursor.execute("UPDATE applicant SET status=%s WHERE uid=%s", (decision, uid))
+            mydb.commit()
+            flash(f"Decision recorded: {decision}.", "success")
+            return redirect(url_for("applications"))
+    mydb.commit()
+    return render_template("final_decision.html", applicant=applicant, reviews=reviews)
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
