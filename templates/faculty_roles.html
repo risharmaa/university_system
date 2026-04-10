@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Faculty Roles</title>
+</head>
+<body>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul>
+      {% for category, message in messages %}
+        <li class="{{ category }}">{{ message }}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+ <h1>Select Faculty Role</h1>
+ <p>Signed in as {{ session["user"]["fname"] }} {{ session["user"]["lname"] }}</p>
+ <h3>Available Roles</h3>
+ <ul>
+    {% for role in roles %}
+        {% if role == "advisor" %}
+            <li>
+                <a href="{{ url_for('facultyadvisor') }}">
+                    Advisor Dashboard
+                </a>
+            </li>
+        {% endif %}
+
+        {% if role == "reviewer" %}
+            <li>
+                <a href="#">
+                    Reviewer Dashboard (not added yet)
+                </a>
+            </li>
+        {% endif %}
+
+        {% if role == "cac" %}
+            <li>
+                <a href="#">
+                    CAC Dashboard (not added yet)
+                </a>
+            </li>
+        {% endif %}
+    {% endfor %}
+ </ul>
+ <p><a href= "{{ url_for('logout') }}">Logout</a></p>
+ </body>
+ </html>

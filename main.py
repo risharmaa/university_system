@@ -697,7 +697,7 @@ def facultyadvisor():
     cursor.execute("SELECT * FROM users WHERE uid = %s", (uid,))
     current_user = cursor.fetchone()
     mydb.commit()
-    return render_template("faculty.html", advisees=advisees, current_user = current_user)
+    return render_template("facultyadvisor.html", advisees=advisees, current_user = current_user)
 
 
 @app.route("/faculty/advisee/<int:uid>")
@@ -706,6 +706,9 @@ def faculty_advisee(uid):
     if "user" not in session or session["user"]["role"] != "faculty":
         flash("Access denied.", "error")
         return redirect(url_for("login"))
+    if "faculty_roles" not in session or "advisor" not in session["faculty_roles"]:
+        flash("Access denied", "error")
+        return redirect(url_for("faculty"))
     faculty_uid = session["user"]["uid"]
     cursor = mydb.cursor(dictionary=True)
     # Confirm the student belongs to this advisor (prevents accessing other advisors' students)
@@ -755,6 +758,9 @@ def faculty_approve_form1(uid):
     if "user" not in session or session["user"]["role"] != "faculty":
         flash("Access denied.", "error")
         return redirect(url_for("login"))
+    if "faculty_roles" not in session or "advisor" not in session["faculty_roles"]:
+        flash("Access denied", "error")
+        return redirect(url_for("faculty"))
 
     faculty_uid = session["user"]["uid"]
     cursor = mydb.cursor(dictionary=True)
