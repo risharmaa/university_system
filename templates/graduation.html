@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Apply for Graduation</title>
+</head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul>
+      {% for category, message in messages %}
+        <li class="{{ category }}">{{ message }}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+    <h1>Apply for Graduation</h1>
+  <p><strong>Name:</strong> {{ student.fname }} {{ student.lname }}</p>
+  <p><strong>Program:</strong> {{ student.program }}</p>
+  <p><strong>Current Status:</strong> {{ student.graduation_status or 'active' }}</p>
+    <!-- Show audit results if student just submitted the form -->
+  {% if audit %}
+    <h2>Audit Results</h2>
+    <table border="1" cellpadding="6">
+      <thead>
+        <tr><th>Requirement</th><th>Status</th><th>Detail</th></tr>
+      </thead>
+        <tbody>
+        {% for key, val in audit.items() %}
+          <!-- Skip internal values that aren't individual checks -->
+          {% if key not in ['cleared', 'gpa_value'] %}
+          <tr>
+            <td>{{ key.replace('_', ' ').title() }}</td>
+            <td>{{ '✅ Pass' if val.pass else '❌ Fail' }}</td>
+            <td>{{ val.detail }}</td>
+          </tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+        {% if audit.cleared %}
+      <p><strong>You have been cleared for graduation!</strong> The Grad Secretary will formally process your graduation.</p>
+    {% else %}
+      <p><strong>You do not yet meet all requirements.</strong> Please review the failed checks above.</p>
+    {% endif %}
+  {% endif %}
+    <!-- Only show the apply button if not already cleared -->
+  {% if student.graduation_status != 'cleared_for_graduation' %}
+    <form method="POST" action="{{ url_for('graduation') }}">
+      <button type="submit">Run Graduation Audit</button>
+    </form>
+  {% else %}
+    <p><em>You are already cleared for graduation. The Grad Secretary will process your application.</em></p>
+  {% endif %}
+    <br>
+  <a href="{{ url_for('student') }}">&larr; Back to Dashboard</a>
+  &nbsp;|&nbsp;
+  <a href="{{ url_for('logout') }}">Logout</a>
+
+</body>
+</html>
