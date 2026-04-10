@@ -405,3 +405,28 @@ INSERT INTO courses_offered VALUES ('CSCI', 6339, 22, 'R', '1600-1830', 29, 2222
 --inserting enrollment for Billie Holiday from REGS
 INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (88888888, 6461, 'CSCI', 'Fall', 2026, 'IP', 3, 11, false);
 INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (88888888, 6212, 'CSCI', 'Fall', 2026, 'IP', 3, 12, false);
+
+-- APPS sample data
+-- Applicant users: 3 applicants at different stages
+INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (11223344, '11223344', 'pass', 'applicant', 'John', 'Lennon', 'johnlennon@gmail.com', 'New York');
+INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (55443322, '55443322', 'pass', 'applicant', 'Mick', 'Jagger', 'mickjagger@gmail.com', 'London');
+INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (99887766, '99887766', 'pass', 'applicant', 'Keith', 'Richards', 'keithrichards@gmail.com', 'Chicago');
+
+-- Applicant details
+INSERT INTO applicant (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_experience, areas_of_interest, transcript_received, status) VALUES (11223344, '123-45-6789', 'MS', 158, 165, 2024, '2 years at Google', 'Machine Learning, Databases', TRUE, 'under review');
+INSERT INTO applicant (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_experience, areas_of_interest, transcript_received, status) VALUES (55443322, '987-65-4321', 'PhD', 162, 170, 2023, '5 years at Meta', 'AI, Cybersecurity', FALSE, 'incomplete');
+INSERT INTO applicant (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_experience, areas_of_interest, transcript_received, status) VALUES (99887766, '111-22-3333', 'MS', 155, 160, 2024, '1 year at startup', 'Networks, Cloud Computing', TRUE, 'admitted');
+
+-- Prior degrees
+INSERT INTO prior_degree (uid, degree_type, year, gpa, university) VALUES (11223344, 'Bachelors', 2022, 3.80, 'MIT');
+INSERT INTO prior_degree (uid, degree_type, year, gpa, university) VALUES (55443322, 'Bachelors', 2018, 3.90, 'Stanford');
+INSERT INTO prior_degree (uid, degree_type, year, gpa, university) VALUES (55443322, 'Masters', 2020, 3.75, 'Stanford');
+INSERT INTO prior_degree (uid, degree_type, year, gpa, university) VALUES (99887766, 'Bachelors', 2023, 3.50, 'GWU');
+
+-- Recommendation letters
+INSERT INTO recommendation_letter (uid, writer_name, writer_email, writer_title, institution_name, letter_content, is_submitted, submission_date) VALUES (11223344, 'Dr. Alice Smith', 'alice@mit.edu', 'Professor', 'MIT', 'John is an exceptional student with strong analytical skills.', TRUE, '2025-01-10 10:00:00');
+INSERT INTO recommendation_letter (uid, writer_name, writer_email, writer_title, institution_name) VALUES (11223344, 'Dr. Bob Jones', 'bob@google.com', 'Senior Engineer', 'Google');
+INSERT INTO recommendation_letter (uid, writer_name, writer_email, writer_title, institution_name) VALUES (55443322, 'Dr. Carol Lee', 'carol@stanford.edu', 'Professor', 'Stanford');
+
+-- Review by Bhagirath for John Lennon
+INSERT INTO app_review (uid, reviewer_uid, rating, deficiency_courses, reject_reasons, comment, recommended_advisor) VALUES (11223344, 22222222, 2, NULL, NULL, 'Strong candidate with solid GPA and work experience.', 12121212);
