@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Faculty Advisor — ADS</title>
+</head>
+<body>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul>
+      {% for category, message in messages %}
+        <li class="{{ category }}">{{ message }}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+  <h1>Faculty Advisor Dashboard</h1>
+  <p>Signed in as {{ session.user.fname }} {{ session.user.lname }}</p>
+  <h2>My Advisees</h2>
+  <table border="1" cellpadding="6">
+    <thead>
+      <tr>
+        <th>UID</th>
+        <th>Name</th>
+        <th>Program</th>
+        <th>Graduation Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in advisees %}
+      <tr>
+        <td>{{ row.uid }}</td>
+        <td>{{ row.fname }} {{ row.lname }}</td>
+        <td>{{ row.program or '—' }}</td>
+        <td>{{ row.graduation_status or '—' }}</td>
+        <td><a href="{{ url_for('faculty_advisee', uid=row.uid) }}">View details</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">No advisees assigned.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+    <p><a href="{{ url_for('logout') }}">Logout</a></p>
+</body>
+</html>
