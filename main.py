@@ -464,6 +464,183 @@ def graduation():
     mydb.commit()
     return render_template("graduation.html", student=student, audit=audit)
 
+def _is_secretary_session():
+    if "user" not in session:
+        return False
+    role = session["user"].get("role", "").lower()
+    if role == "admin":
+        return True
+    if role != "secretary":
+        return False
+    cursor = mydb.cursor(dictionary=True)
+    row = cursor.execute(
+        "SELECT 1 FROM secretary WHERE uid = %s", (session["user"]["uid"],)
+    )
+    row = cursor.fetchone()
+    return row is not None
+
+@app.route("/secretary")
+def secretary():
+    if not _is_secretary_session():
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    uid = session["user"]["uid"]
+    mydb.commit()
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT fname, lname FROM users WHERE uid = %s", (uid,))
+    sec_user = cursor.fetchone()
+    if sec_user:
+        session["user"]["fname"] = sec_user["fname"]
+        session["user"]["lname"] = sec_user["lname"]
+        session.modified = True
+    q = request.args.get("q", "").strip()
+    sql = (
+        "SELECT u.uid, u.fname, u.lname, s.program, s.graduation_status, s.advisor_id "
+        "FROM users u JOIN students s ON u.uid = s.uid"
+    )
+    if q:
+        like = f"%{q}%"
+        sql += (
+            " WHERE CAST(u.uid AS TEXT) LIKE %s OR u.fname LIKE %s OR u.lname LIKE %s "
+            "OR (u.fname || ' ' || u.lname) LIKE %s"
+        )
+        sql += " ORDER BY u.lname, u.fname"
+        cursor.execute(sql, (like, like, like, like))
+        rows = cursor.fetchall()
+    else:
+        sql += " ORDER BY u.lname, u.fname"
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+    uid = session["user"]["uid"]
+    cursor.execute("SELECT * FROM users WHERE uid = %s", (uid,))
+    current_user = cursor.fetchone()
+    mydb.commit()
+    return render_template("secretary.html", students=rows, query=q, current_user=current_user)
+
+
+@app.route("/secretary/student/<int:uid>")
+def secretary_student(uid):
+    if not _is_secretary_session():
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    mydb.commit()
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT s.*, u.username, u.fname, u.lname, u.email "
+        "FROM students s JOIN users u ON s.uid = u.uid WHERE s.uid = %s",
+        (uid,),
+    )
+    student = cursor.fetchone()
+    if not student:
+        mydb.commit()
+        flash("Student not found.", "error")
+        return redirect(url_for("secretary"))
+    cursor.execute(
+        "SELECT e.course_number, e.department, c.title, e.semester, e.year, e.grade, e.credit_hours "
+        "FROM enrollment e JOIN courses c ON e.course_number = c.course_number AND e.department = c.department "
+        "WHERE e.uid = %s ORDER BY e.year, e.semester",
+        (uid,),
+    )
+    enrollment = cursor.fetchall()
+    cursor.execute(
+        "SELECT u.uid, u.fname, u.lname FROM users u "
+        "JOIN faculty f ON u.uid = f.uid ORDER BY u.lname, u.fname"
+    )
+    faculty = cursor.fetchall()
+    mydb.commit()
+    return render_template(
+        "secretary_student.html",
+        student=student,
+        enrollment=enrollment,
+        faculty=faculty,
+        default_grad_year=datetime.now().year,
+    )
+
+
+@app.route("/secretary/assign_advisor", methods=["POST"])
+def secretary_assign_advisor():
+    if not _is_secretary_session():
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    student_uid = request.form.get("student_uid", type=int)
+    advisor_uid = request.form.get("advisor_id", type=int)
+    if not student_uid or not advisor_uid:
+        flash("Missing student or advisor.", "error")
+        return redirect(url_for("secretary"))
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT 1 FROM faculty WHERE uid = %s", (advisor_uid,)
+    )
+    fac = cursor.fetchone()
+    if not fac:
+        mydb.commit()
+        flash("Invalid advisor.", "error")
+        return redirect(url_for("secretary_student", uid=student_uid))
+    cursor.execute(
+        "UPDATE students SET advisor_id = %s WHERE uid = %s",
+        (advisor_uid, student_uid),
+    )
+    mydb.commit()
+    flash("Advisor updated.", "success")
+    return redirect(url_for("secretary_student", uid=student_uid))
+
+
+@app.route("/secretary/graduate", methods=["POST"])
+def secretary_graduate():
+    if not _is_secretary_session():
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    student_uid = request.form.get("student_uid", type=int)
+    degree = (request.form.get("degree") or "").strip() or "MS"
+    graduation_year = request.form.get("graduation_year", type=int)
+    if not student_uid or not graduation_year:
+        flash("Missing data.", "error")
+        return redirect(url_for("secretary"))
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT s.*, u.fname, u.lname FROM students s JOIN users u ON s.uid = u.uid "
+        "WHERE s.uid = %s",
+        (student_uid,),
+    )
+    st = cursor.fetchone()
+    if not st:
+        mydb.commit()
+        flash("Student not found.", "error")
+        return redirect(url_for("secretary"))
+    if (st["graduation_status"] or "") != "cleared_for_graduation":
+        mydb.commit()
+        flash("Student is not cleared for graduation.", "error")
+        return redirect(url_for("secretary_student", uid=student_uid))
+    cursor.execute("SELECT 1 FROM alumni WHERE uid = %s", (student_uid,))
+    dup = cursor.fetchone()
+    if dup:
+        mydb.commit()
+        flash("Already recorded as alumni.", "error")
+        return redirect(url_for("secretary_student", uid=student_uid))
+    try:
+        cursor.execute(
+            "DELETE FROM form_courses WHERE form_id IN "
+            "(SELECT form_id FROM form WHERE uid = %s)",
+            (student_uid,),
+        )
+        cursor.execute("DELETE FROM form WHERE uid = %s", (student_uid,))
+        # Do NOT delete enrollment - spec says keep enrollment history intact
+        # so alumni can view their transcript and re-enroll in future
+        cursor.execute(
+            "INSERT INTO alumni (uid, degree, graduation_year) VALUES (%s, %s, %s)",
+            (student_uid, degree, graduation_year),
+        )
+        cursor.execute("UPDATE users SET role = 'alumni' WHERE uid = %s", (student_uid,))
+        cursor.execute("DELETE FROM students WHERE uid = %s", (student_uid,))
+        mydb.commit()
+    except mysql.connector.Error as e:
+        mydb.rollback()
+        cursor.close()
+        flash(f"Could not record graduation: {e}", "error")
+        return redirect(url_for("secretary_student", uid=student_uid))
+    mydb.commit()
+    flash("Graduation recorded; user is now alumni.", "success")
+    return redirect(url_for("secretary"))
 
 
 
