@@ -238,6 +238,233 @@ def student_info():
     flash("Information updated")
     return redirect(url_for('student'))
 
+@app.route("/form1", methods=["GET", "POST"])
+def form1():
+    if "user" not in session or session["user"]["role"] != "student":
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    user = session["user"]
+    uid = user["uid"]
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT course_number, department, title, credits FROM courses ORDER BY department, course_number")
+    courses = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM students WHERE uid = %s", (uid,))
+    student = cursor.fetchone()
+    if request.method == "GET":
+        cursor.execute("SELECT * FROM form WHERE uid = %s", (uid,))
+        existing_form = cursor.fetchone()
+        existing_courses = []
+        if existing_form:
+            cursor.execute(
+                "SELECT course_number, department FROM form_courses WHERE form_id = %s",
+                (existing_form["form_id"],)
+            )
+            rows = cursor.fetchall()
+            existing_courses = [r["course_number"] for r in rows]
+        mydb.commit()
+        return render_template("form1.html", user=user, courses=courses, student=student,
+                               existing_form=existing_form, existing_courses=existing_courses)
+
+    # POST - parse selected courses (skip blanks, remove duplicates)
+    selected = []
+    for i in range(12):
+        val = request.form.get(f"course_{i}", "").strip()
+        if val:
+            try:
+                num = int(val)
+                if num not in selected:
+                    selected.append(num)
+            except ValueError:
+                pass
+
+    if not selected:
+        flash("Please select at least one course.", "error")
+        return redirect(url_for("form1"))
+
+    # Validate selected courses exist in the catalog
+    valid_nums = {c["course_number"] for c in courses}
+    bad = [n for n in selected if n not in valid_nums]
+    if bad:
+        flash(f"Unrecognized course number(s): {bad}", "error")
+        return redirect(url_for("form1"))
+
+    # Load program requirements from DB
+    program = student["program"] or "MS"
+    cursor.execute("SELECT * FROM programs WHERE program_name = %s", (program,))
+    prog = cursor.fetchone()
+    errors = []
+
+    if program == "MS" and prog:
+        # Check all 3 core courses are included
+        core_nums = [int(c.strip().split()[-1]) for c in (prog["core_courses"] or "").split(",") if c.strip()]
+        missing = [n for n in core_nums if n not in selected]
+        if missing:
+            errors.append(f"Missing required core course(s): {missing}")
+        # Check at most max_outside_courses non-CSCI courses
+        outside = sum(1 for n in selected
+                      for c in courses if c["course_number"] == n and c["department"] != "CSCI")
+        max_out = prog["max_outside_courses"] or 2
+        if outside > max_out:
+            errors.append(f"Too many non-CSCI courses ({outside}); maximum allowed is {max_out}.")
+
+    if errors:
+        for e in errors:
+            flash(e, "error")
+        return redirect(url_for("form1"))
+
+    # Save to DB: one form per student (form_id = uid)
+    form_id = uid
+    try:
+        cursor.execute("DELETE FROM form_courses WHERE form_id = %s", (form_id,))
+        cursor.execute("DELETE FROM form WHERE uid = %s", (uid,))
+        cursor.execute(
+            "INSERT INTO form (form_id, uid, program_type) VALUES (%s, %s, %s)",
+            (form_id, uid, program)
+        )
+        for num in selected:
+            cursor.execute(
+                "INSERT INTO form_courses (form_id, course_number, department) VALUES (%s, %s, %s)",
+                (form_id, num, "CSCI")
+            )
+        mydb.commit()
+        flash("Form 1 submitted successfully!", "success")
+    except mysql.connector.Error as e:
+        mydb.rollback()
+        flash(f"Error saving Form 1: {e}", "error")
+    mydb.commit()
+    return redirect(url_for("student"))
+
+
+# Grade point values used for GPA calculation
+GRADE_POINTS = {"A": 4.0, "A-": 3.7, "B+": 3.3, "B": 3.0,
+                "B-": 2.7, "C+": 2.3, "C": 2.0, "F": 0.0}
+
+# Grades considered "below B" per program requirements
+BELOW_B = {"B-", "C+", "C", "F"}
+
+def run_audit(uid, program, cursor):
+    """Check all graduation requirements for a student. Returns a dict of results."""
+
+    # Load program requirements from DB (so rules can change without code changes)
+    cursor.execute("SELECT * FROM programs WHERE program_name = %s", (program,))
+    prog = cursor.fetchone()
+    if not prog:
+        return {"error": "Program not found in database."}
+
+    # Fetch completed enrollment rows (exclude IP — in progress courses don't count)
+    cursor.execute(
+        "SELECT e.course_number, c.department, e.grade, e.credit_hours "
+        "FROM enrollment e JOIN courses c ON e.course_number = c.course_number AND e.department = c.department "
+        "WHERE e.uid = %s AND e.grade != 'IP'", (uid,)
+    )
+    rows = cursor.fetchall()
+
+    # Calculate GPA and totals from completed courses
+    total_credits, gpa_points, below_b_count, outside_cs = 0, 0.0, 0, 0
+    for r in rows:
+        pts = GRADE_POINTS.get(r["grade"], 0.0)
+        total_credits += r["credit_hours"]
+        gpa_points += pts * r["credit_hours"]
+        if r["grade"] in BELOW_B:
+            below_b_count += 1
+        if r["department"] != "CSCI":
+            outside_cs += 1
+    gpa = round(gpa_points / total_credits, 2) if total_credits > 0 else 0.0
+
+    # Check each requirement and store pass/fail + detail message
+    results = {}
+    results["gpa"] = {"pass": gpa >= prog["min_gpa"],
+                      "detail": f"GPA: {gpa:.2f} (need ≥ {prog['min_gpa']})"}
+    results["credits"] = {"pass": total_credits >= prog["credits_required"],
+                          "detail": f"Credits: {total_credits} (need ≥ {prog['credits_required']})"}
+    results["below_b"] = {"pass": below_b_count <= prog["max_grades_below_B"],
+                          "detail": f"Grades below B: {below_b_count} (max {prog['max_grades_below_B']})"}
+    results["suspended"] = {"pass": below_b_count < 3,
+                            "detail": "Academic suspension: 3+ grades below B" if below_b_count >= 3 else "Not suspended"}
+
+    # MS-specific checks
+    if program == "MS":
+        # Parse core course numbers as integers (e.g. 'CSCI 6212' -> 6212)
+        # so they match the integer course_number values stored in enrollment
+        core = [int(c.strip().split()[-1]) for c in (prog["core_courses"] or "").split(",") if c.strip()]
+        taken = {r["course_number"] for r in rows if r["grade"] != "F"}
+        missing_core = [c for c in core if c not in taken]
+        results["core"] = {"pass": len(missing_core) == 0,
+                           "detail": f"Core courses missing: {missing_core}" if missing_core else "All core courses completed"}
+        results["outside"] = {"pass": outside_cs <= prog["max_outside_courses"],
+                              "detail": f"Outside CS courses: {outside_cs} (max {prog['max_outside_courses']})"}
+
+    # PhD-specific checks
+    if program == "PhD":
+        cs_credits = sum(r["credit_hours"] for r in rows if r["department"] == "CSCI")
+        results["cs_credits"] = {"pass": cs_credits >= prog["credits_required_cs"],
+                                 "detail": f"CS credits: {cs_credits} (need ≥ {prog['credits_required_cs']})"}
+
+    # Check Form 1 submitted and advisor approved
+    cursor.execute("SELECT form_id, advisor_approval FROM form WHERE uid = %s", (uid,))
+    form = cursor.fetchone()
+    form_ok = form is not None
+    approved_ok = form and form["advisor_approval"] == "approved"
+    results["form1_submitted"] = {"pass": form_ok, "detail": "Form 1 submitted" if form_ok else "Form 1 not submitted"}
+    results["form1_approved"] = {"pass": bool(approved_ok), "detail": "Advisor approved Form 1" if approved_ok else "Advisor has not approved Form 1"}
+
+    # Overall: student is cleared only if every check passes
+    results["cleared"] = all(v["pass"] for k, v in results.items() if k != "suspended")
+    results["gpa_value"] = gpa
+    return results
+
+
+
+# Added: Graduation application route
+@app.route("/graduation", methods=["GET", "POST"])
+def graduation():
+    # Only students can apply for graduation
+    if "user" not in session or session["user"]["role"] != "student":
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+
+    uid = session["user"]["uid"]
+    cursor = mydb.cursor(dictionary=True)
+    # Get student's program (MS or PhD)
+    cursor.execute(
+        "SELECT s.program, s.graduation_status, u.fname, u.lname "
+        "FROM students s JOIN users u ON s.uid = u.uid WHERE s.uid = %s", (uid,)
+    )
+    student = cursor.fetchone()
+
+    if not student:
+        mydb.commit()
+        flash("Student record not found.", "error")
+        return redirect(url_for("student"))
+
+    audit = None
+    if request.method == "POST":
+        # Run the audit against all graduation requirements
+        audit = run_audit(uid, student["program"], cursor)
+
+        # Check suspension first - 3+ grades below B = academic suspension (spec requirement)
+        if audit.get("suspended") and not audit["suspended"]["pass"]:
+            cursor.execute(
+                "UPDATE students SET graduation_status = 'suspended' WHERE uid = %s", (uid,)
+            )
+            mydb.commit()
+            flash("You have been placed under academic suspension (3+ grades below B).", "error")
+        elif audit.get("cleared"):
+            # Update graduation status to cleared_for_graduation
+            cursor.execute(
+                "UPDATE students SET graduation_status = 'cleared_for_graduation' WHERE uid = %s", (uid,)
+            )
+            mydb.commit()
+            flash("Congratulations! You have been cleared for graduation.", "success")
+        else:
+            flash("You do not yet meet all graduation requirements. See details below.", "error")
+
+    mydb.commit()
+    return render_template("graduation.html", student=student, audit=audit)
+
+
 
 
 @app.route("/admin/update/<int:uid>", methods=["GET", "POST"])
