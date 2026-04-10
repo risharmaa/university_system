@@ -144,6 +144,102 @@ def create_user():
         mydb.commit()
     return render_template("create_user.html")
 
+
+@app.route("/student")
+def student():
+    if "user" not in session or session["user"]["role"] != "student":
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    uid = session["user"]["uid"]
+    mydb.commit()
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT s.uid, u.address, s.program, u.fname, u.lname, u.email FROM students s JOIN users u ON s.uid = u.uid WHERE s.uid = %s", (uid,))
+    info = cursor.fetchone()
+    if info:
+        session["user"]["fname"] = info["fname"]
+        session["user"]["lname"] = info["lname"]
+        session.modified = True
+    cursor.execute("SELECT e.course_number, c.title, e.semester, e.year, e.grade, e.credit_hours FROM enrollment e JOIN courses c ON e.course_number = c.course_number AND e.department = c.department WHERE e.uid = %s", (uid,))
+    enrollment = cursor.fetchall()
+    
+    cursor.execute("SELECT c.title, c.department, e.grade FROM enrollment e JOIN courses c ON e.course_number = c.course_number AND e.department = c.department WHERE e.uid = %s", (uid,))
+    courses = cursor.fetchall()
+    phd_suggestions = []
+    if info['program'] == 'MS':
+        cyber = ['Security 1', 'Cryptography', 'Network Security']
+        if any (c['title'] in cyber and c['grade'] in ['A', 'B'] for c in courses):
+            phd_suggestions.append('Cybersecurity')
+        machine = ['Machine Learning']
+        if any (c['title'] in machine and c['grade'] in ['A', 'B'] for c in courses):
+            phd_suggestions.append('Machine Learning')
+        cloud = ['Cloud Computing']
+        if any (c['title'] in cloud and c['grade'] in ['A', 'B'] for c in courses):
+            phd_suggestions.append('Cloud Computing')
+        ai = ['AI']
+        if any (c['title'] in ai and c['grade'] in ['A', 'B'] for c in courses):
+            phd_suggestions.append("AI")
+    # --- Added: compute GPA, credits, and checklist for dashboard stats ---
+    GRADE_PTS = {"A":4.0,"A-":3.7,"B+":3.3,"B":3.0,"B-":2.7,"C+":2.3,"C":2.0,"F":0.0}
+    completed = [e for e in enrollment if e['grade'] not in ('IP', None, '')]
+    total_ch   = sum(e['credit_hours'] for e in completed)
+    gpa = round(sum(GRADE_PTS.get(e['grade'],0)*e['credit_hours'] for e in completed)/max(total_ch,1), 2)
+
+    # GPA ring color and fill percentage (capped at 100)
+    gpa_color = "#28a745" if gpa >= 3.5 else ("#ffc107" if gpa >= 3.0 else "#dc3545")
+    gpa_pct   = min(int(gpa / 4.0 * 100), 100)
+
+    # Program thresholds
+    is_ms      = info['program'] == 'MS'
+    min_gpa    = 3.0 if is_ms else 3.5
+    credits_req = 30  if is_ms else 36
+    max_below_b = 2   if is_ms else 1
+    credits_pct = min(int(total_ch / credits_req * 100), 100)
+
+    # Graduation readiness checklist items
+    below_b_grades = {"B-","C+","C","F"}
+    below_b_count  = sum(1 for e in completed if e['grade'] in below_b_grades)
+    taken_nums     = {e['course_number'] for e in completed}
+    core_done      = {6212,6221,6461}.issubset(taken_nums)
+    checklist = [
+        {"label": f"GPA ≥ {min_gpa}  (yours: {gpa})",          "pass": gpa >= min_gpa},
+        {"label": f"Credits ≥ {credits_req}  (yours: {total_ch})", "pass": total_ch >= credits_req},
+        {"label": f"Below-B grades ≤ {max_below_b}  (yours: {below_b_count})", "pass": below_b_count <= max_below_b},
+    ]
+    if is_ms:
+        checklist.insert(2, {"label": "Core courses (6212, 6221, 6461)", "pass": core_done})
+    # --- End: stats block ---
+
+    uid = session["user"]["uid"]
+    cursor.execute("SELECT * FROM users WHERE uid = %s", (uid,))
+    current_user = cursor.fetchone()
+    return render_template("student.html", student=info, enrollment=enrollment,
+                           phd_suggestions=phd_suggestions, gpa=gpa,
+                           gpa_color=gpa_color, gpa_pct=gpa_pct,
+                           total_credits=total_ch, credits_req=credits_req,
+                           credits_pct=credits_pct, checklist=checklist, current_user=current_user)
+
+@app.route("/student/info", methods=["POST"])
+def student_info():
+    if "user" not in session or session["user"]["role"] != "student":
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    uid = session["user"]["uid"]
+    address = request.form.get("address")
+    email = request.form.get("email")
+    password = request.form.get("password")
+    cursor = mydb.cursor(dictionary=True)
+    if address:
+        cursor.execute("UPDATE users SET address=%s WHERE uid=%s", (address, uid))
+    if email:
+        cursor.execute("UPDATE users SET email=%s WHERE uid=%s", (email, uid))
+    if password:
+        cursor.execute("UPDATE users SET password=%s WHERE uid=%s", (password, uid))
+    mydb.commit()
+    flash("Information updated")
+    return redirect(url_for('student'))
+
+
+
 @app.route("/admin/update/<int:uid>", methods=["GET", "POST"])
 def admin_update(uid):
     if "user" not in session or session["user"]["role"] != "admin":
