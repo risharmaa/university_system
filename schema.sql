@@ -249,7 +249,7 @@ INSERT INTO users (uid, username, password, role, fname, lname, email, address) 
 
 -- inserting faculty/advisor from the sample data
 INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (12121212, true, false, true);
-INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (22222222, false, true, false);
+INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (22222222, false, true, true);
 
 -- inserting students from the sample data
 INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year) VALUES(55555555, 'MS', 22222222, 'active', 2023);
