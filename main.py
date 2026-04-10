@@ -642,6 +642,144 @@ def secretary_graduate():
     flash("Graduation recorded; user is now alumni.", "success")
     return redirect(url_for("secretary"))
 
+@app.route("/faculty")
+def faculty():
+    # Only faculty users can access this page
+    if "user" not in session or session["user"]["role"] != "faculty":
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    uid = session["user"]["uid"]
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT advisor, reviewer, cac FROM faculty WHERE uid = %s", (uid,))
+    fac_role = cursor.fetchone()
+    if not fac_role:
+        flash("Access denied", "error")
+        return redirect(url_for("login"))
+    
+    roles = []
+    if fac_role["advisor"]:
+        roles.append("advisor")
+    if fac_role["reviewer"]:
+        roles.append("reviewer")
+    if fac_role["cac"]:
+        roles.append("cac")
+
+    if not roles:
+        flash("No faculty role assigned", "error")
+        return redirect(url_for("login"))
+    session["faculty_roles"] = roles
+    return render_template("faculty_roles.html", roles=roles)
+
+@app.route("/faculty/advisor")
+def facultyadvisor():
+    if "user" not in session or session["user"]["role"] != "faculty":
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    uid = session["user"]["uid"]
+    if "faculty_roles" not in session or "advisor" not in session["faculty_roles"]:
+        flash("Access denied", "error")
+        return redirect(url_for("faculty"))
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT fname, lname FROM users WHERE uid = %s", (uid,))
+    fac_user = cursor.fetchone()
+    if fac_user:
+        session["user"]["fname"] = fac_user["fname"]
+        session["user"]["lname"] = fac_user["lname"]
+        session.modified = True
+    # Fetch all students assigned to this faculty advisor
+    cursor.execute(
+        "SELECT s.uid, u.fname, u.lname, s.program, s.graduation_status "
+        "FROM students s JOIN users u ON s.uid = u.uid "
+        "WHERE s.advisor_id = %s ORDER BY u.lname, u.fname",
+        (uid,)
+    )
+    advisees = cursor.fetchall()
+    cursor.execute("SELECT * FROM users WHERE uid = %s", (uid,))
+    current_user = cursor.fetchone()
+    mydb.commit()
+    return render_template("faculty.html", advisees=advisees, current_user = current_user)
+
+
+@app.route("/faculty/advisee/<int:uid>")
+def faculty_advisee(uid):
+    # Only the assigned faculty advisor can view this advisee
+    if "user" not in session or session["user"]["role"] != "faculty":
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    faculty_uid = session["user"]["uid"]
+    cursor = mydb.cursor(dictionary=True)
+    # Confirm the student belongs to this advisor (prevents accessing other advisors' students)
+    cursor.execute(
+        "SELECT s.uid, s.program, s.graduation_status, s.advisor_id, "
+        "u.fname, u.lname, u.email "
+        "FROM students s JOIN users u ON s.uid = u.uid "
+        "WHERE s.uid = %s AND s.advisor_id = %s",
+        (uid, faculty_uid)
+    )
+    student = cursor.fetchone()
+    if not student:
+        mydb.commit()
+        flash("Advisee not found.", "error")
+        return redirect(url_for("faculty"))
+    # Fetch the student's enrollment history (transcript)
+    cursor.execute(
+        "SELECT e.course_number, e.department, c.title, e.semester, e.year, e.grade, e.credit_hours "
+        "FROM enrollment e JOIN courses c ON e.course_number = c.course_number AND e.department = c.department "
+        "WHERE e.uid = %s ORDER BY e.year, e.semester",
+        (uid,)
+    )
+    enrollment = cursor.fetchall()
+    # Fetch Form 1 if submitted, to show approval status and planned courses
+    cursor.execute(
+        "SELECT f.form_id, f.advisor_approval FROM form f WHERE f.uid = %s", (uid,)
+    )
+    form_row = cursor.fetchone()
+    form_courses = []
+    if form_row:
+        cursor.execute(
+            "SELECT fc.course_number, c.title, c.department "
+            "FROM form_courses fc LEFT JOIN courses c ON fc.course_number = c.course_number AND fc.department = c.department "
+            "WHERE fc.form_id = %s ORDER BY fc.course_number",
+            (form_row["form_id"],)
+        )
+        form_courses = cursor.fetchall()
+    mydb.commit()
+    return render_template("faculty_advisee.html", student=student, enrollment=enrollment, form_row=form_row, form_courses=form_courses)
+
+
+
+# Added: Route for faculty to approve a student's Form 1
+@app.route("/faculty/advisee/<int:uid>/approve", methods=["POST"])
+def faculty_approve_form1(uid):
+    # Only faculty can approve Form 1
+    if "user" not in session or session["user"]["role"] != "faculty":
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+
+    faculty_uid = session["user"]["uid"]
+    cursor = mydb.cursor(dictionary=True)
+
+    # Make sure this student is actually assigned to this advisor
+    cursor.execute(
+        "SELECT uid FROM students WHERE uid = %s AND advisor_id = %s",
+        (uid, faculty_uid)
+    )
+    student = cursor.fetchone()
+
+    if not student:
+        mydb.commit()
+        flash("Student not found or not your advisee.", "error")
+        return redirect(url_for("faculty"))
+
+    # Set advisor_approval to 'approved' on the student's Form 1
+    cursor.execute(
+        "UPDATE form SET advisor_approval = 'approved' WHERE uid = %s",
+        (uid,)
+    )
+    mydb.commit()
+
+    flash("Form 1 approved successfully.", "success")
+    return redirect(url_for("faculty_advisee", uid=uid))
 
 
 @app.route("/admin/update/<int:uid>", methods=["GET", "POST"])
