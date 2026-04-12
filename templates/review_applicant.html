@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head><title>Review Applicant</title></head>
+<body>
+  <h1>Review: {{ applicant.fname }} {{ applicant.lname }}</h1>
+  {% with messages = get_flashed_messages(with_categories=true) %}{% for c,m in messages %}
+  <p><strong>{{ m }}</strong></p>{% endfor %}{% endwith %}
+
+  <h2>Applicant Details</h2>
+  <p>Degree: {{ applicant.degree }} | Status: {{ applicant.status }}</p>
+  <p>GRE Verbal: {{ applicant.gre_verbal or '—' }} | Quant: {{ applicant.gre_quant or '—' }} | Year: {{ applicant.gre_year or '—' }}</p>
+  <p>Work Experience: {{ applicant.work_experience or '—' }}</p>
+  <p>Areas of Interest: {{ applicant.areas_of_interest or '—' }}</p>
+
+  <h2>Prior Degrees</h2>
+  {% if degrees %}
+  <table border="1">
+    <tr><th>Type</th><th>University</th><th>Year</th><th>GPA</th></tr>
+    {% for d in degrees %}<tr><td>{{ d.degree_type }}</td><td>{{ d.university }}</td><td>{{ d.year }}</td><td>{{ d.gpa }}</td></tr>{% endfor %}
+  </table>
+  {% else %}<p>None on file.</p>{% endif %}
+
+  <h2>Recommendation Letters</h2>
+  {% for l in letters %}
+  <p><strong>{{ l.writer_name }}</strong> ({{ l.institution_name }}) — {{ 'Submitted' if l.is_submitted else 'Pending' }}</p>
+  {% if l.is_submitted %}
+  <p>{{ l.letter_content }}</p>
+  <form method="POST">
+    Letter Rating (1-5): <input type="number" name="letter_rating_{{ l.id }}" min="1" max="5" value="{{ l.rating or '' }}">
+    Generic? <select name="letter_generic_{{ l.id }}"><option value="">—</option><option value="Y">Yes</option><option value="N">No</option></select>
+    Credible? <select name="letter_credible_{{ l.id }}"><option value="">—</option><option value="Y">Yes</option><option value="N">No</option></select>
+  </form>
+  {% endif %}
+  {% else %}<p>No letters.</p>{% endfor %}
+
+  <h2>Submit Review</h2>
+  <form method="POST">
+    GAS Rating:
+    <select name="rating" required>
+      <option value="">Select</option>
+      <option value="0" {% if existing_review and existing_review.rating==0 %}selected{% endif %}>0 - Reject</option>
+      <option value="1" {% if existing_review and existing_review.rating==1 %}selected{% endif %}>1 - Borderline</option>
+      <option value="2" {% if existing_review and existing_review.rating==2 %}selected{% endif %}>2 - Admit (no aid)</option>
+      <option value="3" {% if existing_review and existing_review.rating==3 %}selected{% endif %}>3 - Admit with Aid</option>
+    </select><br><br>
+    Deficiency Courses: <input type="text" name="deficiency_courses" value="{{ existing_review.deficiency_courses if existing_review else '' }}"><br><br>
+    Reject Reasons (check all that apply):<br>
+    <input type="checkbox" name="reject_reasons" value="A"> A - GPA too low<br>
+    <input type="checkbox" name="reject_reasons" value="B"> B - GRE too low<br>
+    <input type="checkbox" name="reject_reasons" value="C"> C - Weak recommendations<br>
+    <input type="checkbox" name="reject_reasons" value="D"> D - Weak statement<br>
+    <input type="checkbox" name="reject_reasons" value="E"> E - Other<br><br>
+    Recommended Advisor:
+    <select name="recommended_advisor">
+      <option value="">None</option>
+      {% for f in faculty_list %}<option value="{{ f.uid }}" {% if existing_review and existing_review.recommended_advisor==f.uid %}selected{% endif %}>{{ f.fname }} {{ f.lname }}</option>{% endfor %}
+    </select><br><br>
+    Comments:<br><textarea name="comment" rows="4" cols="50">{{ existing_review.comment if existing_review else '' }}</textarea><br><br>
+    <input type="submit" value="Submit Review">
+  </form>
+  <br><a href="{{ url_for('applications') }}">Back to Applications</a>
+</body>
+</html>
