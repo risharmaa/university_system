@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head><title>Submit Recommendation Letter</title></head>
+<body>
+  <h1>Recommendation Letter Submission</h1>
+  <p>Dear {{ letter.writer_name }},</p>
+  <p>You have been requested to submit a recommendation letter for a GWU CS graduate applicant.</p>
+  <form method="POST">
+    <label>Letter Content:</label><br>
+    <textarea name="letter_content" rows="10" cols="60" required></textarea><br><br>
+    <input type="submit" value="Submit Letter">
+  </form>
+</body>
+</html>
