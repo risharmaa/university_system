@@ -1147,8 +1147,17 @@ def final_decision(uid):
     cursor = mydb.cursor(dictionary=True)
     cursor.execute("SELECT a.*, u.fname, u.lname FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid=%s", (uid,))
     applicant = cursor.fetchone()
-    cursor.execute("SELECT r.*, u.fname, u.lname FROM app_review r JOIN users u ON r.reviewer_uid=u.uid WHERE r.uid=%s", (uid,))
+    cursor.execute("""
+        SELECT r.*, u.fname AS reviewer_fname, u.lname AS reviewer_lname,
+               adv.fname AS advisor_fname, adv.lname AS advisor_lname
+        FROM app_review r
+        JOIN users u ON r.reviewer_uid=u.uid
+        LEFT JOIN users adv ON r.recommended_advisor=adv.uid
+        WHERE r.uid=%s
+    """, (uid,))
     reviews = cursor.fetchall()
+    cursor.execute("SELECT uid, fname, lname FROM users WHERE role='faculty'")
+    faculty_list = cursor.fetchall()
     if request.method == "POST":
         decision = request.form.get("decision")
         if decision in ("admitted", "admitted_with_aid", "rejected"):
@@ -1157,7 +1166,7 @@ def final_decision(uid):
             flash(f"Decision recorded: {decision}.", "success")
             return redirect(url_for("applications"))
     mydb.commit()
-    return render_template("final_decision.html", applicant=applicant, reviews=reviews)
+    return render_template("final_decision.html", applicant=applicant, reviews=reviews, faculty_list=faculty_list)
 
 
 if __name__ == "__main__":
