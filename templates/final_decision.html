@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head><title>Final Decision</title></head>
+<body>
+  <h1>Final Decision: {{ applicant.fname }} {{ applicant.lname }}</h1>
+  {% with messages = get_flashed_messages(with_categories=true) %}{% for c,m in messages %}
+  <p><strong>{{ m }}</strong></p>{% endfor %}{% endwith %}
+
+  <h2>Applicant Details</h2>
+  <p>Degree: {{ applicant.degree }} | Current Status: {{ applicant.status }}</p>
+  <p>Transcript Received: {{ 'Yes' if applicant.transcript_received else 'No' }}</p>
+
+  <h2>Faculty Reviews</h2>
+  {% if reviews %}
+  <table border="1">
+    <tr><th>Reviewer</th><th>GAS Rating</th><th>Deficiency Courses</th><th>Reject Reasons</th><th>Recommended Advisor</th><th>Comments</th></tr>
+    {% for r in reviews %}
+    <tr>
+      <td>{{ r.reviewer_fname }} {{ r.reviewer_lname }}</td>
+      <td>{{ r.rating }} -
+        {% if r.rating == 0 %}Reject
+        {% elif r.rating == 1 %}Borderline
+        {% elif r.rating == 2 %}Admit (no aid)
+        {% elif r.rating == 3 %}Admit with Aid
+        {% endif %}
+      </td>
+      <td>{{ r.deficiency_courses or '—' }}</td>
+      <td>{{ r.reject_reasons or '—' }}</td>
+      <td>{{ r.advisor_fname ~ ' ' ~ r.advisor_lname if r.advisor_fname else '—' }}</td>
+      <td>{{ r.comment or '—' }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p>No reviews submitted yet.</p>
+  {% endif %}
+
+  <h2>Make Final Decision</h2>
+  <form method="POST">
+    Decision:
+    <select name="decision" required>
+      <option value="">Select</option>
+      <option value="admitted" {% if applicant.status == 'admitted' %}selected{% endif %}>Admitted</option>
+      <option value="admitted_with_aid" {% if applicant.status == 'admitted_with_aid' %}selected{% endif %}>Admitted with Aid</option>
+      <option value="rejected" {% if applicant.status == 'rejected' %}selected{% endif %}>Rejected</option>
+    </select><br><br>
+    Final Advisor:
+    <select name="final_advisor">
+      <option value="">None</option>
+      {% for f in faculty_list %}<option value="{{ f.uid }}">{{ f.fname }} {{ f.lname }}</option>{% endfor %}
+    </select><br><br>
+    <input type="submit" value="Submit Decision">
+  </form>
+  <br><a href="{{ url_for('applications') }}">Back to Applications</a>
+</body>
+</html>
