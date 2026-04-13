@@ -1217,6 +1217,16 @@ def add_grades(dpt, crn, sectionno, sem, year):
     mydb.commit()
     return render_template('add_grades.html', title = "Class Grade", students = students, dpt = dpt, crn = crn, sectionno = sectionno, sem = sem, year = year, error = "")
 
+@app.route('/schedule', methods = ['GET', 'POST'])
+def schedule():
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT grade, enrollment.department, enrollment.course_number, enrollment.sectionnum, enrollment.semester, enrollment.year, courses.title, day, time FROM enrollment " \
+    "right join courses on enrollment.department=courses.department AND enrollment.course_number = courses.course_number " \
+    "right join courses_offered on enrollment.department=courses_offered.departmentname AND enrollment.course_number=courses_offered.coursenumber AND enrollment.sectionnum=courses_offered.sectionnum AND enrollment.semester=courses_offered.semester AND enrollment.year=courses_offered.year " \
+    "WHERE enrollment.uid = %s and enrollment.prof_added = FALSE", (session['user']['uid'],))
+    schedule = cursor.fetchall()
+    mydb.commit()
+    return render_template('schedule.html', schedule = schedule)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
