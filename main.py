@@ -1228,5 +1228,35 @@ def schedule():
     mydb.commit()
     return render_template('schedule.html', schedule = schedule)
 
+@app.route('/coursecatalog')
+def courseCatalog():
+  cursor = mydb.cursor(dictionary = True)
+  
+  dpt = request.args.get('dpt')
+  courseno = request.args.get('courseno')
+  title = request.args.get('title')
+
+  if dpt and courseno and title:
+    cursor.execute("SELECT * FROM courses WHERE department = %s AND course_number = %s AND title = %s", (dpt, courseno, title,))
+  elif dpt and courseno:
+    cursor.execute("SELECT * FROM courses WHERE department = %s AND course_number = %s", (dpt, courseno,))
+  elif dpt and title:
+    cursor.execute("SELECT * FROM courses WHERE department = %s AND title = %s", (dpt, title,))
+  elif courseno and title:
+    cursor.execute("SELECT * FROM courses WHERE course_number = %s AND title = %s", (courseno, title,))
+  elif dpt:
+    cursor.execute("SELECT * FROM courses WHERE department = %s", (dpt,))
+  elif courseno:
+    cursor.execute("SELECT * FROM courses WHERE course_number = %s", (courseno,))
+  elif title:
+    cursor.execute("SELECT * FROM courses WHERE title = %s", (title,))
+  else:
+    cursor.execute("SELECT * FROM courses")
+    
+  course = cursor.fetchall()
+
+  mydb.commit()
+  return render_template('course_catalog.html', title = "Course Catalog", course = course)
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)

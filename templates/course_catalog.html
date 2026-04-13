@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title> {{title}} </title>
+    </head>
+
+    <body>
+        <h1> Course Catalog </h1>
+
+        <form action="/coursecatalog" method="GET">
+        <input type="text" name="dpt" placeholder="Department">
+        <input type="text" name="courseno" placeholder="Course Number">
+        <input type="text" name="title" placeholder="Title">
+        <input type="submit" name="submit">
+        </form>
+
+        <ul> 
+            {% for row in course: %}
+            <h3> <a href="/course/{{row.department}}/{{row.course_number}}"> {{row.department}} {{row.course_number}}: {{row.title}}</a> </h3>
+            {% endfor %}
+        </ul>
+
+    </body>
+</html>
