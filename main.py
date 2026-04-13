@@ -495,8 +495,12 @@ def secretary():
         session.modified = True
     q = request.args.get("q", "").strip()
     sql = (
-        "SELECT u.uid, u.fname, u.lname, s.program, s.graduation_status, s.advisor_id "
-        "FROM users u JOIN students s ON u.uid = s.uid"
+        "SELECT u.uid, u.fname, u.lname, "
+        "s.program, s.graduation_status, s.advisor_id, "
+        "adv.fname AS advisor_fname, adv.lname AS advisor_lname "
+        "FROM users u "
+        "JOIN students s ON u.uid = s.uid "
+        "LEFT JOIN users adv ON s.advisor_id = adv.uid"
     )
     if q:
         like = f"%{q}%"
