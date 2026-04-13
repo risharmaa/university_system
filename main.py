@@ -1258,6 +1258,82 @@ def courseCatalog():
   mydb.commit()
   return render_template('course_catalog.html', title = "Course Catalog", course = course)
 
+@app.route('/course/<dpt>/<courseno>', methods=['GET', 'POST'])
+def showcourse(dpt, courseno):
+  cursor = mydb.cursor(dictionary = True)
+
+  cursor.execute("SELECT * FROM courses " \
+  "INNER JOIN courses_offered ON courses.department=courses_offered.departmentname AND courses.course_number=courses_offered.coursenumber " \
+  "INNER JOIN users ON courses_offered.instructorid=users.uid " \
+  "WHERE department = %s AND course_number = %s", (dpt, courseno))
+  course = cursor.fetchone()
+  
+  cursor.execute("SELECT prereqdpt, prereqnum, courses.title FROM prereqs " \
+  "INNER JOIN courses ON prereqs.prereqdpt=courses.department AND prereqs.prereqnum=courses.course_number " \
+  "WHERE dptname=%s AND coursenumber=%s", (dpt, courseno,))
+  prerequisites = cursor.fetchall()
+  if prerequisites == None:
+      prerequisites = False
+
+  studentid = session['user']['uid']
+  cursor.execute("SELECT * FROM enrollment WHERE uid = %s AND department = %s AND course_number = %s", (studentid, dpt, courseno))
+  enrolledIn = cursor.fetchone()
+
+  conflict = False
+  phd_err = False
+  missing_prereqs = []
+ 
+  if session['user']['role'] == 'student':
+    if request.method == 'POST':
+        if enrolledIn:
+            cursor.execute("DELETE FROM enrollment WHERE (uid=%s AND department=%s AND course_number=%s)", (studentid, dpt, courseno,))
+            mydb.commit()
+        else:
+            cursor.execute("SELECT courses_offered.day, courses_offered.time FROM enrollment INNER JOIN courses_offered ON enrollment.department=courses_offered.departmentname AND enrollment.course_number=courses_offered.coursenumber WHERE enrollment.uid = %s AND course_grades.grade = 'IP'", (studentid,))
+            enrolled = cursor.fetchall()
+
+            conflicts = {
+                '1500-1730': ['1530-1800', '1600-1830'],
+                '1530-1800': ['1500-1730', '1600-1830', '1800-2030'],
+                '1600-1830': ['1500-1730', '1530-1800', '1800-2030'],
+                '1800-2030': ['1530-1800', '1600-1830'],
+            }
+            for enrolled_course in enrolled:
+                if enrolled_course['day'] == course['day']:
+                    if enrolled_course['time'] == course['time']:
+                        conflict = True
+                        break
+                    if (enrolled_course['time'] in conflicts.get(course['time'])):
+                        conflict = True
+                        break
+                   
+            if not conflict:
+                cursor.execute("SELECT prereqdpt, prereqnum FROM prereqs WHERE dptname=%s AND coursenumber=%s", (dpt, courseno,))
+                prereqs = cursor.fetchall()
+
+                for prereq in prereqs:
+                    cursor.execute("SELECT * FROM enrollment WHERE (uid=%s AND department=%s AND course_number=%s AND grade != 'IP')", (studentid, prereq['prereqdpt'], prereq['prereqnum'],))
+                    completed = cursor.fetchone()
+                    if not completed:
+                        missing_prereqs.append(prereq['prereqdpt'] + ' ' + prereq['prereqnum'])
+
+            if not conflict and not missing_prereqs:
+                cursor.execute("SELECT program FROM students WHERE uid=%s", (studentid,))
+                student = cursor.fetchone()
+
+
+                if student['program'] == 'PhD' and not courseno.startswith('6'):
+                    phd_err = True
+                else:
+                    cursor.execute("INSERT INTO enrollment (uid, department, course_number, grade, semester, year, sectionnum, prof_added) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", (studentid, dpt, courseno, 'IP', course['semester'], course['year'], course['sectionnum'], 'False',))
+                    mydb.commit()
+ 
+  cursor.execute("SELECT * FROM enrollment WHERE uid = %s AND department = %s AND course_number = %s", (studentid, dpt, courseno,))
+  enrolledIn = cursor.fetchone()
+ 
+  mydb.commit()
+
+  return render_template('course.html', title = "Course", course = course, enrolledIn = enrolledIn, conflict = conflict, missing_prereqs=missing_prereqs, prerequisites=prerequisites, phd_err=phd_err)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)

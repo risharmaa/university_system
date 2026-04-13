@@ -27,7 +27,7 @@
                     <th>{{labels[row]}}</th>
                     {% for day in week %}
                         {% for class in schedule if class['day'] == day and rows[class['time']] == row %}
-                                <td rowspan="5" style="border: 2px solid black; padding: 8px; background-color: rgb(59, 3, 71);"><a style="color: white" href="/course/{{class['department']}}/{{class['coursenum']}}">{{class['department']}} {{class['coursenum']}}</a></td>
+                                <td rowspan="5" style="border: 2px solid black; padding: 8px; background-color: rgb(59, 3, 71);"><a style="color: white" href="/course/{{class['department']}}/{{class['course_number']}}">{{class['department']}} {{class['course_number']}}</a></td>
                             {% else %}
                                 {% for class in schedule if class['day'] == day and row > rows[class['time']] and rows[class['time']]+5 > row %}
                                 {% else %}

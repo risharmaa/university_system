@@ -5,7 +5,7 @@
 
     <body>  
         {% if course %}
-            <h2> {{course['dpt']}} {{course['courseno']}}: {{course['title']}} </h2>
+            <h2> {{course['department']}} {{course['course_number']}}: {{course['title']}} </h2>
             <ul>
                 <strong>Course Information</strong>
                 <ul>
@@ -55,7 +55,7 @@
                 <p></p>
             </ul>
 
-            {% if session['role'] == 'student' %}
+            {% if session['user']['role'] == 'student' %}
                 {% if enrolledIn %}
                     {% if enrolledIn.grade == "IP" %}
                         <p> <div style="color: green;">You are enrolled in this course. </div></p>
@@ -84,6 +84,7 @@
         {% else %}
             <p> <div style="color: red;">This course is not offered this semester. </div></p>
         {% endif %}
+        <p><a href = "/coursecatalog">Course Catalog</a></p>
 
     </body>
 </html>

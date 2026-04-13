@@ -20,5 +20,18 @@
             {% endfor %}
         </ul>
 
+        {% if session['user']['role'] == 'faculty' %}
+            <p><a href="{{ url_for('faculty') }}">Dashboard</a></p>
+        {% endif %}
+        {% if session['user']['role'] == 'secretary' %}
+            <p><a href="{{ url_for('secretary') }}"> Dashboard (not added yet)</a></p>
+        {% endif %}
+        {% if session['user']['role'] == 'admin' %}
+            <p><a href="{{ url_for('admin') }}">  Dashboard (not added yet)</a></p>
+        {% endif %}
+        {% if session['user']['role'] == 'student' %}
+            <p><a href="{{ url_for('student') }}">  Dashboard (not added yet)</a></p>
+        {% endif %}
+
     </body>
 </html>
