@@ -1168,6 +1168,172 @@ def final_decision(uid):
     mydb.commit()
     return render_template("final_decision.html", applicant=applicant, reviews=reviews, faculty_list=faculty_list)
 
+#REGS routes
+@app.route("/viewgrades")
+def grades_list():
+    cursor = mydb.cursor(dictionary=True)
+    search = request.args.get('search')
+
+    if session['user']['role'] == 'faculty':
+        if search:
+            cursor.execute("SELECT co.departmentname, co.coursenumber, c.title, co.sectionnum, co.semester, co.year FROM courses_offered AS co INNER JOIN courses AS c ON co.departmentname = c.department AND co.coursenumber = c.course_number INNER JOIN enrollment AS gr ON co.departmentname=gr.department AND co.coursenumber=gr.course_number WHERE instructorid = %s AND gr.uid=%s ORDER BY co.departmentname, co.coursenumber, co.year DESC", (session['user']['uid'], search,))
+        else:
+            cursor.execute("SELECT co.departmentname, co.coursenumber, c.title, co.sectionnum, co.semester, co.year FROM courses_offered AS co INNER JOIN courses AS c ON co.departmentname = c.department AND co.coursenumber = c.course_number WHERE instructorid = %s ORDER BY co.departmentname, co.coursenumber, co.year DESC", (session['user']['uid'],))
+    else:
+        if search:
+            cursor.execute("SELECT co.departmentname, co.coursenumber, c.title, co.sectionnum, co.semester, co.year FROM courses_offered AS co INNER JOIN courses AS c ON co.departmentname = c.department AND co.coursenumber = c.course_number INNER JOIN enrollment AS gr ON co.departmentname=gr.department AND co.coursenumber=gr.course_number WHERE gr.uid=%s ORDER BY co.departmentname, co.coursenumber, co.year DESC", (search,))
+        else:
+            cursor.execute("SELECT co.departmentname, co.coursenumber, c.title, co.sectionnum, co.semester, co.year FROM courses_offered AS co INNER JOIN courses AS c ON co.departmentname = c.department AND co.coursenumber = c.course_number ORDER BY co.departmentname, co.coursenumber, co.year DESC")
+    
+    classes = cursor.fetchall()
+    mydb.commit()
+    return render_template('view_grades.html', title = "Grades", classes = classes)
+
+@app.route('/<dpt>/<crn>/<sectionno>/<sem>/<year>', methods = ['GET', 'POST'])
+def add_grades(dpt, crn, sectionno, sem, year):
+    cursor = mydb.cursor(dictionary=True)
+    if request.method == 'POST':
+        new = request.form["newgrade"]
+        cursor.execute("SELECT cg.uid, s.fname, s.lname, cg.grade, cg.prof_added FROM enrollment AS cg INNER JOIN users AS s ON cg.uid = s.uid WHERE cg.department = %s AND cg.course_number = %s AND cg.semester = %s AND cg.year = %s AND cg.sectionnum = %s", (dpt, crn, sem, year, sectionno))
+        students = cursor.fetchall()
+        if new != 'A' and new != 'A-' and new != 'B+' and new != 'B' and new != 'B-' and new != 'C+' and new != 'C' and new != 'F' and new != 'IP':
+            return render_template('add_grades.html', title = "Class Grade", students = students, dpt = dpt, crn = crn, sectionno = sectionno, sem = sem, year = year, error = "Please enter a valid grade.")
+        sid = int(request.form["id"])
+        cursor.execute("SELECT prof_added FROM enrollment WHERE department = %s AND course_number = %s AND semester = %s AND year = %s AND sectionnum = %s AND uid = %s", (dpt, crn, sem, year, sectionno, sid))
+        check = cursor.fetchone()
+        if session['user']['role'] == 'faculty' and check['prof_added']==True:
+            cursor.execute("SELECT cg.uid, s.fname, s.lname, cg.grade, cg.prof_added FROM enrollment AS cg INNER JOIN users AS s ON cg.uid = s.uid WHERE cg.department = %s AND cg.course_number = %s AND cg.semester = %s AND cg.year = %s AND cg.sectionnum = %s", (dpt, crn, sem, year, sectionno))
+            students = cursor.fetchall()
+            mydb.commit()
+            return render_template('add_grades.html', title = "Class Grade", students = students, dpt = dpt, crn = crn, sectionno = sectionno, sem = sem, year = year, error = "You have already input a grade. If you would like to change this, please contact the system administrator or grad secretary.")
+        else:
+            if session['user']['role'] == 'faculty':
+                cursor.execute("UPDATE enrollment SET grade = %s, prof_added = TRUE WHERE uid = %s AND department = %s AND course_number = %s AND semester = %s AND year = %s AND sectionnum = %s", (new, sid, dpt, crn, sem, year, sectionno))
+            else:
+                cursor.execute("UPDATE enrollment SET grade = %s, prof_added = FALSE WHERE uid = %s AND department = %s AND course_number = %s AND semester = %s AND year = %s AND sectionnum = %s", (new, sid, dpt, crn, sem, year, sectionno))
+            mydb.commit()
+    cursor.execute("SELECT cg.uid, s.fname, s.lname, cg.grade, cg.prof_added FROM enrollment AS cg INNER JOIN users AS s ON cg.uid = s.uid WHERE cg.department = %s AND cg.course_number = %s AND cg.semester = %s AND cg.year = %s AND cg.sectionnum = %s", (dpt, crn, sem, year, sectionno))
+    students = cursor.fetchall()
+    mydb.commit()
+    return render_template('add_grades.html', title = "Class Grade", students = students, dpt = dpt, crn = crn, sectionno = sectionno, sem = sem, year = year, error = "")
+
+@app.route('/schedule', methods = ['GET', 'POST'])
+def schedule():
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT grade, enrollment.department, enrollment.course_number, enrollment.sectionnum, enrollment.semester, enrollment.year, courses.title, day, time FROM enrollment " \
+    "right join courses on enrollment.department=courses.department AND enrollment.course_number = courses.course_number " \
+    "right join courses_offered on enrollment.department=courses_offered.departmentname AND enrollment.course_number=courses_offered.coursenumber AND enrollment.sectionnum=courses_offered.sectionnum AND enrollment.semester=courses_offered.semester AND enrollment.year=courses_offered.year " \
+    "WHERE enrollment.uid = %s and enrollment.prof_added = FALSE", (session['user']['uid'],))
+    schedule = cursor.fetchall()
+    mydb.commit()
+    return render_template('schedule.html', schedule = schedule)
+
+@app.route('/coursecatalog')
+def courseCatalog():
+  cursor = mydb.cursor(dictionary = True)
+  
+  dpt = request.args.get('dpt')
+  courseno = request.args.get('courseno')
+  title = request.args.get('title')
+
+  if dpt and courseno and title:
+    cursor.execute("SELECT * FROM courses WHERE department = %s AND course_number = %s AND title = %s", (dpt, courseno, title,))
+  elif dpt and courseno:
+    cursor.execute("SELECT * FROM courses WHERE department = %s AND course_number = %s", (dpt, courseno,))
+  elif dpt and title:
+    cursor.execute("SELECT * FROM courses WHERE department = %s AND title = %s", (dpt, title,))
+  elif courseno and title:
+    cursor.execute("SELECT * FROM courses WHERE course_number = %s AND title = %s", (courseno, title,))
+  elif dpt:
+    cursor.execute("SELECT * FROM courses WHERE department = %s", (dpt,))
+  elif courseno:
+    cursor.execute("SELECT * FROM courses WHERE course_number = %s", (courseno,))
+  elif title:
+    cursor.execute("SELECT * FROM courses WHERE title = %s", (title,))
+  else:
+    cursor.execute("SELECT * FROM courses")
+    
+  course = cursor.fetchall()
+
+  mydb.commit()
+  return render_template('course_catalog.html', title = "Course Catalog", course = course)
+
+@app.route('/course/<dpt>/<courseno>', methods=['GET', 'POST'])
+def showcourse(dpt, courseno):
+  cursor = mydb.cursor(dictionary = True)
+
+  cursor.execute("SELECT * FROM courses " \
+  "INNER JOIN courses_offered ON courses.department=courses_offered.departmentname AND courses.course_number=courses_offered.coursenumber " \
+  "INNER JOIN users ON courses_offered.instructorid=users.uid " \
+  "WHERE department = %s AND course_number = %s", (dpt, courseno))
+  course = cursor.fetchone()
+  
+  cursor.execute("SELECT prereqdpt, prereqnum, courses.title FROM prereqs " \
+  "INNER JOIN courses ON prereqs.prereqdpt=courses.department AND prereqs.prereqnum=courses.course_number " \
+  "WHERE dptname=%s AND coursenumber=%s", (dpt, courseno,))
+  prerequisites = cursor.fetchall()
+  if prerequisites == None:
+      prerequisites = False
+
+  studentid = session['user']['uid']
+  cursor.execute("SELECT * FROM enrollment WHERE uid = %s AND department = %s AND course_number = %s", (studentid, dpt, courseno))
+  enrolledIn = cursor.fetchone()
+
+  conflict = False
+  phd_err = False
+  missing_prereqs = []
+ 
+  if session['user']['role'] == 'student':
+    if request.method == 'POST':
+        if enrolledIn:
+            cursor.execute("DELETE FROM enrollment WHERE (uid=%s AND department=%s AND course_number=%s)", (studentid, dpt, courseno,))
+            mydb.commit()
+        else:
+            cursor.execute("SELECT courses_offered.day, courses_offered.time FROM enrollment INNER JOIN courses_offered ON enrollment.department=courses_offered.departmentname AND enrollment.course_number=courses_offered.coursenumber WHERE enrollment.uid = %s AND enrollment.grade = 'IP'", (studentid,))
+            enrolled = cursor.fetchall()
+
+            conflicts = {
+                '1500-1730': ['1530-1800', '1600-1830'],
+                '1530-1800': ['1500-1730', '1600-1830', '1800-2030'],
+                '1600-1830': ['1500-1730', '1530-1800', '1800-2030'],
+                '1800-2030': ['1530-1800', '1600-1830'],
+            }
+            for enrolled_course in enrolled:
+                if enrolled_course['day'] == course['day']:
+                    if enrolled_course['time'] == course['time']:
+                        conflict = True
+                        break
+                    if (enrolled_course['time'] in conflicts.get(course['time'])):
+                        conflict = True
+                        break
+                   
+            if not conflict:
+                cursor.execute("SELECT prereqdpt, prereqnum FROM prereqs WHERE dptname=%s AND coursenumber=%s", (dpt, courseno,))
+                prereqs = cursor.fetchall()
+
+                for prereq in prereqs:
+                    cursor.execute("SELECT * FROM enrollment WHERE (uid=%s AND department=%s AND course_number=%s AND grade != 'IP')", (studentid, prereq['prereqdpt'], prereq['prereqnum'],))
+                    completed = cursor.fetchone()
+                    if not completed:
+                        missing_prereqs.append(prereq['prereqdpt'] + ' ' + str(prereq['prereqnum']))
+
+            if not conflict and not missing_prereqs:
+                cursor.execute("SELECT program FROM students WHERE uid=%s", (studentid,))
+                student = cursor.fetchone()
+
+
+                if student['program'] == 'PhD' and not courseno.startswith('6'):
+                    phd_err = True
+                else:
+                    cursor.execute("INSERT INTO enrollment (uid, department, course_number, grade, semester, year, sectionnum, prof_added) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", (studentid, dpt, courseno, 'IP', course['semester'], course['year'], course['sectionnum'], 'False',))
+                    mydb.commit()
+ 
+  cursor.execute("SELECT * FROM enrollment WHERE uid = %s AND department = %s AND course_number = %s", (studentid, dpt, courseno,))
+  enrolledIn = cursor.fetchone()
+ 
+  mydb.commit()
+
+  return render_template('course.html', title = "Course", course = course, enrolledIn = enrolledIn, conflict = conflict, missing_prereqs=missing_prereqs, prerequisites=prerequisites, phd_err=phd_err)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)

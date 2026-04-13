@@ -1,0 +1,90 @@
+<html>
+    <head>
+        <title> {{title}} </title>
+    </head>
+
+    <body>  
+        {% if course %}
+            <h2> {{course['department']}} {{course['course_number']}}: {{course['title']}} </h2>
+            <ul>
+                <strong>Course Information</strong>
+                <ul>
+                <li>Credits: {{course.credits}}</li>
+                <li>Semester: {{course.semester}} {{course.year}}</li>
+                </ul>
+                
+            <p></p>
+    
+                <strong> Prerequisites: </strong>
+                <ul>
+                    {% if prerequisites %}
+                        {% for prereq in prerequisites: %}
+                            <li><a href="/course/{{prereq.prereqdpt}}/{{prereq.prereqnum}}">{{prereq.prereqdpt}} {{prereq.prereqnum}}: {{prereq.title}}</a></li>
+                        {% endfor %}
+                    {% else %}
+                        <li> None </li>
+                    {% endif %}
+                </ul>
+            <p></p>
+
+                <strong>Section Information</strong>
+                <ul>
+                <li>Section: {{course.sectionnum}}</li>
+                <li>Instructor: {{course.fname}} {{course.lname}}</li>
+                </ul>
+                <p></p>
+
+                <strong>Meeting Times</strong>
+                <ul>
+                <li>Time: 
+                    {% if course.day == 'M' %} Monday,
+                    {% elif course.day == 'T' %} Tuesday,
+                    {% elif course.day == 'W' %} Wednesday,
+                    {% elif course.day == 'R' %} Thursday,
+                    {% elif course.day == 'F' %} Friday,
+                    {% endif %}
+                    {% if course.time == '1500-1730' %} 3:00pm - 5:30pm
+                    {% elif course.time == '1800-2030' %} 6:00pm - 8:30pm
+                    {% elif course.time == '1530-1800' %} 3:30pm - 6:00pm
+                    {% elif course.time == '1600-1830' %} 4:00pm - 6:30pm
+                    {% endif %}
+                </li>
+                <li>Building: {{course.buildingname}}</li>
+                <li>Room: {{course.roomno}}</li>
+                </ul>
+                <p></p>
+            </ul>
+
+            {% if session['user']['role'] == 'student' %}
+                {% if enrolledIn %}
+                    {% if enrolledIn.grade == "IP" %}
+                        <p> <div style="color: green;">You are enrolled in this course. </div></p>
+                        <form action="/course/{{course.department}}/{{course.course_number}}" method="POST">
+                            <input type="submit" value="Unenroll">
+                        </form>
+                    {% else %}
+                        <p> <div style="color: red;">You have already taken this course. </div></p>
+                    {% endif %}
+                {% elif conflict %}
+                    <p> <div style="color: red;">Course conflicts with another course you're enrolled in. </div></p>
+                {% elif phd_err %}
+                    <p> <div style="color: red;">PhD students can only take 6000-level courses. </div></p>
+                {% elif missing_prereqs %}
+                    <p> <div style="color: red;">You are missing the pre-requisites:
+                        {% for prereq in missing_prereqs %} <li>{{prereq}}</li> {% endfor %}
+                    </div></p>
+                {% else %}
+                    <form action="/course/{{course.department}}/{{course.course_number}}" method="POST">
+                        <input type="submit" value="Enroll">
+                    </form>
+                {% endif %}
+
+            {% endif %}
+        
+        {% else %}
+            <p> <div style="color: red;">This course is not offered this semester. </div></p>
+        {% endif %}
+        <p><a href = "/coursecatalog">Course Catalog</a></p>
+
+    </body>
+</html>
