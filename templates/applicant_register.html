@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head><title>Apply - GWU CS</title></head>
+<body>
+  <h1>Graduate Application</h1>
+  {% with messages = get_flashed_messages(with_categories=true) %}{% for c,m in messages %}
+  <p><strong>{{ m }}</strong></p>{% endfor %}{% endwith %}
+  <form method="POST">
+    <h3>Personal Information</h3>
+    First Name: <input type="text" name="fname" required><br><br>
+    Last Name: <input type="text" name="lname" required><br><br>
+    Email: <input type="email" name="email" required><br><br>
+    SSN (XXX-XX-XXXX): <input type="text" name="ssn" placeholder="123-45-6789" required><br><br>
+    Address: <input type="text" name="address"><br><br>
+    Password: <input type="password" name="password" required><br><br>
+    Degree Sought:
+    <select name="degree" required>
+      <option value="">Select</option>
+      <option value="MS">MS</option>
+      <option value="PhD">PhD</option>
+    </select><br><br>
+
+    <h3>GRE Scores</h3>
+    Verbal: <input type="number" name="gre_verbal" min="130" max="170">
+    Quantitative: <input type="number" name="gre_quant" min="130" max="170">
+    Year: <input type="number" name="gre_year" min="2000" max="2030"><br><br>
+
+    <h3>Prior Degrees</h3>
+    <div id="degrees-container">
+      <div class="degree-row">
+        Type: <select name="deg_type[]"><option value="">--</option><option>Bachelors</option><option>Masters</option></select>
+        Year: <input type="number" name="deg_year[]" size="5">
+        GPA: <input type="number" step="0.01" name="deg_gpa[]" size="5">
+        University: <input type="text" name="deg_univ[]"><br>
+      </div>
+    </div>
+    <button type="button" onclick="addDegree()">+ Add Another Degree</button><br><br>
+
+    <h3>Additional Information</h3>
+    Work Experience:<br><textarea name="work_experience" rows="3" cols="50"></textarea><br><br>
+    Areas of Interest:<br><textarea name="areas_of_interest" rows="3" cols="50"></textarea><br><br>
+
+    <input type="submit" value="Submit Application">
+  </form>
+  <br><a href="/login">Already applied? Log in</a>
+  <script>
+  function addDegree() {
+    const c = document.getElementById('degrees-container');
+    const r = c.querySelector('.degree-row').cloneNode(true);
+    r.querySelectorAll('input,select').forEach(el => el.value = '');
+    c.appendChild(r);
+  }
+  </script>
+</body>
+</html>

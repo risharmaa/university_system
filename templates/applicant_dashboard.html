@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head><title>Applicant Dashboard</title></head>
+<body>
+  <h1>Welcome, {{ applicant.fname }} {{ applicant.lname }}</h1>
+  {% with messages = get_flashed_messages(with_categories=true) %}{% for c,m in messages %}
+  <p><strong>{{ m }}</strong></p>{% endfor %}{% endwith %}
+
+  <h2>Application Status: {{ applicant.status }}</h2>
+  <p>Transcript Received: {{ 'Yes' if applicant.transcript_received else 'No' }}</p>
+
+  <h2>Application Details</h2>
+  <p>Degree Sought: {{ applicant.degree }}</p>
+  <p>GRE Verbal: {{ applicant.gre_verbal or '—' }} | GRE Quant: {{ applicant.gre_quant or '—' }} | Year: {{ applicant.gre_year or '—' }}</p>
+  <p>Work Experience: {{ applicant.work_experience or '—' }}</p>
+  <p>Areas of Interest: {{ applicant.areas_of_interest or '—' }}</p>
+
+  <h2>Prior Degrees</h2>
+  {% if degrees %}
+  <table border="1">
+    <tr><th>Type</th><th>University</th><th>Year</th><th>GPA</th></tr>
+    {% for d in degrees %}
+    <tr><td>{{ d.degree_type }}</td><td>{{ d.university }}</td><td>{{ d.year }}</td><td>{{ d.gpa }}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}<p>No prior degrees on file.</p>
+  {% endif %}
+
+  <h2>Recommendation Letters</h2>
+  {% if letters %}
+  <table border="1">
+    <tr><th>Writer</th><th>Institution</th><th>Status</th><th>Submission Link</th></tr>
+    {% for l in letters %}
+    <tr>
+      <td>{{ l.writer_name }} ({{ l.writer_title }})</td>
+      <td>{{ l.institution_name }}</td>
+      <td>{{ 'Submitted' if l.is_submitted else 'Pending' }}</td>
+      <td>{% if not l.is_submitted %}<a href="{{ url_for('submit_letter', letter_id=l.id) }}">Link</a>{% else %}—{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p>No recommendation letters requested yet.</p>
+  {% endif %}
+
+  <h2>Request a Recommendation Letter</h2>
+  <form method="POST" action="{{ url_for('request_recommendation') }}">
+    Writer Name: <input type="text" name="writer_name" required><br><br>
+    Writer Email: <input type="email" name="writer_email" required><br><br>
+    Writer Title: <input type="text" name="writer_title"><br><br>
+    Institution: <input type="text" name="institution_name"><br><br>
+    <input type="submit" value="Send Request">
+  </form>
+  <br><a href="{{ url_for('logout') }}">Logout</a>
+</body>
+</html>
