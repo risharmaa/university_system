@@ -664,9 +664,9 @@ def faculty():
     if fac_role["cac"]:
         roles.append("cac")
 
-    if not roles:
-        flash("No faculty role assigned", "error")
-        return redirect(url_for("login"))
+    # if not roles:
+    #     flash("No faculty role assigned", "error")
+    #     return redirect(url_for("login"))
     session["faculty_roles"] = roles
     return render_template("faculty_roles.html", roles=roles)
 
