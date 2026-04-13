@@ -1258,5 +1258,6 @@ def courseCatalog():
   mydb.commit()
   return render_template('course_catalog.html', title = "Course Catalog", course = course)
 
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
