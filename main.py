@@ -1168,6 +1168,26 @@ def final_decision(uid):
     mydb.commit()
     return render_template("final_decision.html", applicant=applicant, reviews=reviews, faculty_list=faculty_list)
 
+#REGS routes
+@app.route("/viewgrades")
+def grades_list():
+    cursor = mydb.cursor(dictionary=True)
+    search = request.args.get('search')
+
+    if(session['user']['role'] == 'faculty'):
+        if search:
+            cursor.execute("SELECT co.departmentname, co.coursenumber, c.title, co.sectionnum, co.semester, co.year FROM courses_offered AS co INNER JOIN courses AS c ON co.departmentname = c.department AND co.coursenumber = c.course_number INNER JOIN enrollment AS gr ON co.departmentname=gr.department AND co.coursenumber=gr.course_number WHERE instructorid = %s AND gr.studentid=%s ORDER BY co.departmentname, co.coursenumber, co.year DESC", (session['user']['uid'], search,))
+        else:
+            cursor.execute("SELECT co.departmentname, co.coursenumber, c.title, co.sectionnum, co.semester, co.year FROM courses_offered AS co INNER JOIN courses AS c ON co.departmentname = c.department AND co.coursenumber = c.course_number WHERE instructorid = %s ORDER BY co.departmentname, co.coursenumber, co.year DESC", (session['user']['uid'],))
+    else:
+        if search:
+            cursor.execute("SELECT co.departmentname, co.coursenumber, c.title, co.sectionnum, co.semester, co.year FROM courses_offered AS co INNER JOIN courses AS c ON co.departmentname = c.department AND co.coursenumber = c.course_number INNER JOIN enrollment AS gr ON co.departmentname=gr.department AND co.coursenumber=gr.course_number WHERE gr.studentid=%s ORDER BY co.departmentname, co.coursenumber, co.year DESC", (search,))
+        else:
+            cursor.execute("SELECT co.departmentname, co.coursenumber, c.title, co.sectionnum, co.semester, co.year FROM courses_offered AS co INNER JOIN courses AS c ON co.departmentname = c.department AND co.coursenumber = c.course_number ORDER BY co.departmentname, co.coursenumber, co.year DESC")
+    
+    classes = cursor.fetchall()
+    mydb.commit()
+    return render_template('view_grades.html', title = "Grades", classes = classes)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)

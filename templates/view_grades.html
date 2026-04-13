@@ -1,0 +1,18 @@
+<html>
+    <head>
+        <title>{{title}}</title>
+    </head>
+    <body>
+        <h1>View All Grades</h1>
+
+        <form action="/grades" method="GET">
+        <input type="text" name="search" placeholder = "Student ID">
+        <input type="submit" name="submit">
+        </form>
+
+        {% for class in classes: %}
+        <p><a href ="{{class['departmentname']}}/{{class['coursenumber']}}/{{class['sectionnum']}}/{{class['semester']}}/{{class['year']}}">
+            {{class['departmentname']}} {{class['coursenumber']}} : {{class['title']}} | Section #{{class['sectionnum']}}, {{class['semester']}} {{class['year']}}</a></p>
+        {% endfor %}
+    </body>
+</html>
