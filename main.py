@@ -1174,20 +1174,49 @@ def grades_list():
     cursor = mydb.cursor(dictionary=True)
     search = request.args.get('search')
 
-    if(session['user']['role'] == 'faculty'):
+    if session['user']['role'] == 'faculty':
         if search:
-            cursor.execute("SELECT co.departmentname, co.coursenumber, c.title, co.sectionnum, co.semester, co.year FROM courses_offered AS co INNER JOIN courses AS c ON co.departmentname = c.department AND co.coursenumber = c.course_number INNER JOIN enrollment AS gr ON co.departmentname=gr.department AND co.coursenumber=gr.course_number WHERE instructorid = %s AND gr.studentid=%s ORDER BY co.departmentname, co.coursenumber, co.year DESC", (session['user']['uid'], search,))
+            cursor.execute("SELECT co.departmentname, co.coursenumber, c.title, co.sectionnum, co.semester, co.year FROM courses_offered AS co INNER JOIN courses AS c ON co.departmentname = c.department AND co.coursenumber = c.course_number INNER JOIN enrollment AS gr ON co.departmentname=gr.department AND co.coursenumber=gr.course_number WHERE instructorid = %s AND gr.uid=%s ORDER BY co.departmentname, co.coursenumber, co.year DESC", (session['user']['uid'], search,))
         else:
             cursor.execute("SELECT co.departmentname, co.coursenumber, c.title, co.sectionnum, co.semester, co.year FROM courses_offered AS co INNER JOIN courses AS c ON co.departmentname = c.department AND co.coursenumber = c.course_number WHERE instructorid = %s ORDER BY co.departmentname, co.coursenumber, co.year DESC", (session['user']['uid'],))
     else:
         if search:
-            cursor.execute("SELECT co.departmentname, co.coursenumber, c.title, co.sectionnum, co.semester, co.year FROM courses_offered AS co INNER JOIN courses AS c ON co.departmentname = c.department AND co.coursenumber = c.course_number INNER JOIN enrollment AS gr ON co.departmentname=gr.department AND co.coursenumber=gr.course_number WHERE gr.studentid=%s ORDER BY co.departmentname, co.coursenumber, co.year DESC", (search,))
+            cursor.execute("SELECT co.departmentname, co.coursenumber, c.title, co.sectionnum, co.semester, co.year FROM courses_offered AS co INNER JOIN courses AS c ON co.departmentname = c.department AND co.coursenumber = c.course_number INNER JOIN enrollment AS gr ON co.departmentname=gr.department AND co.coursenumber=gr.course_number WHERE gr.uid=%s ORDER BY co.departmentname, co.coursenumber, co.year DESC", (search,))
         else:
             cursor.execute("SELECT co.departmentname, co.coursenumber, c.title, co.sectionnum, co.semester, co.year FROM courses_offered AS co INNER JOIN courses AS c ON co.departmentname = c.department AND co.coursenumber = c.course_number ORDER BY co.departmentname, co.coursenumber, co.year DESC")
     
     classes = cursor.fetchall()
     mydb.commit()
     return render_template('view_grades.html', title = "Grades", classes = classes)
+
+@app.route('/<dpt>/<crn>/<sectionno>/<sem>/<year>', methods = ['GET', 'POST'])
+def add_grades(dpt, crn, sectionno, sem, year):
+    cursor = mydb.cursor(dictionary=True)
+    if request.method == 'POST':
+        new = request.form["newgrade"]
+        cursor.execute("SELECT cg.uid, s.fname, s.lname, cg.grade, cg.prof_added FROM enrollment AS cg INNER JOIN users AS s ON cg.uid = s.uid WHERE cg.department = %s AND cg.course_number = %s AND cg.semester = %s AND cg.year = %s AND cg.sectionnum = %s", (dpt, crn, sem, year, sectionno))
+        students = cursor.fetchall()
+        if new != 'A' and new != 'A-' and new != 'B+' and new != 'B' and new != 'B-' and new != 'C+' and new != 'C' and new != 'F' and new != 'IP':
+            return render_template('add_grades.html', title = "Class Grade", students = students, dpt = dpt, crn = crn, sectionno = sectionno, sem = sem, year = year, error = "Please enter a valid grade.")
+        sid = int(request.form["id"])
+        cursor.execute("SELECT prof_added FROM enrollment WHERE department = %s AND course_number = %s AND semester = %s AND year = %s AND sectionnum = %s AND uid = %s", (dpt, crn, sem, year, sectionno, sid))
+        check = cursor.fetchone()
+        if session['user']['role'] == 'faculty' and check['prof_added']==True:
+            cursor.execute("SELECT cg.uid, s.fname, s.lname, cg.grade, cg.prof_added FROM enrollment AS cg INNER JOIN users AS s ON cg.uid = s.uid WHERE cg.department = %s AND cg.course_number = %s AND cg.semester = %s AND cg.year = %s AND cg.sectionnum = %s", (dpt, crn, sem, year, sectionno))
+            students = cursor.fetchall()
+            mydb.commit()
+            return render_template('add_grades.html', title = "Class Grade", students = students, dpt = dpt, crn = crn, sectionno = sectionno, sem = sem, year = year, error = "You have already input a grade. If you would like to change this, please contact the system administrator or grad secretary.")
+        else:
+            if session['user']['role'] == 'faculty':
+                cursor.execute("UPDATE enrollment SET grade = %s, prof_added = TRUE WHERE uid = %s AND department = %s AND course_number = %s AND semester = %s AND year = %s AND sectionnum = %s", (new, sid, dpt, crn, sem, year, sectionno))
+            else:
+                cursor.execute("UPDATE enrollment SET grade = %s, prof_added = FALSE WHERE uid = %s AND department = %s AND course_number = %s AND semester = %s AND year = %s AND sectionnum = %s", (new, sid, dpt, crn, sem, year, sectionno))
+            mydb.commit()
+    cursor.execute("SELECT cg.uid, s.fname, s.lname, cg.grade, cg.prof_added FROM enrollment AS cg INNER JOIN users AS s ON cg.uid = s.uid WHERE cg.department = %s AND cg.course_number = %s AND cg.semester = %s AND cg.year = %s AND cg.sectionnum = %s", (dpt, crn, sem, year, sectionno))
+    students = cursor.fetchall()
+    mydb.commit()
+    return render_template('add_grades.html', title = "Class Grade", students = students, dpt = dpt, crn = crn, sectionno = sectionno, sem = sem, year = year, error = "")
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
