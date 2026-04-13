@@ -1289,7 +1289,7 @@ def showcourse(dpt, courseno):
             cursor.execute("DELETE FROM enrollment WHERE (uid=%s AND department=%s AND course_number=%s)", (studentid, dpt, courseno,))
             mydb.commit()
         else:
-            cursor.execute("SELECT courses_offered.day, courses_offered.time FROM enrollment INNER JOIN courses_offered ON enrollment.department=courses_offered.departmentname AND enrollment.course_number=courses_offered.coursenumber WHERE enrollment.uid = %s AND course_grades.grade = 'IP'", (studentid,))
+            cursor.execute("SELECT courses_offered.day, courses_offered.time FROM enrollment INNER JOIN courses_offered ON enrollment.department=courses_offered.departmentname AND enrollment.course_number=courses_offered.coursenumber WHERE enrollment.uid = %s AND enrollment.grade = 'IP'", (studentid,))
             enrolled = cursor.fetchall()
 
             conflicts = {
@@ -1315,7 +1315,7 @@ def showcourse(dpt, courseno):
                     cursor.execute("SELECT * FROM enrollment WHERE (uid=%s AND department=%s AND course_number=%s AND grade != 'IP')", (studentid, prereq['prereqdpt'], prereq['prereqnum'],))
                     completed = cursor.fetchone()
                     if not completed:
-                        missing_prereqs.append(prereq['prereqdpt'] + ' ' + prereq['prereqnum'])
+                        missing_prereqs.append(prereq['prereqdpt'] + ' ' + str(prereq['prereqnum']))
 
             if not conflict and not missing_prereqs:
                 cursor.execute("SELECT program FROM students WHERE uid=%s", (studentid,))

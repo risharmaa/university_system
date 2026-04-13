@@ -59,7 +59,7 @@
                 {% if enrolledIn %}
                     {% if enrolledIn.grade == "IP" %}
                         <p> <div style="color: green;">You are enrolled in this course. </div></p>
-                        <form action="/course/{{course.dpt}}/{{course.courseno}}" method="POST">
+                        <form action="/course/{{course.department}}/{{course.course_number}}" method="POST">
                             <input type="submit" value="Unenroll">
                         </form>
                     {% else %}
@@ -74,7 +74,7 @@
                         {% for prereq in missing_prereqs %} <li>{{prereq}}</li> {% endfor %}
                     </div></p>
                 {% else %}
-                    <form action="/course/{{course.dpt}}/{{course.courseno}}" method="POST">
+                    <form action="/course/{{course.department}}/{{course.course_number}}" method="POST">
                         <input type="submit" value="Enroll">
                     </form>
                 {% endif %}
