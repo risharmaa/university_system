@@ -1286,6 +1286,7 @@ def showcourse(dpt, courseno):
   conflict = False
   phd_err = False
   missing_prereqs = []
+  schedule = None
  
   if session['user']['role'] == 'student':
     if request.method == 'POST':
@@ -1332,12 +1333,17 @@ def showcourse(dpt, courseno):
                     cursor.execute("INSERT INTO enrollment (uid, department, course_number, grade, semester, year, sectionnum, prof_added) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", (studentid, dpt, courseno, 'IP', course['semester'], course['year'], course['sectionnum'], 'False',))
                     mydb.commit()
  
-  cursor.execute("SELECT * FROM enrollment WHERE uid = %s AND department = %s AND course_number = %s", (studentid, dpt, courseno,))
-  enrolledIn = cursor.fetchone()
+    cursor.execute("SELECT * FROM enrollment WHERE uid = %s AND department = %s AND course_number = %s", (studentid, dpt, courseno,))
+    enrolledIn = cursor.fetchone()
+    cursor.execute("SELECT grade, enrollment.department, enrollment.course_number, enrollment.sectionnum, enrollment.semester, enrollment.year, courses.title, day, time FROM enrollment " \
+    "right join courses on enrollment.department=courses.department AND enrollment.course_number = courses.course_number " \
+    "right join courses_offered on enrollment.department=courses_offered.departmentname AND enrollment.course_number=courses_offered.coursenumber AND enrollment.sectionnum=courses_offered.sectionnum AND enrollment.semester=courses_offered.semester AND enrollment.year=courses_offered.year " \
+    "WHERE enrollment.uid = %s and enrollment.prof_added = FALSE", (session['user']['uid'],))
+    schedule = cursor.fetchall()
  
   mydb.commit()
 
-  return render_template('course.html', title = "Course", course = course, enrolledIn = enrolledIn, conflict = conflict, missing_prereqs=missing_prereqs, prerequisites=prerequisites, phd_err=phd_err)
+  return render_template('course.html', title = "Course", course = course, enrolledIn = enrolledIn, conflict = conflict, missing_prereqs=missing_prereqs, prerequisites=prerequisites, phd_err=phd_err, schedule=schedule)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
