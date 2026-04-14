@@ -84,6 +84,43 @@
         {% else %}
             <p> <div style="color: red;">This course is not offered this semester. </div></p>
         {% endif %}
+        {% if session['user']['role'] == 'student' %}
+        <details>
+        <summary>View Schedule</summary>
+            {% set rows = {'1500-1730':0, '1530-1800':1, '1600-1830':2, '1800-2030':6} %}
+        {% set labels = [
+            '3:00pm - 3:30pm', '3:30pm - 4:00pm', '4:00pm - 4:30pm', '4:30pm - 5:00pm', '5:00pm - 5:30pm', '5:30pm - 6:00pm', '6:00pm - 6:30pm', '6:30pm - 7:00pm', '7:00pm - 7:30pm', '7:30pm - 8:00pm', '8:00pm - 8:30pm'] %}
+        {% set week = ['M', 'T', 'W', 'R', 'F'] %}
+       
+        <table style="border-collapse: collapse;">
+            <tr>
+                <th style="border: 2px solid black; padding: 8px;"></th>
+                <th style="border: 2px solid black; padding: 8px;">Monday</th>
+                <th style="border: 2px solid black; padding: 8px;">Tuesday</th>
+                <th style="border: 2px solid black; padding: 8px;">Wednesday</th>
+                <th style="border: 2px solid black; padding: 8px;">Thursday</th>
+                <th style="border: 2px solid black; padding: 8px;">Friday</th>
+            </tr>
+            <tr>
+                {% for row in range(11): %}
+                <tr style="border: 2px solid black;">
+                    <th>{{labels[row]}}</th>
+                    {% for day in week %}
+                        {% for class in schedule if class['day'] == day and rows[class['time']] == row %}
+                                <td rowspan="5" style="border: 2px solid black; padding: 8px; background-color: rgb(59, 3, 71);"><a style="color: white" href="/course/{{class['department']}}/{{class['course_number']}}">{{class['department']}} {{class['course_number']}}</a></td>
+                            {% else %}
+                                {% for class in schedule if class['day'] == day and row > rows[class['time']] and rows[class['time']]+5 > row %}
+                                {% else %}
+                                    <td style="border: 0px"></td>
+                                {% endfor %}
+                        {% endfor %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tr>
+        </table>
+        </details>
+        {% endif %}
         <p><a href = "/coursecatalog">Course Catalog</a></p>
 
     </body>
