@@ -218,8 +218,8 @@ CREATE TABLE courses_offered (
   instructorid int(8),
   buildingname varchar(10),
   semester varchar(6),
-  capacity int(2),
   year varchar(4),
+  capacity int(2),
   primary key (departmentname, coursenumber, semester, sectionnum, year),
   foreign key (coursenumber, departmentname) references courses(course_number, department),
   foreign key (instructorid) references users(uid)
