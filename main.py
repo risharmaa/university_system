@@ -1056,13 +1056,15 @@ def applications():
             flash("Only CAC members can review applications.", "error")
             return redirect(url_for("faculty"))
         cursor.execute(
-            "SELECT a.uid, u.fname, u.lname, a.degree, a.status FROM applicant a JOIN users u ON a.uid=u.uid "
-            "WHERE a.status='under review' AND a.uid NOT IN (SELECT uid FROM app_review WHERE reviewer_uid=%s) "
-            "ORDER BY u.lname, u.fname", (reviewer_uid,)
+            "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+            "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
         )
     else:
         cursor.execute(
-            "SELECT a.uid, u.fname, u.lname, a.degree, a.status FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
+            "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+            "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
         )
     applicants = cursor.fetchall()
     mydb.commit()
