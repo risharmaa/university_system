@@ -21,16 +21,18 @@
         </ul>
 
         {% if session['user']['role'] == 'faculty' %}
-            <p><a href="{{ url_for('faculty') }}">Dashboard</a></p>
+            <p><a href="{{ url_for('faculty') }}">
+                <button type="button">Faculty Dashboard </button><br>
+            </a>
         {% endif %}
         {% if session['user']['role'] == 'secretary' %}
-            <p><a href="{{ url_for('secretary') }}"> Dashboard</a></p>
+            <p><a href="{{ url_for('secretary') }}">Secretary Dashboard</a></p>
         {% endif %}
         {% if session['user']['role'] == 'admin' %}
-            <p><a href="{{ url_for('admin') }}">  Dashboard</a></p>
+            <p><a href="{{ url_for('admin') }}"> Admin Dashboard</a></p>
         {% endif %}
         {% if session['user']['role'] == 'student' %}
-            <p><a href="{{ url_for('student') }}">  Dashboard</a></p>
+            <p><a href="{{ url_for('student') }}"> Student Dashboard</a></p>
         {% endif %}
 
     </body>

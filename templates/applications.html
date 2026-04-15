@@ -6,8 +6,6 @@
   {% with messages = get_flashed_messages(with_categories=true) %}{% for c,m in messages %}
   <p><strong>{{ m }}</strong></p>{% endfor %}{% endwith %}
 
-  <a href="{{ url_for('logout') }}">Logout</a><br><br>
-
   <table border="1">
     <tr>
       <th>UID</th><th>Name</th><th>Degree</th><th>Status</th>
@@ -49,5 +47,15 @@
     <tr><td colspan="6">No applications found.</td></tr>
     {% endfor %}
   </table>
+
+  <br>
+  <a href="{{ url_for('faculty') }}">
+    <button type="button">Faculty Dashboard</button>
+  </a>
+  <br>
+  <br>
+
+  <a href="{{ url_for('logout') }}">
+    <button type="button">Logout </button><br>
 </body>
 </html>
