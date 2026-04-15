@@ -958,8 +958,7 @@ def applicant_register():
                         (uid, dt, dy or None, dg or None, du)
                     )
             mydb.commit()
-            flash(f"Registration successful! Your username is {uid} and your password is: pass. Save these to check your application status.", "success")
-            return redirect(url_for("login"))
+            return render_template("applicant_registered.html", uid=uid)
         except mysql.connector.Error as e:
             mydb.rollback()
             flash(f"Registration error: {e}", "error")
