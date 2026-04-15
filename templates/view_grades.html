@@ -17,10 +17,21 @@
         {% endfor %}
         
         {% if session['user']['role'] == 'faculty': %}
-            <p><a href= "{{ url_for('faculty') }}">Dashboard</a></p>
+            <a href="{{ url_for('faculty') }}">
+                <button type="button">Faculty Dashboard</button>
+            </a>
+            <br>
+
         {% endif %}
         {% if session['user']['role'] == 'secretary': %}
-            <p><a href= "{{ url_for('secretary') }}">Dashboard</a></p>
+            <a href= "{{ url_for('secretary') }}">
+                <button type="button">Secretary Dashboard</button>
+            </a>
         {% endif %}
+        
+        <br>
+        <a href="{{ url_for('logout') }}">
+            <button type="button">Logout </button><br>
+        </a>
     </body>
 </html>
