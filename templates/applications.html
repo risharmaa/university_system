@@ -12,6 +12,7 @@
     <tr>
       <th>UID</th><th>Name</th><th>Degree</th><th>Status</th>
       {% if role in ('admin', 'secretary') %}<th>Transcript</th>{% endif %}
+      {% if role == 'faculty' %}<th>Completeness</th>{% endif %}
       <th>Actions</th>
     </tr>
     {% for a in applicants %}
@@ -22,9 +23,17 @@
       <td>{{ a.status }}</td>
       {% if role in ('admin', 'secretary') %}
       <td>
+        {{ 'Yes' if a.transcript_received else 'No' }}
         <form method="POST" action="{{ url_for('update_transcript', uid=a.uid) }}" style="display:inline">
-          <input type="submit" value="Toggle Transcript">
+          <input type="submit" value="Toggle">
         </form>
+      </td>
+      {% endif %}
+      {% if role == 'faculty' %}
+      <td>
+        {% if not a.transcript_received %}<span>No transcript</span><br>{% endif %}
+        {% if a.letters_submitted == 0 %}<span>No letters submitted</span>
+        {% else %}<span>{{ a.letters_submitted }} letter(s) submitted</span>{% endif %}
       </td>
       {% endif %}
       <td>

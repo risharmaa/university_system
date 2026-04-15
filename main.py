@@ -159,9 +159,9 @@ def student():
         session["user"]["fname"] = info["fname"]
         session["user"]["lname"] = info["lname"]
         session.modified = True
-    cursor.execute("SELECT e.course_number, c.title, e.semester, e.year, e.grade, e.credit_hours FROM enrollment e JOIN courses c ON e.course_number = c.course_number AND e.department = c.department WHERE e.uid = %s", (uid,))
+    cursor.execute("SELECT e.course_number, c.title, e.semester, e.year, e.grade, e.credit_hours, c.credits FROM enrollment e JOIN courses c ON e.course_number = c.course_number AND e.department = c.department WHERE e.uid = %s", (uid,))
     enrollment = cursor.fetchall()
-    
+
     cursor.execute("SELECT c.title, c.department, e.grade FROM enrollment e JOIN courses c ON e.course_number = c.course_number AND e.department = c.department WHERE e.uid = %s", (uid,))
     courses = cursor.fetchall()
     phd_suggestions = []
@@ -181,8 +181,8 @@ def student():
     # --- Added: compute GPA, credits, and checklist for dashboard stats ---
     GRADE_PTS = {"A":4.0,"A-":3.7,"B+":3.3,"B":3.0,"B-":2.7,"C+":2.3,"C":2.0,"F":0.0}
     completed = [e for e in enrollment if e['grade'] not in ('IP', None, '')]
-    total_ch   = sum(e['credit_hours'] for e in completed)
-    gpa = round(sum(GRADE_PTS.get(e['grade'],0)*e['credit_hours'] for e in completed)/max(total_ch,1), 2)
+    total_ch   = sum(e['credits'] or e['credit_hours'] or 0 for e in completed)
+    gpa = round(sum(GRADE_PTS.get(e['grade'],0)*(e['credits'] or e['credit_hours'] or 0) for e in completed)/max(total_ch,1), 2)
 
     # GPA ring color and fill percentage (capped at 100)
     gpa_color = "#28a745" if gpa >= 3.5 else ("#ffc107" if gpa >= 3.0 else "#dc3545")
@@ -925,7 +925,6 @@ def applicant_register():
         ssn   = request.form.get("ssn", "").strip()
         address = request.form.get("address", "").strip()
         degree  = request.form.get("degree", "").strip()
-        password = request.form.get("password", "")
         gre_verbal = request.form.get("gre_verbal") or None
         gre_quant  = request.form.get("gre_quant") or None
         gre_year   = request.form.get("gre_year") or None
@@ -937,7 +936,7 @@ def applicant_register():
             return render_template("applicant_register.html")
 
         uid = int(''.join([str(secrets.randbelow(10)) for _ in range(8)]))
-        hashed = generate_password_hash(password, method='pbkdf2:sha256')
+        hashed = generate_password_hash("pass", method='pbkdf2:sha256')
         username = str(uid)
         cursor = mydb.cursor(dictionary=True)
         try:
@@ -963,8 +962,7 @@ def applicant_register():
                         (uid, dt, dy or None, dg or None, du)
                     )
             mydb.commit()
-            flash(f"Registration successful! Your UID is {uid}. Please log in.", "success")
-            return redirect(url_for("login"))
+            return render_template("applicant_registered.html", uid=uid)
         except mysql.connector.Error as e:
             mydb.rollback()
             flash(f"Registration error: {e}", "error")
@@ -1056,14 +1054,21 @@ def applications():
     role = session["user"]["role"]
     reviewer_uid = session["user"]["uid"]
     if role == "faculty":
+        cursor.execute("SELECT cac FROM faculty WHERE uid=%s", (reviewer_uid,))
+        fac = cursor.fetchone()
+        if not fac or not fac["cac"]:
+            flash("Only CAC members can review applications.", "error")
+            return redirect(url_for("faculty"))
         cursor.execute(
-            "SELECT a.uid, u.fname, u.lname, a.degree, a.status FROM applicant a JOIN users u ON a.uid=u.uid "
-            "WHERE a.status='under review' AND a.uid NOT IN (SELECT uid FROM app_review WHERE reviewer_uid=%s) "
-            "ORDER BY u.lname, u.fname", (reviewer_uid,)
+            "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+            "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
         )
     else:
         cursor.execute(
-            "SELECT a.uid, u.fname, u.lname, a.degree, a.status FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
+            "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+            "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
         )
     applicants = cursor.fetchall()
     mydb.commit()
@@ -1167,7 +1172,18 @@ def final_decision(uid):
         if decision in ("admitted", "admitted_with_aid", "rejected"):
             cursor.execute("UPDATE applicant SET status=%s WHERE uid=%s", (decision, uid))
             mydb.commit()
-            flash(f"Decision recorded: {decision}.", "success")
+            if decision in ("admitted", "admitted_with_aid"):
+                new_uid = int(''.join([str(secrets.randbelow(10)) for _ in range(8)]))
+                hashed = generate_password_hash("pass", method='pbkdf2:sha256')
+                cursor.execute(
+                    "INSERT INTO users (uid,username,password,role,fname,lname,email,address) VALUES (%s,%s,%s,'student',%s,%s,%s,%s)",
+                    (new_uid, str(new_uid), hashed, applicant['fname'], applicant['lname'], applicant.get('email',''), applicant.get('address',''))
+                )
+                cursor.execute("INSERT INTO students (uid,program) VALUES (%s,%s)", (new_uid, applicant['degree']))
+                mydb.commit()
+                flash(f"Decision: {decision}. Student account created — Username: {new_uid}, Password: pass", "success")
+            else:
+                flash(f"Decision recorded: {decision}.", "success")
             return redirect(url_for("applications"))
     mydb.commit()
     return render_template("final_decision.html", applicant=applicant, reviews=reviews, faculty_list=faculty_list)

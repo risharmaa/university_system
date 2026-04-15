@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head><title>Application Submitted</title></head>
+<body>
+  <h1>Application Submitted Successfully!</h1>
+  <p>Your application has been received. Use the credentials below to log in and check your application status.</p>
+  <hr>
+  <h2>Your Login Credentials</h2>
+  <p><strong>Username:</strong> {{ uid }}</p>
+  <p><strong>Password:</strong> pass</p>
+  <hr>
+  <p><strong>Please save these credentials.</strong> You will need them to log back in and check your application status.</p>
+  <br>
+  <a href="{{ url_for('login') }}">Go to Login</a>
+</body>
+</html>

@@ -1,4 +1,4 @@
--- Active: 1775655748444@@regs26-sharma.ca1y0o4q8i1b.us-east-1.rds.amazonaws.com@3306@university
+-- Active: 1775839020576@@regs26-sharma.ca1y0o4q8i1b.us-east-1.rds.amazonaws.com@3306@university
 
 -- USE DATABASE university;
 
@@ -352,6 +352,7 @@ INSERT INTO enrollment (uid, course_number, department, semester, year, grade, c
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (88888888,'88888888', 'pass', 'student','Billie', 'Holiday', 'billieholiday@gmail.com', 'Washington');
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (99999999,'99999999', 'pass', 'student', 'Diana', 'Krall', 'dianakrall@gmail.com', 'Seattle');
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (12345678,'12345678', 'pass', 'faculty', 'Hyeong-Ah', 'Choi', 'hyeongahchoi@gmail.com', 'Norfolk');
+INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (13131313,'13131313', 'pass', 'faculty', 'Carol', 'Reed', 'carolreed@gwu.edu', 'Washington DC');
 
 -- inserting students for regs
 INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year) VALUES(88888888, 'MS', 22222222, 'active', 2024);
@@ -359,6 +360,7 @@ INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_ye
 
 -- inserting faculty for regs
 INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (12345678, false, false, false);
+INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (13131313, true, false, false);
 
 -- inserting rooms from regs
 INSERT INTO rooms VALUES (3, 1, 'SEH');
