@@ -159,9 +159,9 @@ def student():
         session["user"]["fname"] = info["fname"]
         session["user"]["lname"] = info["lname"]
         session.modified = True
-    cursor.execute("SELECT e.course_number, c.title, e.semester, e.year, e.grade, e.credit_hours FROM enrollment e JOIN courses c ON e.course_number = c.course_number AND e.department = c.department WHERE e.uid = %s", (uid,))
+    cursor.execute("SELECT e.course_number, c.title, e.semester, e.year, e.grade, e.credit_hours, c.credits FROM enrollment e JOIN courses c ON e.course_number = c.course_number AND e.department = c.department WHERE e.uid = %s", (uid,))
     enrollment = cursor.fetchall()
-    
+
     cursor.execute("SELECT c.title, c.department, e.grade FROM enrollment e JOIN courses c ON e.course_number = c.course_number AND e.department = c.department WHERE e.uid = %s", (uid,))
     courses = cursor.fetchall()
     phd_suggestions = []
@@ -181,8 +181,8 @@ def student():
     # --- Added: compute GPA, credits, and checklist for dashboard stats ---
     GRADE_PTS = {"A":4.0,"A-":3.7,"B+":3.3,"B":3.0,"B-":2.7,"C+":2.3,"C":2.0,"F":0.0}
     completed = [e for e in enrollment if e['grade'] not in ('IP', None, '')]
-    total_ch   = sum(e['credit_hours'] for e in completed)
-    gpa = round(sum(GRADE_PTS.get(e['grade'],0)*e['credit_hours'] for e in completed)/max(total_ch,1), 2)
+    total_ch   = sum(e['credits'] or e['credit_hours'] or 0 for e in completed)
+    gpa = round(sum(GRADE_PTS.get(e['grade'],0)*(e['credits'] or e['credit_hours'] or 0) for e in completed)/max(total_ch,1), 2)
 
     # GPA ring color and fill percentage (capped at 100)
     gpa_color = "#28a745" if gpa >= 3.5 else ("#ffc107" if gpa >= 3.0 else "#dc3545")
