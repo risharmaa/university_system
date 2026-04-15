@@ -921,7 +921,6 @@ def applicant_register():
         ssn   = request.form.get("ssn", "").strip()
         address = request.form.get("address", "").strip()
         degree  = request.form.get("degree", "").strip()
-        password = request.form.get("password", "")
         gre_verbal = request.form.get("gre_verbal") or None
         gre_quant  = request.form.get("gre_quant") or None
         gre_year   = request.form.get("gre_year") or None
@@ -933,7 +932,7 @@ def applicant_register():
             return render_template("applicant_register.html")
 
         uid = int(''.join([str(secrets.randbelow(10)) for _ in range(8)]))
-        hashed = generate_password_hash(password, method='pbkdf2:sha256')
+        hashed = generate_password_hash("pass", method='pbkdf2:sha256')
         username = str(uid)
         cursor = mydb.cursor(dictionary=True)
         try:
@@ -959,7 +958,7 @@ def applicant_register():
                         (uid, dt, dy or None, dg or None, du)
                     )
             mydb.commit()
-            flash(f"Registration successful! Your UID is {uid}. Please log in.", "success")
+            flash(f"Registration successful! Your username is {uid} and your password is: pass. Save these to check your application status.", "success")
             return redirect(url_for("login"))
         except mysql.connector.Error as e:
             mydb.rollback()
@@ -1168,7 +1167,18 @@ def final_decision(uid):
         if decision in ("admitted", "admitted_with_aid", "rejected"):
             cursor.execute("UPDATE applicant SET status=%s WHERE uid=%s", (decision, uid))
             mydb.commit()
-            flash(f"Decision recorded: {decision}.", "success")
+            if decision in ("admitted", "admitted_with_aid"):
+                new_uid = int(''.join([str(secrets.randbelow(10)) for _ in range(8)]))
+                hashed = generate_password_hash("pass", method='pbkdf2:sha256')
+                cursor.execute(
+                    "INSERT INTO users (uid,username,password,role,fname,lname,email,address) VALUES (%s,%s,%s,'student',%s,%s,%s,%s)",
+                    (new_uid, str(new_uid), hashed, applicant['fname'], applicant['lname'], applicant.get('email',''), applicant.get('address',''))
+                )
+                cursor.execute("INSERT INTO students (uid,program) VALUES (%s,%s)", (new_uid, applicant['degree']))
+                mydb.commit()
+                flash(f"Decision: {decision}. Student account created — Username: {new_uid}, Password: pass", "success")
+            else:
+                flash(f"Decision recorded: {decision}.", "success")
             return redirect(url_for("applications"))
     mydb.commit()
     return render_template("final_decision.html", applicant=applicant, reviews=reviews, faculty_list=faculty_list)
