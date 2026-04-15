@@ -786,6 +786,8 @@ def faculty_approve_form1(uid):
         "UPDATE form SET advisor_approval = 'approved' WHERE uid = %s",
         (uid,)
     )
+    # Set registration_hold to false (allow students to register)
+    cursor.execute("UPDATE students SET registration_hold = False WHERE uid = %s", (uid,))
     mydb.commit()
 
     flash("Form 1 approved successfully.", "success")
@@ -1303,6 +1305,8 @@ def showcourse(dpt, courseno):
   phd_err = False
   missing_prereqs = []
   schedule = None
+  capacity = False
+  holds = False
  
   if session['user']['role'] == 'student':
     if request.method == 'POST':
@@ -1310,6 +1314,13 @@ def showcourse(dpt, courseno):
             cursor.execute("DELETE FROM enrollment WHERE (uid=%s AND department=%s AND course_number=%s)", (studentid, dpt, courseno,))
             mydb.commit()
         else:
+            if course['capacity'] == 0:
+                capacity = True
+            cursor.execute("SELECT registration_hold FROM students WHERE uid = %s", (studentid,))
+            hold = cursor.fetchone()
+            if hold['registration_hold'] == True:
+                holds = True
+
             cursor.execute("SELECT courses_offered.day, courses_offered.time FROM enrollment INNER JOIN courses_offered ON enrollment.department=courses_offered.departmentname AND enrollment.course_number=courses_offered.coursenumber WHERE enrollment.uid = %s AND enrollment.grade = 'IP'", (studentid,))
             enrolled = cursor.fetchall()
 
@@ -1338,7 +1349,7 @@ def showcourse(dpt, courseno):
                     if not completed:
                         missing_prereqs.append(prereq['prereqdpt'] + ' ' + str(prereq['prereqnum']))
 
-            if not conflict and not missing_prereqs:
+            if not conflict and not missing_prereqs and not holds and not capacity:
                 cursor.execute("SELECT program FROM students WHERE uid=%s", (studentid,))
                 student = cursor.fetchone()
 
@@ -1350,6 +1361,9 @@ def showcourse(dpt, courseno):
                     credit_hours = cursor.fetchone()
                     credit_hours = credit_hours['credits']
                     cursor.execute("INSERT INTO enrollment (uid, department, course_number, grade, semester, year, sectionnum, prof_added, credit_hours) VALUES (%s,%s,%s,%s,%s,%s,%s,%s, %s)", (studentid, dpt, courseno, 'IP', course['semester'], course['year'], course['sectionnum'], False, credit_hours))
+                    #updating capacity w/enrollment
+                    new_capacity = course['capacity'] - 1
+                    cursor.execute("UPDATE courses_offered SET capacity = %s", (new_capacity,))
                     mydb.commit()
  
     cursor.execute("SELECT * FROM enrollment WHERE uid = %s AND department = %s AND course_number = %s", (studentid, dpt, courseno,))
@@ -1359,10 +1373,15 @@ def showcourse(dpt, courseno):
     "right join courses_offered on enrollment.department=courses_offered.departmentname AND enrollment.course_number=courses_offered.coursenumber AND enrollment.sectionnum=courses_offered.sectionnum AND enrollment.semester=courses_offered.semester AND enrollment.year=courses_offered.year " \
     "WHERE enrollment.uid = %s and enrollment.prof_added = FALSE", (session['user']['uid'],))
     schedule = cursor.fetchall()
+    cursor.execute("SELECT * FROM courses " \
+    "INNER JOIN courses_offered ON courses.department=courses_offered.departmentname AND courses.course_number=courses_offered.coursenumber " \
+    "INNER JOIN users ON courses_offered.instructorid=users.uid " \
+    "WHERE department = %s AND course_number = %s", (dpt, courseno))
+    course = cursor.fetchone()
  
   mydb.commit()
 
-  return render_template('course.html', title = "Course", course = course, enrolledIn = enrolledIn, conflict = conflict, missing_prereqs=missing_prereqs, prerequisites=prerequisites, phd_err=phd_err, schedule=schedule)
+  return render_template('course.html', title = "Course", course = course, enrolledIn = enrolledIn, conflict = conflict, missing_prereqs=missing_prereqs, prerequisites=prerequisites, phd_err=phd_err, schedule=schedule, capacity=capacity, holds=holds)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
