@@ -1052,6 +1052,11 @@ def applications():
     role = session["user"]["role"]
     reviewer_uid = session["user"]["uid"]
     if role == "faculty":
+        cursor.execute("SELECT cac FROM faculty WHERE uid=%s", (reviewer_uid,))
+        fac = cursor.fetchone()
+        if not fac or not fac["cac"]:
+            flash("Only CAC members can review applications.", "error")
+            return redirect(url_for("faculty"))
         cursor.execute(
             "SELECT a.uid, u.fname, u.lname, a.degree, a.status FROM applicant a JOIN users u ON a.uid=u.uid "
             "WHERE a.status='under review' AND a.uid NOT IN (SELECT uid FROM app_review WHERE reviewer_uid=%s) "
