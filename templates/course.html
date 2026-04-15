@@ -76,6 +76,8 @@
                     </div></p>
                 {% elif holds %}
                     <p> <div style="color: red;">You have a registration hold on your account. Please contact your advisor to fix. </div></p>
+                {% elif capacity %}
+                    <p> <div style="color: red;">This class has filled up.</div></p>
                 {% else %}
                     <form action="/course/{{course.department}}/{{course.course_number}}" method="POST">
                         <input type="submit" value="Enroll">
