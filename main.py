@@ -786,6 +786,8 @@ def faculty_approve_form1(uid):
         "UPDATE form SET advisor_approval = 'approved' WHERE uid = %s",
         (uid,)
     )
+    # Set registration_hold to false (allow students to register)
+    cursor.execute("UPDATE students SET registration_hold = False WHERE uid = %s", (uid,))
     mydb.commit()
 
     flash("Form 1 approved successfully.", "success")
