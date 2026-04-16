@@ -738,7 +738,7 @@ def faculty_advisee(uid):
     enrollment = cursor.fetchall()
     # Fetch Form 1 if submitted, to show approval status and planned courses
     cursor.execute(
-        "SELECT f.form_id, f.advisor_approval FROM form f WHERE f.uid = %s", (uid,)
+        "SELECT f.form_id, f.advisor_approval, f.thesis, f.program_type FROM form f WHERE f.uid = %s", (uid,)
     )
     form_row = cursor.fetchone()
     form_courses = []
