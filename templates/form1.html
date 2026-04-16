@@ -61,7 +61,13 @@
         </td>
       </tr>
       {% endfor %}
-    </table>
+    </table> <br>
+    {% if student.program == "PhD" %}
+      <label>Thesis:</label><br>
+      <textarea name="thesis" rows="10" cols="80">
+        {{ existing_form.thesis if existing_form and existing_form.thesis else'' }}
+      </textarea>
+    {% endif %}
     <br>
     <button type="submit">Submit Form 1</button>
   </form>
