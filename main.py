@@ -266,7 +266,7 @@ def form1():
         mydb.commit()
         return render_template("form1.html", user=user, courses=courses, student=student,
                                existing_form=existing_form, existing_courses=existing_courses)
-
+    thesis = request.form.get("thesis")
     # POST - parse selected courses (skip blanks, remove duplicates)
     selected = []
     for i in range(12):
@@ -320,8 +320,8 @@ def form1():
         cursor.execute("DELETE FROM form_courses WHERE form_id = %s", (form_id,))
         cursor.execute("DELETE FROM form WHERE uid = %s", (uid,))
         cursor.execute(
-            "INSERT INTO form (form_id, uid, program_type) VALUES (%s, %s, %s)",
-            (form_id, uid, program)
+            "INSERT INTO form (form_id, uid, program_type, thesis) VALUES (%s, %s, %s, %s)",
+            (form_id, uid, program, thesis if program == 'PhD' else None)
         )
         for num in selected:
             cursor.execute(
