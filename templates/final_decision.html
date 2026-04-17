@@ -12,6 +12,7 @@
 
   <h2>Faculty Reviews</h2>
   {% if reviews %}
+  <p>Average Rating: {{avg}}</p>
   <table border="1">
     <tr><th>Reviewer</th><th>GAS Rating</th><th>Deficiency Courses</th><th>Reject Reasons</th><th>Recommended Advisor</th><th>Comments</th></tr>
     {% for r in reviews %}
