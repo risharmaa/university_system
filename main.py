@@ -1053,6 +1053,7 @@ def applications():
         return redirect(url_for("login"))
     mydb.commit()
     cursor = mydb.cursor(dictionary=True)
+    fac = None
     role = session["user"]["role"]
     reviewer_uid = session["user"]["uid"]
     if role == "faculty":
@@ -1157,6 +1158,7 @@ def final_decision(uid):
         cursor.execute("SELECT cac FROM faculty WHERE uid=%s", (session['user']['uid'],))
         fac = cursor.fetchone()
         fac = fac["cac"]
+    fac = None
     if not _is_staff() or session["user"]["role"] not in ("admin", "secretary") and (not fac):
         flash("Access denied.", "error")
         return redirect(url_for("login"))
