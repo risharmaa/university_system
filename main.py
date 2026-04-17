@@ -1058,9 +1058,10 @@ def applications():
     if role == "faculty":
         cursor.execute("SELECT cac FROM faculty WHERE uid=%s", (reviewer_uid,))
         fac = cursor.fetchone()
-        if not fac or not fac["cac"]:
-            flash("Only CAC members can review applications.", "error")
-            return redirect(url_for("faculty"))
+        fac = fac["cac"]
+        #if not fac or not fac["cac"]:
+            #flash("Only CAC members can review applications.", "error")
+            #return redirect(url_for("faculty"))
         cursor.execute(
             "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
@@ -1074,7 +1075,7 @@ def applications():
         )
     applicants = cursor.fetchall()
     mydb.commit()
-    return render_template("applications.html", applicants=applicants, role=role)
+    return render_template("applications.html", applicants=applicants, role=role, fac = fac)
 
 
 @app.route("/applications/transcript/<int:uid>", methods=["POST"])
@@ -1151,11 +1152,15 @@ def review_applicant(uid):
 
 @app.route("/applications/decision/<int:uid>", methods=["GET", "POST"])
 def final_decision(uid):
-    if not _is_staff() or session["user"]["role"] not in ("admin", "secretary"):
+    cursor = mydb.cursor(dictionary=True)
+    if session["user"]["role"] == "faculty":
+        cursor.execute("SELECT cac FROM faculty WHERE uid=%s", (session['user']['uid'],))
+        fac = cursor.fetchone()
+        fac = fac["cac"]
+    if not _is_staff() or session["user"]["role"] not in ("admin", "secretary") and (not fac):
         flash("Access denied.", "error")
         return redirect(url_for("login"))
     mydb.commit()
-    cursor = mydb.cursor(dictionary=True)
     cursor.execute("SELECT a.*, u.fname, u.lname FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid=%s", (uid,))
     applicant = cursor.fetchone()
     cursor.execute("""
@@ -1167,6 +1172,9 @@ def final_decision(uid):
         WHERE r.uid=%s
     """, (uid,))
     reviews = cursor.fetchall()
+    #get average review score
+    cursor.execute("SELECT AVG(rating) as rating FROM app_review WHERE uid=%s", (uid,) )
+    avg=cursor.fetchone()
     cursor.execute("SELECT uid, fname, lname FROM users WHERE role='faculty'")
     faculty_list = cursor.fetchall()
     if request.method == "POST":
@@ -1188,7 +1196,7 @@ def final_decision(uid):
                 flash(f"Decision recorded: {decision}.", "success")
             return redirect(url_for("applications"))
     mydb.commit()
-    return render_template("final_decision.html", applicant=applicant, reviews=reviews, faculty_list=faculty_list)
+    return render_template("final_decision.html", applicant=applicant, reviews=reviews, faculty_list=faculty_list, fac=fac, avg=avg['rating'])
 
 #REGS routes
 @app.route("/viewgrades")
