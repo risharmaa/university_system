@@ -921,11 +921,11 @@ def applicant_register():
         ssn   = request.form.get("ssn", "").strip()
         address = request.form.get("address", "").strip()
         degree  = request.form.get("degree", "").strip()
-        gre_verbal = request.form.get("gre_verbal") or None
-        gre_quant  = request.form.get("gre_quant") or None
-        gre_year   = request.form.get("gre_year") or None
-        work_exp   = request.form.get("work_experience", "").strip()
-        interests  = request.form.get("areas_of_interest", "").strip()
+        gre_verbal    = request.form.get("gre_verbal") or None
+        gre_quant     = request.form.get("gre_quant") or None
+        gre_year      = request.form.get("gre_year") or None
+        work_exp      = request.form.get("work_experience", "").strip()
+        interests     = request.form.get("areas_of_interest", "").strip()
 
         if not _is_valid_ssn(ssn):
             flash("SSN must be in XXX-XX-XXXX format.", "error")
@@ -1021,8 +1021,14 @@ def request_recommendation():
         (uid, writer_name, writer_email, writer_title, institution)
     )
     mydb.commit()
-    flash("Recommendation letter request sent.", "success")
-    return redirect(url_for("applicant_dashboard"))
+    letter_id = cursor.lastrowid
+    cursor.execute("SELECT u.fname, u.lname FROM users u WHERE u.uid=%s", (uid,))
+    applicant = cursor.fetchone()
+    submit_link = request.host_url.rstrip("/") + "/applicant/submit_letter/" + str(letter_id)
+    return render_template("letter_requested.html",
+        writer_name=writer_name, writer_email=writer_email,
+        writer_title=writer_title, institution=institution,
+        applicant=applicant, submit_link=submit_link)
 
 
 @app.route("/applicant/submit_letter/<int:letter_id>", methods=["GET", "POST"])
