@@ -6,7 +6,28 @@
   {% with messages = get_flashed_messages(with_categories=true) %}{% for c,m in messages %}
   <p><strong>{{ m }}</strong></p>{% endfor %}{% endwith %}
 
-  <h2>Application Status: {{ applicant.status }}</h2>
+  <h2>Application Status:
+    {% if applicant.status == 'incomplete' %}Application Incomplete – please ensure transcript and recommendation letters are submitted
+    {% elif applicant.status == 'under review' %}Application Complete and Under Review – No Decision Yet
+    {% elif applicant.status in ('admitted', 'admitted_with_aid') %}Congratulations, you have been admitted! The formal letter of acceptance will be mailed.
+    {% elif applicant.status == 'rejected' %}Your application for admission has been denied.
+    {% elif applicant.status == 'accepted' %}You have accepted the offer of admission.
+    {% elif applicant.status == 'declined' %}You have declined the offer of admission.
+    {% else %}{{ applicant.status }}{% endif %}
+  </h2>
+
+  {% if applicant.status in ('admitted', 'admitted_with_aid') %}
+  <h3>Respond to Offer</h3>
+  <form method="POST" action="{{ url_for('respond_offer') }}" style="display:inline">
+    <input type="hidden" name="response" value="accepted">
+    <input type="submit" value="Accept Offer">
+  </form>
+  <form method="POST" action="{{ url_for('respond_offer') }}" style="display:inline">
+    <input type="hidden" name="response" value="declined">
+    <input type="submit" value="Decline Offer">
+  </form>
+  {% endif %}
+
   <p>Transcript Received: {{ 'Yes' if applicant.transcript_received else 'No' }}</p>
 
   <h2>Application Details</h2>

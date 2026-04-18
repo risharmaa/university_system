@@ -10,6 +10,7 @@
   <p>Degree: {{ applicant.degree }} | Current Status: {{ applicant.status }}</p>
   <p>Transcript Received: {{ 'Yes' if applicant.transcript_received else 'No' }}</p>
 
+  {% if can_see_reviews %}
   <h2>Faculty Reviews</h2>
   {% if reviews %}
   <p>Average Rating: {{avg}}</p>
@@ -34,6 +35,7 @@
   </table>
   {% else %}
   <p>No reviews submitted yet.</p>
+  {% endif %}
   {% endif %}
 
   <h2>Make Final Decision</h2>

@@ -927,11 +927,11 @@ def applicant_register():
         ssn   = request.form.get("ssn", "").strip()
         address = request.form.get("address", "").strip()
         degree  = request.form.get("degree", "").strip()
-        gre_verbal = request.form.get("gre_verbal") or None
-        gre_quant  = request.form.get("gre_quant") or None
-        gre_year   = request.form.get("gre_year") or None
-        work_exp   = request.form.get("work_experience", "").strip()
-        interests  = request.form.get("areas_of_interest", "").strip()
+        gre_verbal    = request.form.get("gre_verbal") or None
+        gre_quant     = request.form.get("gre_quant") or None
+        gre_year      = request.form.get("gre_year") or None
+        work_exp      = request.form.get("work_experience", "").strip()
+        interests     = request.form.get("areas_of_interest", "").strip()
 
         if not _is_valid_ssn(ssn):
             flash("SSN must be in XXX-XX-XXXX format.", "error")
@@ -989,6 +989,28 @@ def applicant_dashboard():
     return render_template("applicant_dashboard.html", applicant=applicant, letters=letters, degrees=degrees)
 
 
+@app.route("/applicant/respond_offer", methods=["POST"])
+def respond_offer():
+    if "user" not in session or session["user"]["role"] != "applicant":
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    uid = session["user"]["uid"]
+    response = request.form.get("response")
+    if response not in ("accepted", "declined"):
+        flash("Invalid response.", "error")
+        return redirect(url_for("applicant_dashboard"))
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT status FROM applicant WHERE uid=%s", (uid,))
+    row = cursor.fetchone()
+    if not row or row["status"] not in ("admitted", "admitted_with_aid"):
+        flash("No offer to respond to.", "error")
+        return redirect(url_for("applicant_dashboard"))
+    cursor.execute("UPDATE applicant SET status=%s WHERE uid=%s", (response, uid))
+    mydb.commit()
+    flash(f"You have {'accepted' if response == 'accepted' else 'declined'} the offer.", "success")
+    return redirect(url_for("applicant_dashboard"))
+
+
 @app.route("/applicant/request_recommendation", methods=["POST"])
 def request_recommendation():
     if "user" not in session or session["user"]["role"] != "applicant":
@@ -1005,8 +1027,14 @@ def request_recommendation():
         (uid, writer_name, writer_email, writer_title, institution)
     )
     mydb.commit()
-    flash("Recommendation letter request sent.", "success")
-    return redirect(url_for("applicant_dashboard"))
+    letter_id = cursor.lastrowid
+    cursor.execute("SELECT u.fname, u.lname FROM users u WHERE u.uid=%s", (uid,))
+    applicant = cursor.fetchone()
+    submit_link = request.host_url.rstrip("/") + "/applicant/submit_letter/" + str(letter_id)
+    return render_template("letter_requested.html",
+        writer_name=writer_name, writer_email=writer_email,
+        writer_title=writer_title, institution=institution,
+        applicant=applicant, submit_link=submit_link)
 
 
 @app.route("/applicant/submit_letter/<int:letter_id>", methods=["GET", "POST"])
@@ -1057,12 +1085,12 @@ def applications():
     role = session["user"]["role"]
     reviewer_uid = session["user"]["uid"]
     if role == "faculty":
-        cursor.execute("SELECT cac FROM faculty WHERE uid=%s", (reviewer_uid,))
+        cursor.execute("SELECT cac, reviewer FROM faculty WHERE uid=%s", (reviewer_uid,))
         fac = cursor.fetchone()
+        if not fac or (not fac["cac"] and not fac["reviewer"]):
+            flash("Only CAC members or reviewers can access applications.", "error")
+            return redirect(url_for("faculty"))
         fac = fac["cac"]
-        #if not fac or not fac["cac"]:
-            #flash("Only CAC members can review applications.", "error")
-            #return redirect(url_for("faculty"))
         cursor.execute(
             "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
@@ -1153,16 +1181,22 @@ def review_applicant(uid):
 
 @app.route("/applications/decision/<int:uid>", methods=["GET", "POST"])
 def final_decision(uid):
-    cursor = mydb.cursor(dictionary=True)
-    if session["user"]["role"] == "faculty":
-        cursor.execute("SELECT cac FROM faculty WHERE uid=%s", (session['user']['uid'],))
-        fac = cursor.fetchone()
-        fac = fac["cac"]
-    fac = None
-    if not _is_staff() or session["user"]["role"] not in ("admin", "secretary") and (not fac):
+    if not _is_staff():
         flash("Access denied.", "error")
         return redirect(url_for("login"))
+    current_role = session["user"]["role"]
+    current_uid  = session["user"]["uid"]
     mydb.commit()
+    cursor = mydb.cursor(dictionary=True)
+    # CAC faculty can make final decisions; regular reviewers cannot
+    if current_role == "faculty":
+        cursor.execute("SELECT cac FROM faculty WHERE uid=%s", (current_uid,))
+        fac = cursor.fetchone()
+        if not fac or not fac["cac"]:
+            flash("Only CAC or Graduate Secretary can make final decisions.", "error")
+            return redirect(url_for("applications"))
+    # CAC and admin can see reviewer reviews; GS cannot
+    can_see_reviews = current_role in ("admin", "faculty")
     cursor.execute("SELECT a.*, u.fname, u.lname FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid=%s", (uid,))
     applicant = cursor.fetchone()
     cursor.execute("""
@@ -1198,7 +1232,7 @@ def final_decision(uid):
                 flash(f"Decision recorded: {decision}.", "success")
             return redirect(url_for("applications"))
     mydb.commit()
-    return render_template("final_decision.html", applicant=applicant, reviews=reviews, faculty_list=faculty_list, fac=fac, avg=avg['rating'])
+    return render_template("final_decision.html", applicant=applicant, reviews=reviews, faculty_list=faculty_list, can_see_reviews=can_see_reviews, avg=avg['rating'] if avg else None)
 
 #REGS routes
 @app.route("/viewgrades")
