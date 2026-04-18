@@ -983,6 +983,28 @@ def applicant_dashboard():
     return render_template("applicant_dashboard.html", applicant=applicant, letters=letters, degrees=degrees)
 
 
+@app.route("/applicant/respond_offer", methods=["POST"])
+def respond_offer():
+    if "user" not in session or session["user"]["role"] != "applicant":
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    uid = session["user"]["uid"]
+    response = request.form.get("response")
+    if response not in ("accepted", "declined"):
+        flash("Invalid response.", "error")
+        return redirect(url_for("applicant_dashboard"))
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT status FROM applicant WHERE uid=%s", (uid,))
+    row = cursor.fetchone()
+    if not row or row["status"] not in ("admitted", "admitted_with_aid"):
+        flash("No offer to respond to.", "error")
+        return redirect(url_for("applicant_dashboard"))
+    cursor.execute("UPDATE applicant SET status=%s WHERE uid=%s", (response, uid))
+    mydb.commit()
+    flash(f"You have {'accepted' if response == 'accepted' else 'declined'} the offer.", "success")
+    return redirect(url_for("applicant_dashboard"))
+
+
 @app.route("/applicant/request_recommendation", methods=["POST"])
 def request_recommendation():
     if "user" not in session or session["user"]["role"] != "applicant":
