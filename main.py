@@ -1072,10 +1072,10 @@ def applications():
     role = session["user"]["role"]
     reviewer_uid = session["user"]["uid"]
     if role == "faculty":
-        cursor.execute("SELECT cac FROM faculty WHERE uid=%s", (reviewer_uid,))
+        cursor.execute("SELECT cac, reviewer FROM faculty WHERE uid=%s", (reviewer_uid,))
         fac = cursor.fetchone()
-        if not fac or not fac["cac"]:
-            flash("Only CAC members can review applications.", "error")
+        if not fac or (not fac["cac"] and not fac["reviewer"]):
+            flash("Only CAC members or reviewers can access applications.", "error")
             return redirect(url_for("faculty"))
         cursor.execute(
             "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
