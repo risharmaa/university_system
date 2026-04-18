@@ -522,6 +522,30 @@ def secretary():
     return render_template("secretary.html", students=rows, query=q, current_user=current_user)
 
 
+@app.route("/secretary/stats")
+def secretary_stats():
+    if not _is_secretary_session():
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    degree = request.args.get("degree", "").strip()
+    mydb.commit()
+    cursor = mydb.cursor(dictionary=True)
+    where = "WHERE a.degree=%s" if degree else ""
+    params = (degree,) if degree else ()
+    cursor.execute(f"SELECT COUNT(*) AS total FROM applicant a {where}", params)
+    total = cursor.fetchone()["total"]
+    cursor.execute(f"SELECT COUNT(*) AS admitted FROM applicant a {where} {'AND' if degree else 'WHERE'} a.status IN ('admitted','admitted_with_aid','accepted')", params)
+    admitted = cursor.fetchone()["admitted"]
+    cursor.execute(f"SELECT COUNT(*) AS rejected FROM applicant a {where} {'AND' if degree else 'WHERE'} a.status='rejected'", params)
+    rejected = cursor.fetchone()["rejected"]
+    cursor.execute(f"SELECT AVG((a.gre_verbal + a.gre_quant)/2) AS avg_gre FROM applicant a {where} {'AND' if degree else 'WHERE'} a.status IN ('admitted','admitted_with_aid','accepted') AND a.gre_verbal IS NOT NULL AND a.gre_quant IS NOT NULL", params)
+    avg_gre = cursor.fetchone()["avg_gre"]
+    mydb.commit()
+    return render_template("secretary_stats.html", total=total, admitted=admitted,
+                           rejected=rejected, avg_gre=round(avg_gre, 1) if avg_gre else "N/A",
+                           degree=degree)
+
+
 @app.route("/secretary/student/<int:uid>")
 def secretary_student(uid):
     if not _is_secretary_session():
@@ -1000,14 +1024,22 @@ def respond_offer():
         flash("Invalid response.", "error")
         return redirect(url_for("applicant_dashboard"))
     cursor = mydb.cursor(dictionary=True)
-    cursor.execute("SELECT status FROM applicant WHERE uid=%s", (uid,))
+    cursor.execute("SELECT a.*, u.fname, u.lname, u.email, u.address FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid=%s", (uid,))
     row = cursor.fetchone()
     if not row or row["status"] not in ("admitted", "admitted_with_aid"):
         flash("No offer to respond to.", "error")
         return redirect(url_for("applicant_dashboard"))
     cursor.execute("UPDATE applicant SET status=%s WHERE uid=%s", (response, uid))
+    if response == "accepted":
+        cursor.execute("UPDATE users SET role='student' WHERE uid=%s", (uid,))
+        cursor.execute("INSERT INTO students (uid, program) VALUES (%s, %s)", (uid, row["degree"]))
+        mydb.commit()
+        session["user"]["role"] = "student"
+        session.modified = True
+        flash("You have accepted the offer. Welcome to GWU!", "success")
+        return redirect(url_for("student"))
     mydb.commit()
-    flash(f"You have {'accepted' if response == 'accepted' else 'declined'} the offer.", "success")
+    flash("You have declined the offer.", "success")
     return redirect(url_for("applicant_dashboard"))
 
 
@@ -1218,18 +1250,7 @@ def final_decision(uid):
         if decision in ("admitted", "admitted_with_aid", "rejected"):
             cursor.execute("UPDATE applicant SET status=%s WHERE uid=%s", (decision, uid))
             mydb.commit()
-            if decision in ("admitted", "admitted_with_aid"):
-                new_uid = int(''.join([str(secrets.randbelow(10)) for _ in range(8)]))
-                hashed = generate_password_hash("pass", method='pbkdf2:sha256')
-                cursor.execute(
-                    "INSERT INTO users (uid,username,password,role,fname,lname,email,address) VALUES (%s,%s,%s,'student',%s,%s,%s,%s)",
-                    (new_uid, str(new_uid), hashed, applicant['fname'], applicant['lname'], applicant.get('email',''), applicant.get('address',''))
-                )
-                cursor.execute("INSERT INTO students (uid,program) VALUES (%s,%s)", (new_uid, applicant['degree']))
-                mydb.commit()
-                flash(f"Decision: {decision}. Student account created — Username: {new_uid}, Password: pass", "success")
-            else:
-                flash(f"Decision recorded: {decision}.", "success")
+            flash(f"Decision recorded: {decision}. The applicant can now log in to accept or decline.", "success")
             return redirect(url_for("applications"))
     mydb.commit()
     return render_template("final_decision.html", applicant=applicant, reviews=reviews, faculty_list=faculty_list, can_see_reviews=can_see_reviews, avg=avg['rating'] if avg else None)
