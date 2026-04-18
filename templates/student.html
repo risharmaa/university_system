@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html>
      <head>
     <title>Student Info</title>
@@ -52,6 +52,8 @@
         </tr>
         {% endfor %}
     </table>
+    <p><a href = "/schedule">View Schedule</a></p>
+    <p><a href = "/coursecatalog">View Courses Available</a></p>
 
     <h2>Forms</h2>
     <a href="{{ url_for('form1')}}">
@@ -67,4 +69,97 @@
     </a>
   </body>
 
-</html>
+</html> -->
+
+{% extends "basic.html" %}
+{% block title %}Student Dashboard - ADS{% endblock %}
+{% block content %}
+<style>
+  .gpa-ring{width:90px;height:90px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .gpa-inner{width:66px;height:66px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem}
+</style>
+
+<h2 class="mb-1">Welcome, {{ current_user.fname }} {{ current_user.lname }}</h2>
+<p class="text-muted mb-4">{{ student.program }} Program &mdash; UID: {{ student.uid }}</p>
+
+<!-- Stats Row: GPA ring, credits bar, graduation checklist -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card shadow-sm text-center py-3">
+      <div class="gpa-ring mx-auto" style="background:conic-gradient({{ gpa_color }} {{ gpa_pct }}%, #e9ecef 0)">
+        <div class="gpa-inner">{{ "%.2f"|format(gpa) }}</div>
+      </div>
+      <small class="text-muted mt-2 d-block fw-semibold">Cumulative GPA</small>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm p-3 h-100 d-flex flex-column justify-content-center">
+      <div class="d-flex justify-content-between mb-1">
+        <small class="fw-semibold">Credits Completed</small>
+        <small>{{ total_credits }}/{{ credits_req }}</small>
+      </div>
+      <div class="progress" style="height:22px">
+        <div class="progress-bar {{ 'bg-success' if total_credits >= credits_req else 'bg-warning' }} progress-bar-striped progress-bar-animated" style="width:{{ credits_pct }}%">{{ credits_pct }}%</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-5">
+    <div class="card shadow-sm p-3 h-100">
+      <small class="fw-semibold d-block mb-2">Graduation Readiness</small>
+      {% for item in checklist %}
+      <div class="small py-1 border-bottom">{{ '✅' if item.pass else '❌' }} {{ item.label }}</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-4">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C">Personal Information</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('student_info') }}">
+          <div class="mb-2"><label class="form-label small fw-semibold">Address</label><input type="text" class="form-control form-control-sm" name="address" value="{{ student.address or '' }}"></div>
+          <div class="mb-2"><label class="form-label small fw-semibold">Email</label><input type="email" class="form-control form-control-sm" name="email" value="{{ student.email or '' }}"></div>
+          <div class="mb-3"><label class="form-label small fw-semibold">New Password</label><input type="password" class="form-control form-control-sm" name="password" placeholder="Leave blank to keep current"></div>
+          <button type="submit" class="btn btn-sm w-100 fw-semibold" style="background:#002147;color:#F2C75C">Update Info</button>
+        </form>
+      </div>
+    </div>
+    {% if phd_suggestions %}
+    <div class="card shadow-sm mb-4 border-warning">
+      <div class="card-header fw-semibold bg-warning text-dark">PhD Suggestions</div>
+      <ul class="list-group list-group-flush">{% for s in phd_suggestions %}<li class="list-group-item">🎓 {{ s }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C">Quick Actions</div>
+      <div class="card-body d-grid gap-2">
+        <a href="/form1" class="btn btn-outline-dark">📋 Submit Form 1</a>
+        <a href="/graduation" class="btn btn-outline-dark">🎓 Apply for Graduation</a>
+        <a href = "/schedule" class="btn btn-outline-dark">View Schedule</a>
+        <a href = "/coursecatalog" class="btn btn-outline-dark">View Courses Available</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C">Enrollment History</div>
+      <div class="card-body p-0">
+        <table class="table table-hover table-striped mb-0">
+          <thead class="table-dark"><tr><th>Course #</th><th>Title</th><th>Semester</th><th>Year</th><th>Grade</th><th>Credits</th></tr></thead>
+          <tbody>
+            {% for e in enrollment %}
+            <tr>
+              <td>{{ e.course_number }}</td><td>{{ e.title }}</td><td>{{ e.semester }}</td><td>{{ e.year }}</td>
+              <td><span class="badge {% if e.grade in ['A','A-'] %}bg-success{% elif e.grade in ['B+','B'] %}bg-primary{% elif e.grade=='IP' %}bg-warning text-dark{% elif e.grade=='F' %}bg-danger{% else %}bg-secondary{% endif %}">{{ e.grade or 'IP' }}</span></td>
+              <td>{{ e.credit_hours }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

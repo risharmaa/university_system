@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{title}}</title>
+    </head>
+    <body>
+        <h1>{{dpt}} {{crn}} | {{sem}} {{year}}</h1>
+        <h2>Section #{{sectionno}}</h2>
+        {% for student in students: %}
+        <h3>{{student['fname']}} {{student['lname']}}</h3>
+        <table>
+            <tr>
+                <td>Grade: {{student['grade']}}</td>
+                <td>
+                    <form action="/{{dpt}}/{{crn}}/{{sectionno}}/{{sem}}/{{year}}" method="POST">
+                        <input type = "hidden" name = "id" value = "{{student['uid']}}">
+                        <input type="text" name="newgrade" placeholder="New Grade">
+                        <input type="submit" name="submit" class = "button">
+                    </form>
+                </td>
+            </tr>
+        </table>
+        <p>{{error}}</p>
+        {% endfor %}
+        <p><a href= "/viewgrades">Grades List</a></p>
+    </body>
+</html>

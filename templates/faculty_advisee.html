@@ -51,6 +51,26 @@
   <h2>Form 1 Approval</h2>
   {% if form_row %}
     <p>Status: <strong>{{ form_row.advisor_approval or 'pending' }}</strong></p>
+    <h3>Planned Courses</h3>
+    {% if form_courses %}
+    <ul>
+      {% for c in form_courses %}
+        <li>
+          {{ c.department }} {{ c.course_number }} - {{ c.title }}
+        </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+      <p><em>No courses submitted.</em></p>
+    {% endif %}
+
+    {% if student.program == "PhD" and form_row.thesis %}
+      <h3>Thesis Proposal</h3>
+      <div style="white-space: pre-wrap; border: 1px solid; padding: 10px;">
+        {{ form_row.thesis}}
+      </div>
+    {% endif %}
+    
     {% if form_row.advisor_approval != 'approved' %}
     <form method="post" action="{{ url_for('faculty_approve_form1', uid=student.uid) }}">
       <button type="submit">Approve Form 1</button>

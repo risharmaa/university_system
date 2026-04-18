@@ -22,7 +22,7 @@
         {% if role == "advisor" %}
             <li>
                 <a href="{{ url_for('facultyadvisor') }}">
-                    Advisor Dashboard
+                    View Advisees
                 </a>
             </li>
         {% endif %}
@@ -43,7 +43,12 @@
             </li>
         {% endif %}
     {% endfor %}
+    <li><a href = "/viewgrades">View Grades</a></li>
+    <li><a href = "/coursecatalog">View Courses</a></li>
  </ul>
- <p><a href= "{{ url_for('logout') }}">Logout</a></p>
+ <a href= "{{ url_for('logout') }}">
+    <button type="button">Logout </button><br>
+    </a>
+</body>
  </body>
  </html>

@@ -6,8 +6,6 @@
   {% with messages = get_flashed_messages(with_categories=true) %}{% for c,m in messages %}
   <p><strong>{{ m }}</strong></p>{% endfor %}{% endwith %}
 
-  <a href="{{ url_for('logout') }}">Logout</a><br><br>
-
   <table border="1">
     <tr>
       <th>UID</th><th>Name</th><th>Degree</th><th>Status</th>
@@ -40,7 +38,7 @@
         {% if a.status in ('under review', 'incomplete') and role in ('admin', 'secretary', 'faculty') %}
         <a href="{{ url_for('review_applicant', uid=a.uid) }}">Review</a>
         {% endif %}
-        {% if role in ('admin', 'secretary') %}
+        {% if role in ('admin', 'secretary') or fac %}
         | <a href="{{ url_for('final_decision', uid=a.uid) }}">Decision</a>
         {% endif %}
       </td>
@@ -49,5 +47,15 @@
     <tr><td colspan="6">No applications found.</td></tr>
     {% endfor %}
   </table>
+
+  <br>
+  <a href="{{ url_for('faculty') }}">
+    <button type="button">Faculty Dashboard</button>
+  </a>
+  <br>
+  <br>
+
+  <a href="{{ url_for('logout') }}">
+    <button type="button">Logout </button><br>
 </body>
 </html>

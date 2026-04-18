@@ -1,4 +1,4 @@
--- Active: 1775839020576@@regs26-sharma.ca1y0o4q8i1b.us-east-1.rds.amazonaws.com@3306@university
+-- Active: 1775655748444@@regs26-sharma.ca1y0o4q8i1b.us-east-1.rds.amazonaws.com@3306@university
 
 -- USE DATABASE university;
 
@@ -28,6 +28,7 @@ CREATE TABLE students (
   advisor_id        int(8),
   graduation_status varchar(30),
   enrollment_year   varchar(4),
+  registration_hold BOOLEAN DEFAULT TRUE,
   PRIMARY KEY (uid),
   FOREIGN KEY (advisor_id) REFERENCES faculty(uid),
   FOREIGN KEY (uid) REFERENCES users(uid)
@@ -133,10 +134,20 @@ CREATE TABLE courses (
   title           varchar(50) NOT NULL,
   credits         int(2),
   department      varchar(10),
-  prereq1         varchar(10),
-  prereq2         varchar(10),
   PRIMARY KEY (course_number, department)
 );
+
+DROP TABLE IF EXISTS prereqs;
+CREATE TABLE prereqs (
+  coursenumber int(4),
+  dptname varchar(10),
+  prereqnum int(4),
+  prereqdpt varchar(10),
+  primary key(coursenumber, dptname, prereqnum, prereqdpt),
+  foreign key (coursenumber, dptname) references courses(course_number, department),
+  foreign key (prereqnum, prereqdpt) references courses(course_number,department)
+);
+
 
 DROP TABLE IF EXISTS enrollment;
 CREATE TABLE enrollment (
@@ -160,6 +171,7 @@ CREATE TABLE form (
   uid                   int(8) NOT NULL,
   program_type          varchar(10) NOT NULL,
   advisor_approval      varchar(10),
+  thesis                text,
   PRIMARY KEY (form_id),
   UNIQUE (uid),
   FOREIGN KEY (uid) REFERENCES students(uid)
@@ -208,18 +220,10 @@ CREATE TABLE courses_offered (
   buildingname varchar(10),
   semester varchar(6),
   year varchar(4),
+  capacity int(2),
   primary key (departmentname, coursenumber, semester, sectionnum, year),
   foreign key (coursenumber, departmentname) references courses(course_number, department),
-  foreign key (roomno, buildingname) references rooms(roomnum, building),
   foreign key (instructorid) references users(uid)
-);
-
-DROP TABLE IF EXISTS rooms;
-CREATE TABLE rooms (
-  capacity INTEGER,
-  roomnum varchar(4),
-  building varchar(10),
-  primary key(roomnum, building)
 );
 
 SET FOREIGN_KEY_CHECKS=1;
@@ -252,9 +256,9 @@ INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (12121212, true, false, 
 INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (22222222, false, true, true);
 
 -- inserting students from the sample data
-INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year) VALUES(55555555, 'MS', 22222222, 'active', 2023);
-INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year) VALUES(66666666, 'MS', 12121212, 'active', 2024);
-INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year) VALUES(87654321, 'PhD', 12121212, 'active', 2023);
+INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year, registration_hold) VALUES(55555555, 'MS', 22222222, 'active', 2023, TRUE);
+INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year, registration_hold) VALUES(66666666, 'MS', 12121212, 'active', 2024, TRUE);
+INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year, registration_hold) VALUES(87654321, 'PhD', 12121212, 'active', 2023, TRUE);
 
 -- inserting alumni from the sample data  
 INSERT INTO alumni (uid, degree, graduation_year) VALUES (77777777, 'MS', 2014);
@@ -263,28 +267,28 @@ INSERT INTO alumni (uid, degree, graduation_year) VALUES (77777777, 'MS', 2014);
 INSERT INTO secretary (uid) VALUES (33333333);
 
 -- inserting courses
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6221, 'SW Paradigms', 3, 'CSCI', NULL, NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6461, 'Computer Architecture', 3, 'CSCI', NULL, NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6212, 'Algorithms', 3, 'CSCI', NULL, NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6220, 'Machine Learning', 3, 'CSCI', NULL, NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6232, 'Networks 1', 3, 'CSCI', NULL, NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6233, 'Networks 2', 3, 'CSCI', 'CSCI 6232', NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6241, 'Database 1', 3, 'CSCI', NULL, NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6242, 'Database 2', 3, 'CSCI', 'CSCI 6241', NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6246, 'Compilers', 3, 'CSCI', 'CSCI 6461', 'CSCI 6212');
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6260, 'Multimedia', 3, 'CSCI', NULL, NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6251, 'Cloud Computing', 3, 'CSCI', 'CSCI 6461', NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6254, 'SW Engineering', 3, 'CSCI', 'CSCI 6221', NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6262, 'Graphics 1', 3, 'CSCI', NULL, NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6283, 'Security 1', 3, 'CSCI', 'CSCI 6212', NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6284, 'Cryptography', 3, 'CSCI', 'CSCI 6212', NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6286, 'Network Security', 3, 'CSCI', 'CSCI 6283', 'CSCI 6232');
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6325, 'Algorithms 2', 3, 'CSCI', 'CSCI 6212', NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6339, 'Embedded Systems', 3, 'CSCI', 'CSCI 6461','CSCI 6212');
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6384, 'Cryptography 2', 3, 'CSCI', 'CSCI 6284', NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6241, 'Communication Theory', 3, 'ECE', NULL, NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6242, 'Information Theory', 2, 'ECE', NULL, NULL);
-INSERT INTO courses (course_number, title, credits, department, prereq1, prereq2) VALUES (6210, 'Logic', 2, 'MATH', NULL, NULL);
+INSERT INTO courses (course_number, title, credits, department) VALUES (6221, 'SW Paradigms', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6461, 'Computer Architecture', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6212, 'Algorithms', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6220, 'Machine Learning', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6232, 'Networks 1', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6233, 'Networks 2', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6241, 'Database 1', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6242, 'Database 2', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6246, 'Compilers', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6260, 'Multimedia', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6251, 'Cloud Computing', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6254, 'SW Engineering', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6262, 'Graphics 1', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6283, 'Security 1', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6284, 'Cryptography', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6286, 'Network Security', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6325, 'Algorithms 2', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6339, 'Embedded Systems', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6384, 'Cryptography 2', 3, 'CSCI');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6241, 'Communication Theory', 3, 'ECE');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6242, 'Information Theory', 2, 'ECE');
+INSERT INTO courses (course_number, title, credits, department) VALUES (6210, 'Logic', 2, 'MATH');
 
 
 -- inserting courses for Paul 
@@ -345,58 +349,34 @@ INSERT INTO users (uid, username, password, role, fname, lname, email, address) 
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (13131313,'13131313', 'pass', 'faculty', 'Carol', 'Reed', 'carolreed@gwu.edu', 'Washington DC');
 
 -- inserting students for regs
-INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year) VALUES(88888888, 'MS', 22222222, 'active', 2024);
-INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year) VALUES(99999999, 'MS', 12121212, 'active', 2025);
+INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year, registration_hold) VALUES(88888888, 'MS', 22222222, 'active', 2024, TRUE);
+INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year, registration_hold) VALUES(99999999, 'MS', 12121212, 'active', 2025, TRUE);
 
 -- inserting faculty for regs
 INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (12345678, false, false, false);
 INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (13131313, true, false, false);
 
--- inserting rooms from regs
-INSERT INTO rooms VALUES (3, 1, 'SEH');
-INSERT INTO rooms VALUES (3, 2, 'SEH');
-INSERT INTO rooms VALUES (3, 3, 'SEH');
-INSERT INTO rooms VALUES (3, 4, 'SEH');
-INSERT INTO rooms VALUES (3, 5, 'SEH');
-INSERT INTO rooms VALUES (3, 6, 'SEH');
-INSERT INTO rooms VALUES (3, 7, 'SEH');
-INSERT INTO rooms VALUES (3, 8, 'SEH');
-INSERT INTO rooms VALUES (4, 9, 'SEH');
-INSERT INTO rooms VALUES (4, 10, 'SEH');
-INSERT INTO rooms VALUES (4, 11, 'SEH');
-INSERT INTO rooms VALUES (4, 12, 'SEH');
-INSERT INTO rooms VALUES (4, 13, 'SEH');
-INSERT INTO rooms VALUES (4, 14, 'SEH');
-INSERT INTO rooms VALUES (2, 15, 'SEH');
-INSERT INTO rooms VALUES (2, 16, 'SEH');
-INSERT INTO rooms VALUES (2, 17, 'SEH');
-INSERT INTO rooms VALUES (2, 18, 'SEH');
-INSERT INTO rooms VALUES (2, 19, 'SEH');
-INSERT INTO rooms VALUES (2, 20, 'SEH');
-INSERT INTO rooms VALUES (2, 21, 'SEH');
-INSERT INTO rooms VALUES (2, 22, 'SEH');
-
 -- inserting courses offered from regs
-INSERT INTO courses_offered VALUES ('CSCI', 6221, 1, 'M', '1500-1730', 10, 22222222, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('CSCI', 6461, 2, 'T', '1500-1730', 11, 22222222, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('CSCI', 6212, 3, 'W', '1500-1730', 12, 12345678, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('CSCI', 6232, 5, 'M', '1800-2030', 13, 12345678, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('CSCI', 6233, 6, 'T', '1800-2030', 14, 12121212, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('CSCI', 6241, 7, 'W', '1800-2030', 15, 12121212, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('CSCI', 6242, 8, 'R', '1800-2030', 16, 22222222, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('CSCI', 6246, 9, 'T', '1500-1730', 17, 12345678, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('CSCI', 6251, 10, 'M', '1800-2030', 18, 12121212, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('CSCI', 6254, 11, 'M', '1530-1800', 19, 12121212, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('CSCI', 6260, 12, 'R', '1800-2030', 20, 12121212, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('CSCI', 6262, 13, 'W', '1800-2030', 21, 12345678, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('CSCI', 6283, 14, 'T', '1800-2030', 22, 22222222, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('CSCI', 6284, 15, 'M', '1800-2030', 23, 22222222, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('CSCI', 6286, 16, 'W', '1800-2030', 24, 12121212, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('CSCI', 6384, 18, 'W', '1500-1730', 25, 22222222, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('ECE', 6241, 19, 'M', '1800-2030', 26, 12345678, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('ECE', 6242, 20, 'T', '1800-2030', 27, 22222222, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('MATH', 6210, 21, 'W', '1800-2030', 28, 12345678, 'SEH', 'Fall', 2026);
-INSERT INTO courses_offered VALUES ('CSCI', 6339, 22, 'R', '1600-1830', 29, 22222222, 'SEH', 'Fall', 2026);
+INSERT INTO courses_offered VALUES ('CSCI', 6221, 1, 'M', '1500-1730', 10, 22222222, 'SEH', 'Fall', 2026, 30);
+INSERT INTO courses_offered VALUES ('CSCI', 6461, 2, 'T', '1500-1730', 11, 22222222, 'SEH', 'Fall', 2026, 20);
+INSERT INTO courses_offered VALUES ('CSCI', 6212, 3, 'W', '1500-1730', 12, 12345678, 'SEH', 'Fall', 2026, 20);
+INSERT INTO courses_offered VALUES ('CSCI', 6232, 5, 'M', '1800-2030', 13, 12345678, 'SEH', 'Fall', 2026, 30);
+INSERT INTO courses_offered VALUES ('CSCI', 6233, 6, 'T', '1800-2030', 14, 12121212, 'SEH', 'Fall', 2026, 25);
+INSERT INTO courses_offered VALUES ('CSCI', 6241, 7, 'W', '1800-2030', 15, 12121212, 'SEH', 'Fall', 2026, 30);
+INSERT INTO courses_offered VALUES ('CSCI', 6242, 8, 'R', '1800-2030', 16, 22222222, 'SEH', 'Fall', 2026, 20);
+INSERT INTO courses_offered VALUES ('CSCI', 6246, 9, 'T', '1500-1730', 17, 12345678, 'SEH', 'Fall', 2026, 25);
+INSERT INTO courses_offered VALUES ('CSCI', 6251, 10, 'M', '1800-2030', 18, 12121212, 'SEH', 'Fall', 2026, 40);
+INSERT INTO courses_offered VALUES ('CSCI', 6254, 11, 'M', '1530-1800', 19, 12121212, 'SEH', 'Fall', 2026, 30);
+INSERT INTO courses_offered VALUES ('CSCI', 6260, 12, 'R', '1800-2030', 20, 12121212, 'SEH', 'Fall', 2026, 20);
+INSERT INTO courses_offered VALUES ('CSCI', 6262, 13, 'W', '1800-2030', 21, 12345678, 'SEH', 'Fall', 2026, 20);
+INSERT INTO courses_offered VALUES ('CSCI', 6283, 14, 'T', '1800-2030', 22, 22222222, 'SEH', 'Fall', 2026, 20);
+INSERT INTO courses_offered VALUES ('CSCI', 6284, 15, 'M', '1800-2030', 23, 22222222, 'SEH', 'Fall', 2026, 25);
+INSERT INTO courses_offered VALUES ('CSCI', 6286, 16, 'W', '1800-2030', 24, 12121212, 'SEH', 'Fall', 2026, 30);
+INSERT INTO courses_offered VALUES ('CSCI', 6384, 18, 'W', '1500-1730', 25, 22222222, 'SEH', 'Fall', 2026, 35);
+INSERT INTO courses_offered VALUES ('ECE', 6241, 19, 'M', '1800-2030', 26, 12345678, 'SEH', 'Fall', 2026, 30);
+INSERT INTO courses_offered VALUES ('ECE', 6242, 20, 'T', '1800-2030', 27, 22222222, 'SEH', 'Fall', 2026, 25);
+INSERT INTO courses_offered VALUES ('MATH', 6210, 21, 'W', '1800-2030', 28, 12345678, 'SEH', 'Fall', 2026, 25);
+INSERT INTO courses_offered VALUES ('CSCI', 6339, 22, 'R', '1600-1830', 29, 22222222, 'SEH', 'Fall', 2026, 20);
 
 -- inserting enrollment for Billie Holiday from REGS
 INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (88888888, 6461, 'CSCI', 'Fall', 2026, 'IP', 3, 11, false);
@@ -426,3 +406,19 @@ INSERT INTO recommendation_letter (uid, writer_name, writer_email, writer_title,
 
 -- Review by Bhagirath for John Lennon
 INSERT INTO app_review (uid, reviewer_uid, rating, deficiency_courses, reject_reasons, comment, recommended_advisor) VALUES (11223344, 22222222, 2, NULL, NULL, 'Strong candidate with solid GPA and work experience.', 12121212);
+
+-- inserting values for prereqs
+INSERT INTO prereqs VALUES (6233, 'CSCI', 6232, 'CSCI');
+INSERT INTO prereqs VALUES (6242,'CSCI', 6241, 'CSCI');
+INSERT INTO prereqs VALUES (6246,'CSCI', 6461, 'CSCI'); 
+INSERT INTO prereqs VALUES (6246, 'CSCI', 6212,'CSCI');
+INSERT INTO prereqs VALUES (6251, 'CSCI', 6461,'CSCI');
+INSERT INTO prereqs VALUES (6254, 'CSCI', 6221,'CSCI');
+INSERT INTO prereqs VALUES (6283, 'CSCI', 6212,'CSCI');
+INSERT INTO prereqs VALUES (6284, 'CSCI', 6212,'CSCI');
+INSERT INTO prereqs VALUES (6286, 'CSCI', 6283,'CSCI');
+INSERT INTO prereqs VALUES (6286, 'CSCI', 6232,'CSCI');
+INSERT INTO prereqs VALUES (6325, 'CSCI', 6212,'CSCI');
+INSERT INTO prereqs VALUES (6339, 'CSCI', 6461,'CSCI');
+INSERT INTO prereqs VALUES (6339, 'CSCI', 6212,'CSCI');
+INSERT INTO prereqs VALUES (6384, 'CSCI', 6284,'CSCI');

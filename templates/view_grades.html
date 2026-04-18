@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{title}}</title>
+    </head>
+    <body>
+        <h1>View All Grades</h1>
+
+        <form action="/viewgrades" method="GET">
+        <input type="text" name="search" placeholder = "Student ID">
+        <input type="submit" name="submit">
+        </form>
+
+        {% for class in classes: %}
+        <p><a href ="{{class['departmentname']}}/{{class['coursenumber']}}/{{class['sectionnum']}}/{{class['semester']}}/{{class['year']}}">
+            {{class['departmentname']}} {{class['coursenumber']}} : {{class['title']}} | Section #{{class['sectionnum']}}, {{class['semester']}} {{class['year']}}</a></p>
+        {% endfor %}
+        
+        {% if session['user']['role'] == 'faculty': %}
+            <a href="{{ url_for('faculty') }}">
+                <button type="button">Faculty Dashboard</button>
+            </a>
+            <br>
+
+        {% endif %}
+        {% if session['user']['role'] == 'secretary': %}
+            <a href= "{{ url_for('secretary') }}">
+                <button type="button">Secretary Dashboard</button>
+            </a>
+        {% endif %}
+        
+        <br>
+        <a href="{{ url_for('logout') }}">
+            <button type="button">Logout </button><br>
+        </a>
+    </body>
+</html>

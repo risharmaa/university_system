@@ -13,6 +13,7 @@
   {% if can_see_reviews %}
   <h2>Faculty Reviews</h2>
   {% if reviews %}
+  <p>Average Rating: {{avg}}</p>
   <table border="1">
     <tr><th>Reviewer</th><th>GAS Rating</th><th>Deficiency Courses</th><th>Reject Reasons</th><th>Recommended Advisor</th><th>Comments</th></tr>
     {% for r in reviews %}
@@ -53,6 +54,9 @@
     </select><br><br>
     <input type="submit" value="Submit Decision">
   </form>
+  <a href="{{ url_for('faculty') }}">
+    <button type="button">Switch Role</button>
+  </a>
   <br><a href="{{ url_for('applications') }}">Back to Applications</a>
 </body>
 </html>
