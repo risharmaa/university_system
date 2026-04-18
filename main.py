@@ -1167,11 +1167,22 @@ def review_applicant(uid):
 
 @app.route("/applications/decision/<int:uid>", methods=["GET", "POST"])
 def final_decision(uid):
-    if not _is_staff() or session["user"]["role"] not in ("admin", "secretary"):
+    if not _is_staff():
         flash("Access denied.", "error")
         return redirect(url_for("login"))
+    current_role = session["user"]["role"]
+    current_uid  = session["user"]["uid"]
     mydb.commit()
     cursor = mydb.cursor(dictionary=True)
+    # CAC faculty can make final decisions; regular reviewers cannot
+    if current_role == "faculty":
+        cursor.execute("SELECT cac FROM faculty WHERE uid=%s", (current_uid,))
+        fac = cursor.fetchone()
+        if not fac or not fac["cac"]:
+            flash("Only CAC or Graduate Secretary can make final decisions.", "error")
+            return redirect(url_for("applications"))
+    # CAC and admin can see reviewer reviews; GS cannot
+    can_see_reviews = current_role in ("admin", "faculty")
     cursor.execute("SELECT a.*, u.fname, u.lname FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid=%s", (uid,))
     applicant = cursor.fetchone()
     cursor.execute("""
@@ -1204,7 +1215,7 @@ def final_decision(uid):
                 flash(f"Decision recorded: {decision}.", "success")
             return redirect(url_for("applications"))
     mydb.commit()
-    return render_template("final_decision.html", applicant=applicant, reviews=reviews, faculty_list=faculty_list)
+    return render_template("final_decision.html", applicant=applicant, reviews=reviews, faculty_list=faculty_list, can_see_reviews=can_see_reviews)
 
 
 if __name__ == "__main__":
