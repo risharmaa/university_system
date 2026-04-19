@@ -992,7 +992,7 @@ def applicant_dashboard():
        areas_of_interest = request.form.get("areas_of_interest").strip()
        try:
            cursor.execute("UPDATE users SET fname=%s, lname=%s, email=%s, address=%s WHERE uid=%s", (fname, lname, email, address, uid))
-           cursor.execute("UPDATE applicant SET degree=%s, gre_verbal=%, gre_quant=%s, gre_year=%s, work_experience=%s, areas_of_interest=% WHERE uid=%", (degree, gre_verbal, gre_quant, gre_year, work_experience, areas_of_interest, uid))
+           cursor.execute("UPDATE applicant SET degree=%s, gre_verbal=%s, gre_quant=%s, gre_year=%s, work_experience=%s, areas_of_interest=%s WHERE uid=%s", (degree, gre_verbal, gre_quant, gre_year, work_experience, areas_of_interest, uid))
            mydb.commit()
            flash("Information updated successfully", "success")
        except mysql.connector.Error as e:
@@ -1001,7 +1001,7 @@ def applicant_dashboard():
        return redirect(url_for("applicant_dashboard"))
     cursor.execute("SELECT a.*, u.fname, u.lname, u.email, u.address FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid=%s", (uid,))
     applicant = cursor.fetchone()
-    cursor.execute("SELECT * FROM recommnedation_letter WHERE uid=%s ORDER BY id", (uid,))
+    cursor.execute("SELECT * FROM recommendation_letter WHERE uid=%s ORDER BY id", (uid,))
     letters = cursor.fetchall()
     cursor.execute("SELECT * FROM prior_degree WHERE uid=%s ORDER BY year DESC", (uid,))
     degrees = cursor.fetchall()
