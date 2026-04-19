@@ -31,6 +31,7 @@
   <p>Transcript Received: {{ 'Yes' if applicant.transcript_received else 'No' }}</p>
 
   <form method="POST" action="{{ url_for('applicant_dashboard') }}">
+    <h3>Personal Information</h3>
     <label>First Name:</label>
     <input type="text" name="fname" value="{{ applicant.fname }}" required><br><br>
 
@@ -43,13 +44,13 @@
     <label>Address:</label>
     <input type="text" name="address" value="{{ applicant.address }}"><br><br>
 
-    <button type="submit">Update Personal Information</button>
-  </form>
 
-  <h2>Application Details</h2>
-  <form method="POST" action="{{ url_for('applicant_dashboard') }}">
+    <h3>Application Information</h3>
     <label>Degree Sought:</label>
-    <input type="text" name="degree" value="{{ applicant.degree }}"><br><br>
+    <select name="degree">
+      <option value="MS" {% if applicant.degree == "MS" %}selected{% endif %}>MS</option>
+      <option value="PhD" {% if applicant.degree == "PhD" %}selected{% endif %}>PhD</option>
+    </select> <br><br>
 
     <label>GRE Verbal:</label>
     <input type="number" name="gre_verbal" value="{{ applicant.gre_verbal or '—' }}"><br><br>
@@ -66,7 +67,7 @@
     <label>Areas of Interest:</label>
     <textarea name="areas_of_interest">{{ applicant.areas_of_interest or '—' }}</textarea><br><br>
 
-    <button type="submit">Update Application Information</button>
+    <button type="submit">Update Information</button>
   </form>
 
   <h2>Prior Degrees</h2>
