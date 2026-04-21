@@ -494,6 +494,7 @@ def secretary():
         session["user"]["lname"] = sec_user["lname"]
         session.modified = True
     q = request.args.get("q", "").strip()
+    advisor_id = request.args.get("advisor_id")
     sql = (
         "SELECT u.uid, u.fname, u.lname, "
         "s.program, s.graduation_status, s.advisor_id, "
@@ -502,24 +503,30 @@ def secretary():
         "JOIN students s ON u.uid = s.uid "
         "LEFT JOIN users adv ON s.advisor_id = adv.uid"
     )
+    filters = []
+    params = []
     if q:
         like = f"%{q}%"
-        sql += (
-            " WHERE CAST(u.uid AS TEXT) LIKE %s OR u.fname LIKE %s OR u.lname LIKE %s "
+        filters.append("(CAST(u.uid AS TEXT) LIKE %s OR u.fname LIKE %s OR u.lname LIKE %s "
             "OR (u.fname || ' ' || u.lname) LIKE %s"
         )
-        sql += " ORDER BY u.lname, u.fname"
-        cursor.execute(sql, (like, like, like, like))
-        rows = cursor.fetchall()
-    else:
-        sql += " ORDER BY u.lname, u.fname"
-        cursor.execute(sql)
-        rows = cursor.fetchall()
+        params.extend([like, like, like, like])
+    if advisor_id:
+        filters.append("s.advisor_id = %s")
+        params.append(advisor_id)
+    if filters:
+        sql += " WHERE " + " AND ".join(filters)
+    sql += " ORDER BY u.lname, u.fname"
+    cursor.execute(sql, tuple(params))
+    rows = cursor.fetchall()
     uid = session["user"]["uid"]
     cursor.execute("SELECT * FROM users WHERE uid = %s", (uid,))
     current_user = cursor.fetchone()
+
+    cursor.execute("SELECT u.uid, u.fname, u.lname FROM faculty f JOIN users u ON f.uid = u.uid WHERE f.advisor = 1")
+    advisors = cursor.fetchall()
     mydb.commit()
-    return render_template("secretary.html", students=rows, query=q, current_user=current_user)
+    return render_template("secretary.html", students=rows, query=q, current_user=current_user, advisors=advisors, selected_advisor=advisor_id)
 
 
 @app.route("/secretary/student/<int:uid>")
