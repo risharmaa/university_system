@@ -495,6 +495,8 @@ def secretary():
         session.modified = True
     q = request.args.get("q", "").strip()
     advisor_id = request.args.get("advisor_id")
+    degree = request.args.get("degree")
+    year = request.args.get("year")
     sql = (
         "SELECT u.uid, u.fname, u.lname, "
         "s.program, s.graduation_status, s.advisor_id, "
@@ -514,6 +516,12 @@ def secretary():
     if advisor_id:
         filters.append("s.advisor_id = %s")
         params.append(advisor_id)
+    if degree:
+        filters.append("s.program = %s")
+        params.append(degree)
+    if year:
+        filters.append("s.enrollment_year = %s")
+        params.append(year)
     if filters:
         sql += " WHERE " + " AND ".join(filters)
     sql += " ORDER BY u.lname, u.fname"
@@ -526,7 +534,7 @@ def secretary():
     cursor.execute("SELECT u.uid, u.fname, u.lname FROM faculty f JOIN users u ON f.uid = u.uid WHERE f.advisor = 1")
     advisors = cursor.fetchall()
     mydb.commit()
-    return render_template("secretary.html", students=rows, query=q, current_user=current_user, advisors=advisors, selected_advisor=advisor_id)
+    return render_template("secretary.html", students=rows, query=q, current_user=current_user, advisors=advisors, selected_advisor=advisor_id, selected_degree=degree)
 
 
 @app.route("/secretary/student/<int:uid>")
