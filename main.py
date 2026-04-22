@@ -1375,7 +1375,8 @@ def add_grades(dpt, crn, sectionno, sem, year):
         cursor.execute("SELECT cg.uid, s.fname, s.lname, cg.grade, cg.prof_added FROM enrollment AS cg INNER JOIN users AS s ON cg.uid = s.uid WHERE cg.department = %s AND cg.course_number = %s AND cg.semester = %s AND cg.year = %s AND cg.sectionnum = %s", (dpt, crn, sem, year, sectionno))
         students = cursor.fetchall()
         if new != 'A' and new != 'A-' and new != 'B+' and new != 'B' and new != 'B-' and new != 'C+' and new != 'C' and new != 'F' and new != 'IP':
-            return render_template('add_grades.html', title = "Class Grade", students = students, dpt = dpt, crn = crn, sectionno = sectionno, sem = sem, year = year, error = "Please enter a valid grade.")
+            flash("Please enter a valid grade.")
+            return render_template('add_grades.html', title = "Class Grade", students = students, dpt = dpt, crn = crn, sectionno = sectionno, sem = sem, year = year)
         sid = int(request.form["id"])
         cursor.execute("SELECT prof_added FROM enrollment WHERE department = %s AND course_number = %s AND semester = %s AND year = %s AND sectionnum = %s AND uid = %s", (dpt, crn, sem, year, sectionno, sid))
         check = cursor.fetchone()
@@ -1383,7 +1384,8 @@ def add_grades(dpt, crn, sectionno, sem, year):
             cursor.execute("SELECT cg.uid, s.fname, s.lname, cg.grade, cg.prof_added FROM enrollment AS cg INNER JOIN users AS s ON cg.uid = s.uid WHERE cg.department = %s AND cg.course_number = %s AND cg.semester = %s AND cg.year = %s AND cg.sectionnum = %s", (dpt, crn, sem, year, sectionno))
             students = cursor.fetchall()
             mydb.commit()
-            return render_template('add_grades.html', title = "Class Grade", students = students, dpt = dpt, crn = crn, sectionno = sectionno, sem = sem, year = year, error = "You have already input a grade. If you would like to change this, please contact the system administrator or grad secretary.")
+            flash("You have already added a grade. If you would like to change this, please contact the systems administrator or grad secretary.")
+            return render_template('add_grades.html', title = "Class Grade", students = students, dpt = dpt, crn = crn, sectionno = sectionno, sem = sem, year = year)
         else:
             if session['user']['role'] == 'faculty':
                 cursor.execute("UPDATE enrollment SET grade = %s, prof_added = TRUE WHERE uid = %s AND department = %s AND course_number = %s AND semester = %s AND year = %s AND sectionnum = %s", (new, sid, dpt, crn, sem, year, sectionno))
@@ -1393,7 +1395,7 @@ def add_grades(dpt, crn, sectionno, sem, year):
     cursor.execute("SELECT cg.uid, s.fname, s.lname, cg.grade, cg.prof_added FROM enrollment AS cg INNER JOIN users AS s ON cg.uid = s.uid WHERE cg.department = %s AND cg.course_number = %s AND cg.semester = %s AND cg.year = %s AND cg.sectionnum = %s", (dpt, crn, sem, year, sectionno))
     students = cursor.fetchall()
     mydb.commit()
-    return render_template('add_grades.html', title = "Class Grade", students = students, dpt = dpt, crn = crn, sectionno = sectionno, sem = sem, year = year, error = "")
+    return render_template('add_grades.html', title = "Class Grade", students = students, dpt = dpt, crn = crn, sectionno = sectionno, sem = sem, year = year)
 
 @app.route('/schedule', methods = ['GET', 'POST'])
 def schedule():
