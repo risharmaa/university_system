@@ -1108,6 +1108,8 @@ def applications():
         return redirect(url_for("login"))
     mydb.commit()
     cursor = mydb.cursor(dictionary=True)
+    uid = request.args.get('uid')
+    lname = request.args.get('lname')
     fac = None
     role = session["user"]["role"]
     reviewer_uid = session["user"]["uid"]
@@ -1124,11 +1126,20 @@ def applications():
             "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
         )
     else:
-        cursor.execute(
-            "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+        if uid:
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
-            "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
-        )
+            "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid = %s ORDER BY a.status, u.lname", (uid,))
+        elif lname:
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+            "FROM applicant a JOIN users u ON a.uid=u.uid WHERE u.lname = %s ORDER BY a.status, u.lname", (lname,))
+        else:
+            cursor.execute(
+                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+                "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+                "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
+            )
     applicants = cursor.fetchall()
     mydb.commit()
     return render_template("applications.html", applicants=applicants, role=role, fac = fac)

@@ -5,7 +5,13 @@
   <h1>Applications Dashboard</h1>
   {% with messages = get_flashed_messages(with_categories=true) %}{% for c,m in messages %}
   <p><strong>{{ m }}</strong></p>{% endfor %}{% endwith %}
-
+  {% if role == 'faculty' or role == 'secretary' %}
+    <form action="/applications" method="GET">
+      <input type="text" name="uid" placeholder = "Applicant ID">
+      <input type="text" name="lname" placeholder = "Applicant Last Name">
+      <input type="submit" name="submit">
+    </form>
+  {% endif %}
   <table border="1">
     <tr>
       <th>UID</th><th>Name</th><th>Degree</th><th>Status</th>
