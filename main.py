@@ -571,12 +571,20 @@ def secretary_student(uid):
     )
     faculty = cursor.fetchall()
     mydb.commit()
+
+    # --- Added: compute GPA, credits, and checklist for dashboard stats ---
+    GRADE_PTS = {"A":4.0,"A-":3.7,"B+":3.3,"B":3.0,"B-":2.7,"C+":2.3,"C":2.0,"F":0.0}
+    completed = [e for e in enrollment if e['grade'] not in ('IP', None, '')]
+    total_ch   = sum(e['credit_hours'] or 0 for e in completed)
+    gpa = round(sum(GRADE_PTS.get(e['grade'],0)*(e['credit_hours'] or 0) for e in completed)/max(total_ch,1), 2)
+
     return render_template(
         "secretary_student.html",
         student=student,
         enrollment=enrollment,
         faculty=faculty,
         default_grad_year=datetime.now().year,
+        gpa = gpa
     )
 
 
@@ -764,6 +772,12 @@ def faculty_advisee(uid):
         (uid,)
     )
     enrollment = cursor.fetchall()
+    # --- Added: compute GPA, credits, and checklist for dashboard stats ---
+    GRADE_PTS = {"A":4.0,"A-":3.7,"B+":3.3,"B":3.0,"B-":2.7,"C+":2.3,"C":2.0,"F":0.0}
+    completed = [e for e in enrollment if e['grade'] not in ('IP', None, '')]
+    total_ch   = sum(e['credit_hours'] or 0 for e in completed)
+    gpa = round(sum(GRADE_PTS.get(e['grade'],0)*(e['credit_hours'] or 0) for e in completed)/max(total_ch,1), 2)
+
     # Fetch Form 1 if submitted, to show approval status and planned courses
     cursor.execute(
         "SELECT f.form_id, f.advisor_approval, f.thesis, f.program_type FROM form f WHERE f.uid = %s", (uid,)
@@ -779,7 +793,7 @@ def faculty_advisee(uid):
         )
         form_courses = cursor.fetchall()
     mydb.commit()
-    return render_template("faculty_advisee.html", student=student, enrollment=enrollment, form_row=form_row, form_courses=form_courses)
+    return render_template("faculty_advisee.html", student=student, enrollment=enrollment, form_row=form_row, form_courses=form_courses, gpa = gpa)
 
 
 
