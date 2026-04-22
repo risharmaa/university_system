@@ -7,8 +7,26 @@
   <p><strong>{{ m }}</strong></p>{% endfor %}{% endwith %}
   {% if role == 'faculty' or role == 'secretary' %}
     <form action="/applications" method="GET">
+      <label for="uid">Applicant ID:</label>
       <input type="text" name="uid" placeholder = "Applicant ID">
+      <label for="lname">Applicant Last Name:</label>
       <input type="text" name="lname" placeholder = "Applicant Last Name">
+      {% if role == 'secretary' %}
+        <label for="degree">Potential Degree:</label>
+        <br><select name="degree" id="degree">
+          <option value="">All Degree Types</option>
+          <option value="PhD">PhD</option>
+          <option value="MS">MS</option> 
+        </select>
+        <label for="semester">Semester Applied:</label>
+        <select name="semester" id="semester">
+          <option value="">All Semesters</option>
+          <option value="Spring">Spring</option>
+          <option value="Fall">Fall</option> 
+        </select>
+        <label for="year">Year Applied:</label>
+        <input type="text" name="year" placeholder = "Year Applied">
+      {% endif %}
       <input type="submit" name="submit">
     </form>
   {% endif %}
