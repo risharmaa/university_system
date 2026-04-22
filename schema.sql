@@ -1,4 +1,4 @@
--- Active: 1775655748444@@regs26-sharma.ca1y0o4q8i1b.us-east-1.rds.amazonaws.com@3306@university
+-- Active: 1773861604957@@regs26-sharma.ca1y0o4q8i1b.us-east-1.rds.amazonaws.com@3306@university
 
 -- USE DATABASE university;
 
@@ -56,6 +56,7 @@ CREATE TABLE alumni (
   uid               int(8) NOT NULL,
   degree            varchar(20),
   graduation_year   int(4),
+  graduation_semester varchar(10),
   PRIMARY KEY (uid),
   FOREIGN KEY (uid) REFERENCES users(uid)
 );
@@ -261,7 +262,7 @@ INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_ye
 INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year, registration_hold) VALUES(87654321, 'PhD', 12121212, 'active', 2023, TRUE);
 
 -- inserting alumni from the sample data  
-INSERT INTO alumni (uid, degree, graduation_year) VALUES (77777777, 'MS', 2014);
+INSERT INTO alumni (uid, degree, graduation_year, graduation_semester) VALUES (77777777, 'MS', 2014, 'Fall');
 
 -- inserting grad secretary from the sample data  
 INSERT INTO secretary (uid) VALUES (33333333);

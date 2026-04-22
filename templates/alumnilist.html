@@ -14,6 +14,12 @@
     </select>
     <label for = "grad_year">Graduation Year</label>
     <input type="text" name="grad_year" placeholder = "Graduation Year">
+    <label for="grad_semester">Semester Graduated</label>
+    <select name="grad_semester" id="grad_semester">
+    <option value="">Select Semester</option>
+      <option value = "Fall">Fall</option>
+      <option value = "Spring">Spring</option>
+    </select>
     <input type="submit" value="Search">
   </form>
     <table border="1" cellpadding="6">
@@ -23,6 +29,7 @@
         <th>Name</th>
         <th>Program</th>
         <th>Graduation Year</th>
+        <th>Graduation Semester</th>
         <th>Email</th>
       </tr>
     </thead>
@@ -35,6 +42,7 @@
         <td>
           {{ row.graduation_year}}
         </td>
+        <td>{{ row.graduation_semester }}</td>
         <td>{{ row.email }}</td>
       </tr>
       {% else %}
@@ -42,7 +50,7 @@
       {% endfor %}
     </tbody>
   </table>
-    <a href="/logout">Logout</a>
-    <a href="/secretary">Dashboard</a>
+    <p><a href="/logout">Logout</a></p>
+    <p><a href="/secretary">Dashboard</a></p>
 </body>
 </html>

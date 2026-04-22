@@ -1483,12 +1483,15 @@ def alumnilist():
     cursor = mydb.cursor(dictionary = True)
     program = request.args.get('program')
     grad_year = request.args.get('grad_year', type = int)
+    grad_semester = request.args.get('grad_semester')
     if program:
-        cursor.execute("SELECT users.uid, email, fname, lname, a.degree, a.graduation_year from users INNER JOIN alumni AS a ON users.uid = a.uid WHERE a.degree = %s", (program,))
+        cursor.execute("SELECT users.uid, email, fname, lname, a.degree, a.graduation_year, a.graduation_semester from users INNER JOIN alumni AS a ON users.uid = a.uid WHERE a.degree = %s", (program,))
     elif grad_year:
-        cursor.execute("SELECT users.uid, email, fname, lname, a.degree, a.graduation_year from users INNER JOIN alumni AS a ON users.uid = a.uid WHERE a.graduation_year = %s", (grad_year,))
+        cursor.execute("SELECT users.uid, email, fname, lname, a.degree, a.graduation_year, a.graduation_semester from users INNER JOIN alumni AS a ON users.uid = a.uid WHERE a.graduation_year = %s", (grad_year,))
+    elif grad_semester:
+        cursor.execute("SELECT users.uid, email, fname, lname, a.degree, a.graduation_year, a.graduation_semester from users INNER JOIN alumni AS a ON users.uid = a.uid WHERE a.graduation_semester = %s", (grad_semester,))
     else:
-        cursor.execute("SELECT users.uid, email, fname, lname, a.degree, a.graduation_year from users INNER JOIN alumni AS a ON users.uid = a.uid")
+        cursor.execute("SELECT users.uid, email, fname, lname, a.degree, a.graduation_year, a.graduation_semester from users INNER JOIN alumni AS a ON users.uid = a.uid")
     alum = cursor.fetchall()
     
     return render_template('alumnilist.html', title = "Alumni List", alum = alum)
