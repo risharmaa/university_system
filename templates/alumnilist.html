@@ -5,6 +5,14 @@
 </head>
 <body>
     <h1>Alumni List</h1>
+    <form method="get" action="/alumnilist">
+    <label for="program">Degree Type</label>
+    <select name="program" id="program">
+      <option value = "MS">MS</option>
+      <option value = "PhD">PhD</option>
+    </select>
+    <input type="submit" value="Search">
+  </form>
     <table border="1" cellpadding="6">
     <thead>
       <tr>
@@ -20,7 +28,7 @@
       <tr>
         <td>{{ row.uid }}</td>
         <td>{{ row.fname }} {{ row.lname }}</td>
-        <td>{{ row.degree}}</td>
+        <td>{{ row.degree }}</td>
         <td>
           {{ row.graduation_year}}
         </td>

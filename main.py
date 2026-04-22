@@ -1481,7 +1481,11 @@ def alumnilist():
         return redirect(url_for("login"))
 
     cursor = mydb.cursor(dictionary = True)
-    cursor.execute("SELECT users.uid, email, fname, lname, a.degree, a.graduation_year from users INNER JOIN alumni AS a ON users.uid = a.uid")
+    program = request.args.get('program')
+    if program:
+        cursor.execute("SELECT users.uid, email, fname, lname, a.degree, a.graduation_year from users INNER JOIN alumni AS a ON users.uid = a.uid WHERE a.degree = %s", (program,))
+    else:
+        cursor.execute("SELECT users.uid, email, fname, lname, a.degree, a.graduation_year from users INNER JOIN alumni AS a ON users.uid = a.uid")
     alum = cursor.fetchall()
     
     return render_template('alumnilist.html', title = "Alumni List", alum = alum)
