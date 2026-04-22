@@ -497,6 +497,7 @@ def secretary():
     advisor_id = request.args.get("advisor_id")
     degree = request.args.get("degree")
     year = request.args.get("year")
+    sid = request.args.get("sid")
     sql = (
         "SELECT u.uid, u.fname, u.lname, "
         "s.program, s.graduation_status, s.advisor_id, "
@@ -522,6 +523,9 @@ def secretary():
     if year:
         filters.append("s.enrollment_year = %s")
         params.append(year)
+    if sid:
+        filters.append("u.uid = %s")
+        params.append(sid)
     if filters:
         sql += " WHERE " + " AND ".join(filters)
     sql += " ORDER BY u.lname, u.fname"
@@ -706,12 +710,21 @@ def facultyadvisor():
         session["user"]["lname"] = fac_user["lname"]
         session.modified = True
     # Fetch all students assigned to this faculty advisor
-    cursor.execute(
-        "SELECT s.uid, u.fname, u.lname, s.program, s.graduation_status "
-        "FROM students s JOIN users u ON s.uid = u.uid "
-        "WHERE s.advisor_id = %s ORDER BY u.lname, u.fname",
-        (uid,)
-    )
+    search = request.args.get('search')
+    if search:
+        cursor.execute(
+            "SELECT s.uid, u.fname, u.lname, s.program, s.graduation_status "
+            "FROM students s JOIN users u ON s.uid = u.uid "
+            "WHERE s.advisor_id = %s AND s.uid = %s ORDER BY u.lname, u.fname",
+            (uid, search)
+        )
+    else:
+        cursor.execute(
+            "SELECT s.uid, u.fname, u.lname, s.program, s.graduation_status "
+            "FROM students s JOIN users u ON s.uid = u.uid "
+            "WHERE s.advisor_id = %s ORDER BY u.lname, u.fname",
+            (uid,)
+        )
     advisees = cursor.fetchall()
     cursor.execute("SELECT * FROM users WHERE uid = %s", (uid,))
     current_user = cursor.fetchone()

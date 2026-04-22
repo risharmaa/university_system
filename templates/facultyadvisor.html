@@ -17,6 +17,11 @@
   <h1>Faculty Advisor Dashboard</h1>
   <p>Signed in as {{ session["user"]["fname"] }} {{ session["user"]["lname"] }}</p>
   <h2>My Advisees</h2>
+  <form action="/faculty/advisor" method="GET">
+    <label for="search">Search by Student ID:</label>
+    <input type="text" name="search" placeholder = "Student ID">
+    <input type="submit" name="submit">
+  </form>
   <table border="1" cellpadding="6">
     <thead>
       <tr>
