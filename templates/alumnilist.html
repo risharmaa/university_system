@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Alumni List</title>
+</head>
+<body>
+    <h1>Alumni List</h1>
+    <table border="1" cellpadding="6">
+    <thead>
+      <tr>
+        <th>UID</th>
+        <th>Name</th>
+        <th>Program</th>
+        <th>Graduation Year</th>
+        <th>Email</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in alum %}
+      <tr>
+        <td>{{ row.uid }}</td>
+        <td>{{ row.fname }} {{ row.lname }}</td>
+        <td>{{ row.degree}}</td>
+        <td>
+          {{ row.graduation_year}}
+        </td>
+        <td>{{ row.email }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">No students match.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+    <a href="/logout">Logout</a>
+    <a href="/secretary">Dashboard</a>
+</body>
+</html>

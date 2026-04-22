@@ -1474,5 +1474,17 @@ def showcourse(dpt, courseno):
 
   return render_template('course.html', title = "Course", course = course, enrolledIn = enrolledIn, conflict = conflict, missing_prereqs=missing_prereqs, prerequisites=prerequisites, phd_err=phd_err, schedule=schedule, capacity=capacity, holds=holds)
 
+@app.route('/alumnilist')
+def alumnilist():
+    if session['user']['role'] != 'secretary':
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+
+    cursor = mydb.cursor(dictionary = True)
+    cursor.execute("SELECT users.uid, email, fname, lname, a.degree, a.graduation_year from users INNER JOIN alumni AS a ON users.uid = a.uid")
+    alum = cursor.fetchall()
+    
+    return render_template('alumnilist.html', title = "Alumni List", alum = alum)
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
