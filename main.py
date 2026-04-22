@@ -495,6 +495,8 @@ def secretary():
         session.modified = True
     q = request.args.get("q", "").strip()
     advisor_id = request.args.get("advisor_id")
+    degree = request.args.get("degree")
+    year = request.args.get("year")
     sql = (
         "SELECT u.uid, u.fname, u.lname, "
         "s.program, s.graduation_status, s.advisor_id, "
@@ -514,6 +516,12 @@ def secretary():
     if advisor_id:
         filters.append("s.advisor_id = %s")
         params.append(advisor_id)
+    if degree:
+        filters.append("s.program = %s")
+        params.append(degree)
+    if year:
+        filters.append("s.enrollment_year = %s")
+        params.append(year)
     if filters:
         sql += " WHERE " + " AND ".join(filters)
     sql += " ORDER BY u.lname, u.fname"
@@ -526,7 +534,7 @@ def secretary():
     cursor.execute("SELECT u.uid, u.fname, u.lname FROM faculty f JOIN users u ON f.uid = u.uid WHERE f.advisor = 1")
     advisors = cursor.fetchall()
     mydb.commit()
-    return render_template("secretary.html", students=rows, query=q, current_user=current_user, advisors=advisors, selected_advisor=advisor_id)
+    return render_template("secretary.html", students=rows, query=q, current_user=current_user, advisors=advisors, selected_advisor=advisor_id, selected_degree=degree)
 
 
 @app.route("/secretary/student/<int:uid>")
@@ -1108,6 +1116,11 @@ def applications():
         return redirect(url_for("login"))
     mydb.commit()
     cursor = mydb.cursor(dictionary=True)
+    uid = request.args.get('uid')
+    lname = request.args.get('lname')
+    year = request.args.get('year')
+    degree = request.args.get('degree')
+    semester = request.args.get('semester')
     fac = None
     role = session["user"]["role"]
     reviewer_uid = session["user"]["uid"]
@@ -1118,17 +1131,62 @@ def applications():
             flash("Only CAC members or reviewers can access applications.", "error")
             return redirect(url_for("faculty"))
         fac = fac["cac"]
-        cursor.execute(
-            "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+        if uid:
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
-            "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
-        )
+            "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid = %s ORDER BY a.status, u.lname", (uid,))
+        elif lname:
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+            "FROM applicant a JOIN users u ON a.uid=u.uid WHERE u.lname = %s ORDER BY a.status, u.lname", (lname,))
+        else:
+            cursor.execute(
+                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+                "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+                "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
+            )
+    elif role == "secretary":
+        if uid:
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+            "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid = %s ORDER BY a.status, u.lname", (uid,))
+        elif lname:
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+            "FROM applicant a JOIN users u ON a.uid=u.uid WHERE u.lname = %s ORDER BY a.status, u.lname", (lname,))
+        elif year:
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+            "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.year_applied = %s ORDER BY a.status, u.lname", (year,))
+        elif degree:
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+            "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.degree = %s ORDER BY a.status, u.lname", (degree,))
+        elif semester:
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+            "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.semester_applied = %s ORDER BY a.status, u.lname", (semester,))
+        else:
+            cursor.execute(
+                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+                "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+                "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
+            )
     else:
-        cursor.execute(
-            "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+        if uid:
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
-            "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
-        )
+            "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid = %s ORDER BY a.status, u.lname", (uid,))
+        elif lname:
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+            "FROM applicant a JOIN users u ON a.uid=u.uid WHERE u.lname = %s ORDER BY a.status, u.lname", (lname,))
+        else:
+            cursor.execute(
+                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+                "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+                "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
+            )
     applicants = cursor.fetchall()
     mydb.commit()
     return render_template("applications.html", applicants=applicants, role=role, fac = fac)
@@ -1453,6 +1511,28 @@ def showcourse(dpt, courseno):
   mydb.commit()
 
   return render_template('course.html', title = "Course", course = course, enrolledIn = enrolledIn, conflict = conflict, missing_prereqs=missing_prereqs, prerequisites=prerequisites, phd_err=phd_err, schedule=schedule, capacity=capacity, holds=holds)
+
+@app.route('/alumnilist')
+def alumnilist():
+    if session['user']['role'] != 'secretary':
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+
+    cursor = mydb.cursor(dictionary = True)
+    program = request.args.get('program')
+    grad_year = request.args.get('grad_year', type = int)
+    grad_semester = request.args.get('grad_semester')
+    if program:
+        cursor.execute("SELECT users.uid, email, fname, lname, a.degree, a.graduation_year, a.graduation_semester from users INNER JOIN alumni AS a ON users.uid = a.uid WHERE a.degree = %s", (program,))
+    elif grad_year:
+        cursor.execute("SELECT users.uid, email, fname, lname, a.degree, a.graduation_year, a.graduation_semester from users INNER JOIN alumni AS a ON users.uid = a.uid WHERE a.graduation_year = %s", (grad_year,))
+    elif grad_semester:
+        cursor.execute("SELECT users.uid, email, fname, lname, a.degree, a.graduation_year, a.graduation_semester from users INNER JOIN alumni AS a ON users.uid = a.uid WHERE a.graduation_semester = %s", (grad_semester,))
+    else:
+        cursor.execute("SELECT users.uid, email, fname, lname, a.degree, a.graduation_year, a.graduation_semester from users INNER JOIN alumni AS a ON users.uid = a.uid")
+    alum = cursor.fetchall()
+    
+    return render_template('alumnilist.html', title = "Alumni List", alum = alum)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
