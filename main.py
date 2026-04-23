@@ -1475,9 +1475,16 @@ def courseCatalog():
                 elif grade != 'IP':
                     item['passed'] = True
 
+  # adding schedule to page
+  cursor.execute("SELECT grade, enrollment.department, enrollment.course_number, enrollment.sectionnum, enrollment.semester, enrollment.year, courses.title, day, time FROM enrollment " \
+    "right join courses on enrollment.department=courses.department AND enrollment.course_number = courses.course_number " \
+    "right join courses_offered on enrollment.department=courses_offered.departmentname AND enrollment.course_number=courses_offered.coursenumber AND enrollment.sectionnum=courses_offered.sectionnum AND enrollment.semester=courses_offered.semester AND enrollment.year=courses_offered.year " \
+    "WHERE enrollment.uid = %s and enrollment.prof_added = FALSE", (session['user']['uid'],))
+  schedule = cursor.fetchall()
+
 
   mydb.commit()
-  return render_template('course_catalog.html', title = "Course Catalog", course = course)
+  return render_template('course_catalog.html', title = "Course Catalog", course = course, schedule = schedule)
 
 @app.route('/course/<dpt>/<courseno>', methods=['GET', 'POST'])
 def showcourse(dpt, courseno):
