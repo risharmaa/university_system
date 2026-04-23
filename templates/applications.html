@@ -33,7 +33,7 @@
   <table border="1">
     <tr>
       <th>UID</th><th>Name</th><th>Degree</th><th>Status</th>
-      {% if role in ('admin', 'secretary') %}<th>Transcript</th>{% endif %}
+      {% if role == 'secretary' %}<th>Transcript</th>{% endif %}
       {% if role == 'faculty' %}<th>Completeness</th>{% endif %}
       <th>Actions</th>
     </tr>
@@ -43,27 +43,40 @@
       <td>{{ a.fname }} {{ a.lname }}</td>
       <td>{{ a.degree }}</td>
       <td>{{ a.status }}</td>
-      {% if role in ('admin', 'secretary') %}
-      <td>
-        {{ 'Yes' if a.transcript_received else 'No' }}
-        <form method="POST" action="{{ url_for('update_transcript', uid=a.uid) }}" style="display:inline">
-          <input type="submit" value="Toggle">
-        </form>
-      </td>
-      {% endif %}
       {% if role == 'faculty' %}
       <td>
-        {% if not a.transcript_received %}<span>No transcript</span><br>{% endif %}
-        {% if a.letters_submitted == 0 %}<span>No letters submitted</span>
-        {% else %}<span>{{ a.letters_submitted }} letter(s) submitted</span>{% endif %}
+        {% if not a.transcript_received %} No transcript<br>{% endif %}
+        {% if a.letters_submitted == 0 %}
+          No letters submitted 
+        {% else %}
+          Letters submitted
+        {% endif %}
+      </td>
+      {% endif %}
+      {% if role == 'secretary' %}
+      <td>
+        <form method="POST" action="{{ url_for('update_transcript', uid=a.uid) }}">
+          <span>{{ "Received" if a.transcript_received else "Pending" }}</span>
+
+          {% if a.transcript_method == "mail" %}
+            <select name="transcript_received">
+              <option value="1" {% if a.transcript_received %}selected{% endif %}>Received</option>
+              <option value="0" {% if not a.transcript_received %}selected{% endif %}>Not Received</option>
+            </select>
+            <button type="submit">Update</button>
+          {% else %}
+            <span style="color:gray;">Uploaded</span>
+          {% endif %}
+        </form>
       </td>
       {% endif %}
       <td>
         {% if a.status in ('under review', 'incomplete') and role in ('admin', 'secretary', 'faculty') %}
-        <a href="{{ url_for('review_applicant', uid=a.uid) }}">Review</a>
+          <a href="{{ url_for('review_applicant', uid=a.uid) }}">Review</a>
         {% endif %}
+
         {% if role in ('admin', 'secretary') or fac %}
-        | <a href="{{ url_for('final_decision', uid=a.uid) }}">Decision</a>
+          | <a href="{{ url_for('final_decision', uid=a.uid) }}">Decision</a>
         {% endif %}
       </td>
     </tr>
