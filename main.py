@@ -109,7 +109,7 @@ def create_user():
         flash("Access denied.", "error")
         return redirect(url_for("login"))
     if request.method == "POST":
-        uid = request.form.get("uid")
+        uid = int(request.form.get("uid"))
         username = request.form.get("username")
         password = request.form.get("password")
         role = request.form.get("role")
@@ -136,11 +136,12 @@ def create_user():
                 degree = request.form.get("degree")
                 graduation_year = request.form.get("graduation_year")
                 address = request.form.get("address")
-                cursor.execute("INSERT INTO alumni (uid, degree, graduation_year) VALUES (%s, %s, %s, %s)", (uid, degree, graduation_year))
+                graduation_semester = request.form.get("graduation_semester")
+                cursor.execute("INSERT INTO alumni (uid, degree, graduation_year, graduation_semester) VALUES (%s, %s, %s, %s)", (uid, degree, graduation_year, graduation_semester))
             mydb.commit()
             flash("New account created", "success")
         except mysql.connector.Error as e:
-            flash("Error: UID or username already exists", "error")
+            flash(f"Database error: {e}", "error")
         mydb.commit()
     return render_template("create_user.html")
 
