@@ -1445,6 +1445,18 @@ def courseCatalog():
         cursor.execute("SELECT department, course_number FROM enrollment WHERE department = %s AND course_number = %s AND uid = %s", (item['department'], item['course_number'], session['user']['uid']))
         enrolledIn = cursor.fetchone()
         item['enrolledIn'] = enrolledIn
+        # check if they've already taken it (from years prior and if they failed--if yes, they can retake)
+        item['retake'] = False
+        item['passed'] = False
+        if enrolledIn:
+            cursor.execute("SELECT grade FROM enrollment WHERE department = %s AND course_number = %s AND uid = %s AND (year != %s OR semester != %s)", (item['department'], item['course_number'], session['user']['uid'], item['year'], item['semester']))
+            grade = cursor.fetchone()
+            if grade:
+                grade = grade['grade']
+                if grade == 'D' or grade == 'F':
+                    item['retake'] = True
+                elif grade != 'IP':
+                    item['passed'] = True
 
 
   mydb.commit()

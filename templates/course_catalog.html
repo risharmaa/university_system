@@ -18,7 +18,7 @@
         {% for row in course: %}
             <details>
             <summary>
-            <h3> <a href="/course/{{row.department}}/{{row.course_number}}"> {{row.department}} {{row.course_number}}: {{row.title}}</a> </h3>
+            <h3>{{row.department}} {{row.course_number}}: {{row.title}}</h3>
             </summary>
             <Strong>Course Information:</Strong>
             <ul>
@@ -60,10 +60,12 @@
                 </ul>
             </ul>
             {% if session['user']['role'] == 'student' %}
-                {% if row.enrolledIn %}
-                    <a href="/{{row.department}}/{{row.course_number}}"><button type="button">Unenroll in Class</button></a>
-                {% else %}
-                    <a href="/{{row.department}}/{{row.course_number}}"><button type="button">Enroll in Class</button></a>
+                {% if row.retake %}
+                    <a href="/course/{{row.department}}/{{row.course_number}}"><button type="button">Enroll</button></a>
+                {% elif row.enrolledIn and not row.passed %}
+                    <a href="/course/{{row.department}}/{{row.course_number}}"><button type="button">Unenroll</button></a>
+                {% elif not row.passed %}
+                    <a href="/course/{{row.department}}/{{row.course_number}}"><button type="button">Enroll</button></a>
                 {% endif %}
             {% endif %}
             </details>
