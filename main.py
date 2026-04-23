@@ -970,6 +970,8 @@ def applicant_register():
         ssn   = request.form.get("ssn", "").strip()
         address = request.form.get("address", "").strip()
         degree  = request.form.get("degree", "").strip()
+        year_applied = request.form.get("year_applied")
+        semester_applied = request.form.get("semester_applied")
         gre_verbal    = request.form.get("gre_verbal") or None
         gre_quant     = request.form.get("gre_quant") or None
         gre_year      = request.form.get("gre_year") or None
@@ -990,8 +992,8 @@ def applicant_register():
                 (uid, username, hashed, fname, lname, email, address)
             )
             cursor.execute(
-                "INSERT INTO applicant (uid,ssn,degree,gre_verbal,gre_quant,gre_year,work_experience,areas_of_interest) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
-                (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_exp, interests)
+                "INSERT INTO applicant (uid,ssn,degree,gre_verbal,gre_quant,gre_year,work_experience,areas_of_interest, year_applied, semester_applied) VALUES (%s,%s,%s,%s,%s,%s,%s,%s, %s, %s)",
+                (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_exp, interests, year_applied, semester_applied)
             )
             mydb.commit()
 
