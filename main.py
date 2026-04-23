@@ -542,6 +542,7 @@ def secretary():
     return render_template("secretary.html", students=rows, query=q, current_user=current_user, advisors=advisors, selected_advisor=advisor_id, selected_degree=degree)
 
 
+
 @app.route("/secretary/student/<int:uid>")
 def secretary_student(uid):
     if not _is_secretary_session():
@@ -978,6 +979,11 @@ def applicant_register():
         work_exp      = request.form.get("work_experience", "").strip()
         interests     = request.form.get("areas_of_interest", "").strip()
 
+        transcript_method = request.form.get("transcript_method")
+        if transcript_method == "upload":
+            transcript_received = True
+        else:
+            transcript_recieved = False
         if not _is_valid_ssn(ssn):
             flash("SSN must be in XXX-XX-XXXX format.", "error")
             return render_template("applicant_register.html")
@@ -992,8 +998,8 @@ def applicant_register():
                 (uid, username, hashed, fname, lname, email, address)
             )
             cursor.execute(
-                "INSERT INTO applicant (uid,ssn,degree,gre_verbal,gre_quant,gre_year,work_experience,areas_of_interest, year_applied, semester_applied) VALUES (%s,%s,%s,%s,%s,%s,%s,%s, %s, %s)",
-                (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_exp, interests, year_applied, semester_applied)
+                "INSERT INTO applicant (uid,ssn,degree,gre_verbal,gre_quant,gre_year,work_experience,areas_of_interest, transcript_received, transcript_method year_applied, semester_applied) VALUES (%s,%s,%s,%s,%s,%s,%s,%s, %s, %s, %s, %s)",
+                (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_exp, interests, transcript_received, transcript_method, year_applied, semester_applied)
             )
             mydb.commit()
 

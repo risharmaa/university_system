@@ -72,6 +72,7 @@ CREATE TABLE applicant (
   work_experience TEXT,  -- Prior work experience
   areas_of_interest TEXT,  -- Areas of interest
   transcript_received BOOLEAN DEFAULT FALSE,
+  transcript_method varchar(10),
   year_applied int(4),
   semester_applied varchar(10),
   status VARCHAR(50) DEFAULT 'incomplete',  -- e.g., 'incomplete', 'under review', 'admitted', 'rejected'
