@@ -983,7 +983,7 @@ def applicant_register():
         if transcript_method == "upload":
             transcript_received = True
         else:
-            transcript_recieved = False
+            transcript_received = False
         if not _is_valid_ssn(ssn):
             flash("SSN must be in XXX-XX-XXXX format.", "error")
             return render_template("applicant_register.html")
@@ -998,9 +998,10 @@ def applicant_register():
                 (uid, username, hashed, fname, lname, email, address)
             )
             cursor.execute(
-                "INSERT INTO applicant (uid,ssn,degree,gre_verbal,gre_quant,gre_year,work_experience,areas_of_interest, transcript_received, transcript_method year_applied, semester_applied) VALUES (%s,%s,%s,%s,%s,%s,%s,%s, %s, %s, %s, %s)",
+                "INSERT INTO applicant (uid,ssn,degree,gre_verbal,gre_quant,gre_year,work_experience,areas_of_interest, transcript_received, transcript_method, year_applied, semester_applied) VALUES (%s,%s,%s,%s,%s,%s,%s,%s, %s, %s, %s, %s)",
                 (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_exp, interests, transcript_received, transcript_method, year_applied, semester_applied)
             )
+            _check_completeness(uid, cursor)
             mydb.commit()
 
             # Save prior degrees
@@ -1168,58 +1169,58 @@ def applications():
             return redirect(url_for("faculty"))
         fac = fac["cac"]
         if uid:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid = %s ORDER BY a.status, u.lname", (uid,))
         elif lname:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid WHERE u.lname = %s ORDER BY a.status, u.lname", (lname,))
         else:
             cursor.execute(
-                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
                 "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
                 "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
             )
     elif role == "secretary":
         if uid:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid = %s ORDER BY a.status, u.lname", (uid,))
         elif lname:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid WHERE u.lname = %s ORDER BY a.status, u.lname", (lname,))
         elif year:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.year_applied = %s ORDER BY a.status, u.lname", (year,))
         elif degree:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.degree = %s ORDER BY a.status, u.lname", (degree,))
         elif semester:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.semester_applied = %s ORDER BY a.status, u.lname", (semester,))
         else:
             cursor.execute(
-                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
                 "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
                 "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
             )
     else:
         if uid:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid = %s ORDER BY a.status, u.lname", (uid,))
         elif lname:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid WHERE u.lname = %s ORDER BY a.status, u.lname", (lname,))
         else:
             cursor.execute(
-                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
                 "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
                 "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
             )
@@ -1230,18 +1231,25 @@ def applications():
 
 @app.route("/applications/transcript/<int:uid>", methods=["POST"])
 def update_transcript(uid):
-    if not _is_staff() or session["user"]["role"] not in ("admin", "secretary"):
+    if not _is_staff() or session["user"]["role"] not in ("secretary"):
         flash("Access denied.", "error")
         return redirect(url_for("applications"))
     cursor = mydb.cursor(dictionary=True)
-    cursor.execute("SELECT transcript_received FROM applicant WHERE uid=%s", (uid,))
+    cursor.execute("SELECT transcript_received , transcript_method FROM applicant WHERE uid=%s", (uid,))
     row = cursor.fetchone()
-    if row:
-        new_val = not row["transcript_received"]
-        cursor.execute("UPDATE applicant SET transcript_received=%s WHERE uid=%s", (new_val, uid))
-        mydb.commit()
-        _check_completeness(uid, cursor)
-        mydb.commit()
+    if not row:
+       flash("Applicant not found", "error")
+       return redirect(url_for("applications"))
+    if row["transcript_method"] != "mail":
+        flash("Uploaded transcripts already handled", "error")
+        return redirect(url_for("applications")) 
+    if not row["transcript_received"]:
+        cursor.execute("UPDATE applicant SET transcript_received=TRUE WHERE uid=%s", (uid,))
+        flash("Transcript marked as received", "success")
+    else:
+        flash("Transcript already marked as received", "info")
+    _check_completeness(uid, cursor)
+    mydb.commit()
     return redirect(url_for("applications"))
 
 
