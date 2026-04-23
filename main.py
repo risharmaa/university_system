@@ -22,7 +22,8 @@ mydb = mysql.connector.connect(
     host="regs26-sharma.ca1y0o4q8i1b.us-east-1.rds.amazonaws.com",
     user="admin",
     password="14998riya",
-    database="university"
+    database="university",
+    buffered=True
 )
 
 app.debug = True
@@ -1434,23 +1435,46 @@ def courseCatalog():
   title = request.args.get('title')
 
   if dpt and courseno and title:
-    cursor.execute("SELECT * FROM courses WHERE department = %s AND course_number = %s AND title = %s", (dpt, courseno, title,))
+    cursor.execute("SELECT courses.*, courses_offered.*, t.fname, t.lname FROM courses INNER JOIN courses_offered ON courses.department = courses_offered.departmentname AND courses.course_number = courses_offered.coursenumber INNER JOIN users AS t ON instructorid = uid WHERE department = %s AND course_number = %s AND title = %s ORDER BY department, course_number", (dpt, courseno, title,))
   elif dpt and courseno:
-    cursor.execute("SELECT * FROM courses WHERE department = %s AND course_number = %s", (dpt, courseno,))
+    cursor.execute("SELECT courses.*, courses_offered.*, t.fname, t.lname FROM courses INNER JOIN courses_offered ON courses.department = courses_offered.departmentname AND courses.course_number = courses_offered.coursenumber INNER JOIN users AS t ON instructorid = uid WHERE department = %s AND course_number = %s ORDER BY department, course_number", (dpt, courseno,))
   elif dpt and title:
-    cursor.execute("SELECT * FROM courses WHERE department = %s AND title = %s", (dpt, title,))
+    cursor.execute("SELECT courses.*, courses_offered.*, t.fname, t.lname FROM courses INNER JOIN courses_offered ON courses.department = courses_offered.departmentname AND courses.course_number = courses_offered.coursenumber INNER JOIN users AS t ON instructorid = uid WHERE department = %s AND title = %s ORDER BY department, course_number", (dpt, title,))
   elif courseno and title:
-    cursor.execute("SELECT * FROM courses WHERE course_number = %s AND title = %s", (courseno, title,))
+    cursor.execute("SELECT courses.*, courses_offered.*, t.fname, t.lname FROM courses INNER JOIN courses_offered ON courses.department = courses_offered.departmentname AND courses.course_number = courses_offered.coursenumber INNER JOIN users AS t ON instructorid = uid WHERE course_number = %s AND title = %s ORDER BY department, course_number", (courseno, title,))
   elif dpt:
-    cursor.execute("SELECT * FROM courses WHERE department = %s", (dpt,))
+    cursor.execute("SELECT courses.*, courses_offered.*, t.fname, t.lname FROM courses INNER JOIN courses_offered ON courses.department = courses_offered.departmentname AND courses.course_number = courses_offered.coursenumber INNER JOIN users AS t ON instructorid = uid WHERE department = %s ORDER BY department, course_number", (dpt,))
   elif courseno:
-    cursor.execute("SELECT * FROM courses WHERE course_number = %s", (courseno,))
+    cursor.execute("SELECT courses.*, courses_offered.*, t.fname, t.lname FROM courses INNER JOIN courses_offered ON courses.department = courses_offered.departmentname AND courses.course_number = courses_offered.coursenumber INNER JOIN users AS t ON instructorid = uid WHERE course_number = %s ORDER BY department, course_number", (courseno,))
   elif title:
-    cursor.execute("SELECT * FROM courses WHERE title = %s", (title,))
+    cursor.execute("SELECT courses.*, courses_offered.*, t.fname, t.lname FROM courses INNER JOIN courses_offered ON courses.department = courses_offered.departmentname AND courses.course_number = courses_offered.coursenumber INNER JOIN users AS t ON instructorid = uid WHERE title = %s ORDER BY department, course_number", (title,))
   else:
-    cursor.execute("SELECT * FROM courses")
+    cursor.execute("SELECT courses.*, courses_offered.*, t.fname, t.lname FROM courses INNER JOIN courses_offered ON courses.department = courses_offered.departmentname AND courses.course_number = courses_offered.coursenumber INNER JOIN users AS t ON instructorid = uid ORDER BY department, course_number")
     
   course = cursor.fetchall()
+
+  for item in course:
+    cursor.execute("SELECT prereqdpt, prereqnum, courses.title FROM prereqs " \
+    "INNER JOIN courses ON prereqs.prereqdpt=courses.department AND prereqs.prereqnum=courses.course_number " \
+    "WHERE dptname=%s AND coursenumber=%s", (item['department'], item['course_number']))
+    item['prereqs'] = cursor.fetchall()
+    if session['user']['role'] == 'student':
+        cursor.execute("SELECT department, course_number FROM enrollment WHERE department = %s AND course_number = %s AND uid = %s", (item['department'], item['course_number'], session['user']['uid']))
+        enrolledIn = cursor.fetchone()
+        item['enrolledIn'] = enrolledIn
+        # check if they've already taken it (from years prior and if they failed--if yes, they can retake)
+        item['retake'] = False
+        item['passed'] = False
+        if enrolledIn:
+            cursor.execute("SELECT grade FROM enrollment WHERE department = %s AND course_number = %s AND uid = %s AND (year != %s OR semester != %s)", (item['department'], item['course_number'], session['user']['uid'], item['year'], item['semester']))
+            grade = cursor.fetchone()
+            if grade:
+                grade = grade['grade']
+                if grade == 'D' or grade == 'F':
+                    item['retake'] = True
+                elif grade != 'IP':
+                    item['passed'] = True
+
 
   mydb.commit()
   return render_template('course_catalog.html', title = "Course Catalog", course = course)
@@ -1460,11 +1484,11 @@ def showcourse(dpt, courseno):
   cursor = mydb.cursor(dictionary = True)
 
   cursor.execute("SELECT * FROM courses " \
-  "INNER JOIN courses_offered ON courses.department=courses_offered.departmentname AND courses.course_number=courses_offered.coursenumber " \
-  "INNER JOIN users ON courses_offered.instructorid=users.uid " \
-  "WHERE department = %s AND course_number = %s", (dpt, courseno))
+    "INNER JOIN courses_offered ON courses.department=courses_offered.departmentname AND courses.course_number=courses_offered.coursenumber " \
+    "INNER JOIN users ON courses_offered.instructorid=users.uid " \
+    "WHERE department = %s AND course_number = %s", (dpt, courseno))
+
   course = cursor.fetchone()
-  
   cursor.execute("SELECT prereqdpt, prereqnum, courses.title FROM prereqs " \
   "INNER JOIN courses ON prereqs.prereqdpt=courses.department AND prereqs.prereqnum=courses.course_number " \
   "WHERE dptname=%s AND coursenumber=%s", (dpt, courseno,))
@@ -1476,87 +1500,84 @@ def showcourse(dpt, courseno):
   cursor.execute("SELECT * FROM enrollment WHERE uid = %s AND department = %s AND course_number = %s", (studentid, dpt, courseno))
   enrolledIn = cursor.fetchone()
 
-  conflict = False
-  phd_err = False
-  missing_prereqs = []
-  schedule = None
-  capacity = False
-  holds = False
  
-  if session['user']['role'] == 'student':
-    if request.method == 'POST':
-        if enrolledIn:
-            cursor.execute("DELETE FROM enrollment WHERE (uid=%s AND department=%s AND course_number=%s)", (studentid, dpt, courseno,))
-            mydb.commit()
-        else:
-            if course['capacity'] == 0:
-                capacity = True
-            cursor.execute("SELECT registration_hold FROM students WHERE uid = %s", (studentid,))
-            hold = cursor.fetchone()
-            if hold['registration_hold'] == True:
-                holds = True
+  missing_prereqs = []
 
-            cursor.execute("SELECT courses_offered.day, courses_offered.time FROM enrollment INNER JOIN courses_offered ON enrollment.department=courses_offered.departmentname AND enrollment.course_number=courses_offered.coursenumber WHERE enrollment.uid = %s AND enrollment.grade = 'IP'", (studentid,))
-            enrolled = cursor.fetchall()
+  if enrolledIn:
+    cursor.execute("DELETE FROM enrollment WHERE (uid=%s AND department=%s AND course_number=%s)", (studentid, dpt, courseno,))
+    mydb.commit()
+  else:
+    if course['capacity'] == 0:
+        flash("This course is full.")
+        return redirect("/coursecatalog")
 
-            conflicts = {
-                '1500-1730': ['1530-1800', '1600-1830'],
-                '1530-1800': ['1500-1730', '1600-1830', '1800-2030'],
-                '1600-1830': ['1500-1730', '1530-1800', '1800-2030'],
-                '1800-2030': ['1530-1800', '1600-1830'],
-            }
-            for enrolled_course in enrolled:
-                if enrolled_course['day'] == course['day']:
-                    if enrolled_course['time'] == course['time']:
-                        conflict = True
-                        break
-                    if (enrolled_course['time'] in conflicts.get(course['time'])):
-                        conflict = True
-                        break
+    cursor.execute("SELECT registration_hold FROM students WHERE uid = %s", (studentid,))
+    hold = cursor.fetchone()
+    if hold['registration_hold'] == True:
+        flash("You have a registration hold. Please contact your advisor to fix.")
+        return redirect("/coursecatalog")
+
+    cursor.execute("SELECT courses_offered.day, courses_offered.time FROM enrollment INNER JOIN courses_offered ON enrollment.department=courses_offered.departmentname AND enrollment.course_number=courses_offered.coursenumber WHERE enrollment.uid = %s AND enrollment.grade = 'IP'", (studentid,))
+    enrolled = cursor.fetchall()
+
+    conflicts = {
+        '1500-1730': ['1530-1800', '1600-1830'],
+        '1530-1800': ['1500-1730', '1600-1830', '1800-2030'],
+        '1600-1830': ['1500-1730', '1530-1800', '1800-2030'],
+        '1800-2030': ['1530-1800', '1600-1830'],
+    }
+    for enrolled_course in enrolled:
+        if enrolled_course['day'] == course['day']:
+            if enrolled_course['time'] == course['time']:
+                flash("Course time conflicts with another class you're taking.")
+                return redirect("/coursecatalog")
+            if (enrolled_course['time'] in conflicts.get(course['time'])):
+                flash("Course time conflicts with another class you're taking.")
+                return redirect("/coursecatalog")
                    
-            if not conflict:
-                cursor.execute("SELECT prereqdpt, prereqnum FROM prereqs WHERE dptname=%s AND coursenumber=%s", (dpt, courseno,))
-                prereqs = cursor.fetchall()
+    if not conflict:
+        cursor.execute("SELECT prereqdpt, prereqnum FROM prereqs WHERE dptname=%s AND coursenumber=%s", (dpt, courseno,))
+        prereqs = cursor.fetchall()
 
-                for prereq in prereqs:
-                    cursor.execute("SELECT * FROM enrollment WHERE (uid=%s AND department=%s AND course_number=%s AND grade != 'IP')", (studentid, prereq['prereqdpt'], prereq['prereqnum'],))
-                    completed = cursor.fetchone()
-                    if not completed:
-                        missing_prereqs.append(prereq['prereqdpt'] + ' ' + str(prereq['prereqnum']))
+        for prereq in prereqs:
+            cursor.execute("SELECT * FROM enrollment WHERE (uid=%s AND department=%s AND course_number=%s AND grade != 'IP')", (studentid, prereq['prereqdpt'], prereq['prereqnum'],))
+            completed = cursor.fetchone()
+            if not completed:
+                missing_prereqs.append(prereq['prereqdpt'] + ' ' + str(prereq['prereqnum']))
+        
+        if missing_prereqs:
+            if len(missing_prereqs) == 1:
+                error = "You are missing the prerequisite " + missing_prereqs[0]
+            else:
+                error = "You are missing the prerequisites " + missing_prereqs[0] + " and " + missing_prereqs[1]
+            flash(error)
+            return redirect("/coursecatalog")
 
-            if not conflict and not missing_prereqs and not holds and not capacity:
-                cursor.execute("SELECT program FROM students WHERE uid=%s", (studentid,))
-                student = cursor.fetchone()
+    if not conflict and not missing_prereqs and not holds and not capacity:
+        cursor.execute("SELECT program FROM students WHERE uid=%s", (studentid,))
+        student = cursor.fetchone()
 
 
-                if student['program'] == 'PhD' and not courseno.startswith('6'):
-                    phd_err = True
-                else:
-                    cursor.execute("SELECT credits FROM courses WHERE course_number = %s AND department = %s", (courseno, dpt))
-                    credit_hours = cursor.fetchone()
-                    credit_hours = credit_hours['credits']
-                    cursor.execute("INSERT INTO enrollment (uid, department, course_number, grade, semester, year, sectionnum, prof_added, credit_hours) VALUES (%s,%s,%s,%s,%s,%s,%s,%s, %s)", (studentid, dpt, courseno, 'IP', course['semester'], course['year'], course['sectionnum'], False, credit_hours))
-                    #updating capacity w/enrollment
-                    new_capacity = course['capacity'] - 1
-                    cursor.execute("UPDATE courses_offered SET capacity = %s", (new_capacity,))
-                    mydb.commit()
+        if student['program'] == 'PhD' and not courseno.startswith('6'):
+            flash("PhD Students can not take courses below 6000.")
+            return redirect("/coursecatalog")
+        else:
+            cursor.execute("SELECT credits FROM courses WHERE course_number = %s AND department = %s", (courseno, dpt))
+            credit_hours = cursor.fetchone()
+            credit_hours = credit_hours['credits']
+            cursor.execute("INSERT INTO enrollment (uid, department, course_number, grade, semester, year, sectionnum, prof_added, credit_hours) VALUES (%s,%s,%s,%s,%s,%s,%s,%s, %s)", (studentid, dpt, courseno, 'IP', course['semester'], course['year'], course['sectionnum'], False, credit_hours))
+            #updating capacity w/enrollment
+            new_capacity = course['capacity'] - 1
+            cursor.execute("UPDATE courses_offered SET capacity = %s", (new_capacity,))
+            mydb.commit()
  
     cursor.execute("SELECT * FROM enrollment WHERE uid = %s AND department = %s AND course_number = %s", (studentid, dpt, courseno,))
     enrolledIn = cursor.fetchone()
-    cursor.execute("SELECT grade, enrollment.department, enrollment.course_number, enrollment.sectionnum, enrollment.semester, enrollment.year, courses.title, day, time FROM enrollment " \
-    "right join courses on enrollment.department=courses.department AND enrollment.course_number = courses.course_number " \
-    "right join courses_offered on enrollment.department=courses_offered.departmentname AND enrollment.course_number=courses_offered.coursenumber AND enrollment.sectionnum=courses_offered.sectionnum AND enrollment.semester=courses_offered.semester AND enrollment.year=courses_offered.year " \
-    "WHERE enrollment.uid = %s and enrollment.prof_added = FALSE", (session['user']['uid'],))
-    schedule = cursor.fetchall()
-    cursor.execute("SELECT * FROM courses " \
-    "INNER JOIN courses_offered ON courses.department=courses_offered.departmentname AND courses.course_number=courses_offered.coursenumber " \
-    "INNER JOIN users ON courses_offered.instructorid=users.uid " \
-    "WHERE department = %s AND course_number = %s", (dpt, courseno))
-    course = cursor.fetchone()
- 
-  mydb.commit()
 
-  return render_template('course.html', title = "Course", course = course, enrolledIn = enrolledIn, conflict = conflict, missing_prereqs=missing_prereqs, prerequisites=prerequisites, phd_err=phd_err, schedule=schedule, capacity=capacity, holds=holds)
+  mydb.commit()
+  
+  return redirect("/coursecatalog")
+  #return render_template('course.html', title = "Course", course = course, enrolledIn = enrolledIn, conflict = conflict, missing_prereqs=missing_prereqs, prerequisites=prerequisites, phd_err=phd_err, schedule=schedule, capacity=capacity, holds=holds)
 
 @app.route('/alumnilist')
 def alumnilist():
