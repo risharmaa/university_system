@@ -1506,32 +1506,41 @@ def showcourse(dpt, courseno):
                 flash("Course time conflicts with another class you're taking.")
                 return redirect("/coursecatalog")
                    
-            if not conflict:
-                cursor.execute("SELECT prereqdpt, prereqnum FROM prereqs WHERE dptname=%s AND coursenumber=%s", (dpt, courseno,))
-                prereqs = cursor.fetchall()
+    if not conflict:
+        cursor.execute("SELECT prereqdpt, prereqnum FROM prereqs WHERE dptname=%s AND coursenumber=%s", (dpt, courseno,))
+        prereqs = cursor.fetchall()
 
-                for prereq in prereqs:
-                    cursor.execute("SELECT * FROM enrollment WHERE (uid=%s AND department=%s AND course_number=%s AND grade != 'IP')", (studentid, prereq['prereqdpt'], prereq['prereqnum'],))
-                    completed = cursor.fetchone()
-                    if not completed:
-                        missing_prereqs.append(prereq['prereqdpt'] + ' ' + str(prereq['prereqnum']))
+        for prereq in prereqs:
+            cursor.execute("SELECT * FROM enrollment WHERE (uid=%s AND department=%s AND course_number=%s AND grade != 'IP')", (studentid, prereq['prereqdpt'], prereq['prereqnum'],))
+            completed = cursor.fetchone()
+            if not completed:
+                missing_prereqs.append(prereq['prereqdpt'] + ' ' + str(prereq['prereqnum']))
+        
+        if missing_prereqs:
+            if len(missing_prereqs) == 1:
+                error = "You are missing the prerequisite " + missing_prereqs[0]
+            else:
+                error = "You are missing the prerequisites " + missing_prereqs[0] + " and " + missing_prereqs[1]
+            flash(error)
+            return redirect("/coursecatalog")
 
-            if not conflict and not missing_prereqs and not holds and not capacity:
-                cursor.execute("SELECT program FROM students WHERE uid=%s", (studentid,))
-                student = cursor.fetchone()
+    if not conflict and not missing_prereqs and not holds and not capacity:
+        cursor.execute("SELECT program FROM students WHERE uid=%s", (studentid,))
+        student = cursor.fetchone()
 
 
-                if student['program'] == 'PhD' and not courseno.startswith('6'):
-                    phd_err = True
-                else:
-                    cursor.execute("SELECT credits FROM courses WHERE course_number = %s AND department = %s", (courseno, dpt))
-                    credit_hours = cursor.fetchone()
-                    credit_hours = credit_hours['credits']
-                    cursor.execute("INSERT INTO enrollment (uid, department, course_number, grade, semester, year, sectionnum, prof_added, credit_hours) VALUES (%s,%s,%s,%s,%s,%s,%s,%s, %s)", (studentid, dpt, courseno, 'IP', course['semester'], course['year'], course['sectionnum'], False, credit_hours))
-                    #updating capacity w/enrollment
-                    new_capacity = course['capacity'] - 1
-                    cursor.execute("UPDATE courses_offered SET capacity = %s", (new_capacity,))
-                    mydb.commit()
+        if student['program'] == 'PhD' and not courseno.startswith('6'):
+            flash("PhD Students can not take courses below 6000.")
+            return redirect("/coursecatalog")
+        else:
+            cursor.execute("SELECT credits FROM courses WHERE course_number = %s AND department = %s", (courseno, dpt))
+            credit_hours = cursor.fetchone()
+            credit_hours = credit_hours['credits']
+            cursor.execute("INSERT INTO enrollment (uid, department, course_number, grade, semester, year, sectionnum, prof_added, credit_hours) VALUES (%s,%s,%s,%s,%s,%s,%s,%s, %s)", (studentid, dpt, courseno, 'IP', course['semester'], course['year'], course['sectionnum'], False, credit_hours))
+            #updating capacity w/enrollment
+            new_capacity = course['capacity'] - 1
+            cursor.execute("UPDATE courses_offered SET capacity = %s", (new_capacity,))
+            mydb.commit()
  
     cursor.execute("SELECT * FROM enrollment WHERE uid = %s AND department = %s AND course_number = %s", (studentid, dpt, courseno,))
     enrolledIn = cursor.fetchone()
