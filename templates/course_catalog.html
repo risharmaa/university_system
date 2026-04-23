@@ -14,11 +14,61 @@
         <input type="submit" name="submit">
         </form>
 
-        <ul> 
-            {% for row in course: %}
+ 
+        {% for row in course: %}
+            <details>
+            <summary>
             <h3> <a href="/course/{{row.department}}/{{row.course_number}}"> {{row.department}} {{row.course_number}}: {{row.title}}</a> </h3>
-            {% endfor %}
-        </ul>
+            </summary>
+            <Strong>Course Information:</Strong>
+            <ul>
+                <li>Credits: {{row.credits}}</li>
+                <li>Semester: {{row.semester}} {{row.year}} </li>
+                <li>Section Number: {{row.sectionnum}} </li>
+                <li>Instructor: {{row.fname}} {{row.lname}} </li>
+            </ul>
+            <strong>Prerequisites</strong>
+            {% if row.prereqs %}
+                {% for item in row.prereqs %}
+                <ul>
+                    <li> {{item.prereqdpt}} {{item.prereqnum}}</li>
+                </ul>
+                {% endfor %}
+            {% else %}
+            <ul>
+                <li>None</li>
+            </ul>
+            {% endif %}
+            <strong>Meeting Times</strong>
+            <ul>
+                <li>Time: 
+                    {% if row.day == 'M' %} Monday,
+                    {% elif row.day == 'T' %} Tuesday,
+                    {% elif row.day == 'W' %} Wednesday,
+                    {% elif row.day == 'R' %} Thursday,
+                    {% elif row.day == 'F' %} Friday,
+                    {% endif %}
+                    {% if row.time == '1500-1730' %} 3:00pm - 5:30pm
+                    {% elif row.time == '1800-2030' %} 6:00pm - 8:30pm
+                    {% elif row.time == '1530-1800' %} 3:30pm - 6:00pm
+                    {% elif row.time == '1600-1830' %} 4:00pm - 6:30pm
+                    {% endif %}
+                </li>
+                <li>Building: {{row.buildingname}}</li>
+                <li>Room: {{row.roomno}}</li>
+                <li>Capacity: {{row.capacity}}</li>
+                </ul>
+            </ul>
+            {% if session['user']['role'] == 'student' %}
+                {% if row.enrolledIn %}
+                    <a href="/{{row.department}}/{{row.course_number}}"><button type="button">Unenroll in Class</button></a>
+                {% else %}
+                    <a href="/{{row.department}}/{{row.course_number}}"><button type="button">Enroll in Class</button></a>
+                {% endif %}
+            {% endif %}
+            </details>
+            
+        {% endfor %}
 
         {% if session['user']['role'] == 'faculty' %}
             <p><a href="{{ url_for('faculty') }}">

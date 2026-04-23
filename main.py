@@ -1417,23 +1417,34 @@ def courseCatalog():
   title = request.args.get('title')
 
   if dpt and courseno and title:
-    cursor.execute("SELECT * FROM courses WHERE department = %s AND course_number = %s AND title = %s", (dpt, courseno, title,))
+    cursor.execute("SELECT courses.*, courses_offered.*, t.fname, t.lname FROM courses INNER JOIN courses_offered ON courses.department = courses_offered.departmentname AND courses.course_number = courses_offered.coursenumber INNER JOIN users AS t ON instructorid = uid WHERE department = %s AND course_number = %s AND title = %s ORDER BY department, course_number", (dpt, courseno, title,))
   elif dpt and courseno:
-    cursor.execute("SELECT * FROM courses WHERE department = %s AND course_number = %s", (dpt, courseno,))
+    cursor.execute("SELECT courses.*, courses_offered.*, t.fname, t.lname FROM courses INNER JOIN courses_offered ON courses.department = courses_offered.departmentname AND courses.course_number = courses_offered.coursenumber INNER JOIN users AS t ON instructorid = uid WHERE department = %s AND course_number = %s ORDER BY department, course_number", (dpt, courseno,))
   elif dpt and title:
-    cursor.execute("SELECT * FROM courses WHERE department = %s AND title = %s", (dpt, title,))
+    cursor.execute("SELECT courses.*, courses_offered.*, t.fname, t.lname FROM courses INNER JOIN courses_offered ON courses.department = courses_offered.departmentname AND courses.course_number = courses_offered.coursenumber INNER JOIN users AS t ON instructorid = uid WHERE department = %s AND title = %s ORDER BY department, course_number", (dpt, title,))
   elif courseno and title:
-    cursor.execute("SELECT * FROM courses WHERE course_number = %s AND title = %s", (courseno, title,))
+    cursor.execute("SELECT courses.*, courses_offered.*, t.fname, t.lname FROM courses INNER JOIN courses_offered ON courses.department = courses_offered.departmentname AND courses.course_number = courses_offered.coursenumber INNER JOIN users AS t ON instructorid = uid WHERE course_number = %s AND title = %s ORDER BY department, course_number", (courseno, title,))
   elif dpt:
-    cursor.execute("SELECT * FROM courses WHERE department = %s", (dpt,))
+    cursor.execute("SELECT courses.*, courses_offered.*, t.fname, t.lname FROM courses INNER JOIN courses_offered ON courses.department = courses_offered.departmentname AND courses.course_number = courses_offered.coursenumber INNER JOIN users AS t ON instructorid = uid WHERE department = %s ORDER BY department, course_number", (dpt,))
   elif courseno:
-    cursor.execute("SELECT * FROM courses WHERE course_number = %s", (courseno,))
+    cursor.execute("SELECT courses.*, courses_offered.*, t.fname, t.lname FROM courses INNER JOIN courses_offered ON courses.department = courses_offered.departmentname AND courses.course_number = courses_offered.coursenumber INNER JOIN users AS t ON instructorid = uid WHERE course_number = %s ORDER BY department, course_number", (courseno,))
   elif title:
-    cursor.execute("SELECT * FROM courses WHERE title = %s", (title,))
+    cursor.execute("SELECT courses.*, courses_offered.*, t.fname, t.lname FROM courses INNER JOIN courses_offered ON courses.department = courses_offered.departmentname AND courses.course_number = courses_offered.coursenumber INNER JOIN users AS t ON instructorid = uid WHERE title = %s ORDER BY department, course_number", (title,))
   else:
-    cursor.execute("SELECT * FROM courses")
+    cursor.execute("SELECT courses.*, courses_offered.*, t.fname, t.lname FROM courses INNER JOIN courses_offered ON courses.department = courses_offered.departmentname AND courses.course_number = courses_offered.coursenumber INNER JOIN users AS t ON instructorid = uid ORDER BY department, course_number")
     
   course = cursor.fetchall()
+  enrolledIn = None
+
+  for item in course:
+    cursor.execute("SELECT prereqdpt, prereqnum, courses.title FROM prereqs " \
+    "INNER JOIN courses ON prereqs.prereqdpt=courses.department AND prereqs.prereqnum=courses.course_number " \
+    "WHERE dptname=%s AND coursenumber=%s", (item['department'], item['course_number']))
+    item['prereqs'] = cursor.fetchall()
+    if session['user']['role'] == 'student':
+        cursor.execute("SELECT department, course_number FROM enrollment WHERE department = %s AND course_number = %s AND uid = %s", (item['department'], item['course_number'], session['user']['uid']))
+        enrolledIn = cursor.fetchone()
+        item['enrolledIn'] = enrolledIn
 
   mydb.commit()
   return render_template('course_catalog.html', title = "Course Catalog", course = course)
