@@ -1393,7 +1393,7 @@ def add_grades(dpt, crn, sectionno, sem, year):
         cursor.execute("SELECT cg.uid, s.fname, s.lname, cg.grade, cg.prof_added FROM enrollment AS cg INNER JOIN users AS s ON cg.uid = s.uid WHERE cg.department = %s AND cg.course_number = %s AND cg.semester = %s AND cg.year = %s AND cg.sectionnum = %s", (dpt, crn, sem, year, sectionno))
         students = cursor.fetchall()
         if new != 'A' and new != 'A-' and new != 'B+' and new != 'B' and new != 'B-' and new != 'C+' and new != 'C' and new != 'F' and new != 'IP':
-            flash("Please enter a valid grade.")
+            flash("Please enter a valid grade.", "error")
             return render_template('add_grades.html', title = "Class Grade", students = students, dpt = dpt, crn = crn, sectionno = sectionno, sem = sem, year = year)
         sid = int(request.form["id"])
         cursor.execute("SELECT prof_added FROM enrollment WHERE department = %s AND course_number = %s AND semester = %s AND year = %s AND sectionnum = %s AND uid = %s", (dpt, crn, sem, year, sectionno, sid))
@@ -1402,13 +1402,15 @@ def add_grades(dpt, crn, sectionno, sem, year):
             cursor.execute("SELECT cg.uid, s.fname, s.lname, cg.grade, cg.prof_added FROM enrollment AS cg INNER JOIN users AS s ON cg.uid = s.uid WHERE cg.department = %s AND cg.course_number = %s AND cg.semester = %s AND cg.year = %s AND cg.sectionnum = %s", (dpt, crn, sem, year, sectionno))
             students = cursor.fetchall()
             mydb.commit()
-            flash("You have already added a grade. If you would like to change this, please contact the systems administrator or grad secretary.")
+            flash("You have already added a grade. If you would like to change this, please contact the systems administrator or grad secretary.", "error")
             return render_template('add_grades.html', title = "Class Grade", students = students, dpt = dpt, crn = crn, sectionno = sectionno, sem = sem, year = year)
         else:
             if session['user']['role'] == 'faculty':
                 cursor.execute("UPDATE enrollment SET grade = %s, prof_added = TRUE WHERE uid = %s AND department = %s AND course_number = %s AND semester = %s AND year = %s AND sectionnum = %s", (new, sid, dpt, crn, sem, year, sectionno))
+                flash("Grade successfully updated.", "success")
             else:
                 cursor.execute("UPDATE enrollment SET grade = %s, prof_added = FALSE WHERE uid = %s AND department = %s AND course_number = %s AND semester = %s AND year = %s AND sectionnum = %s", (new, sid, dpt, crn, sem, year, sectionno))
+                flash("Grade successfully updated.", "success")
             mydb.commit()
     cursor.execute("SELECT cg.uid, s.fname, s.lname, cg.grade, cg.prof_added FROM enrollment AS cg INNER JOIN users AS s ON cg.uid = s.uid WHERE cg.department = %s AND cg.course_number = %s AND cg.semester = %s AND cg.year = %s AND cg.sectionnum = %s", (dpt, crn, sem, year, sectionno))
     students = cursor.fetchall()
@@ -1515,13 +1517,13 @@ def showcourse(dpt, courseno):
     mydb.commit()
   else:
     if course['capacity'] == 0:
-        flash("This course is full.")
+        flash("This course is full.", "error")
         return redirect("/coursecatalog")
 
     cursor.execute("SELECT registration_hold FROM students WHERE uid = %s", (studentid,))
     hold = cursor.fetchone()
     if hold['registration_hold'] == True:
-        flash("You have a registration hold. Please contact your advisor to fix.")
+        flash("You have a registration hold. Please contact your advisor to fix.", "error")
         return redirect("/coursecatalog")
 
     cursor.execute("SELECT courses_offered.day, courses_offered.time FROM enrollment INNER JOIN courses_offered ON enrollment.department=courses_offered.departmentname AND enrollment.course_number=courses_offered.coursenumber WHERE enrollment.uid = %s AND enrollment.grade = 'IP'", (studentid,))
@@ -1536,10 +1538,10 @@ def showcourse(dpt, courseno):
     for enrolled_course in enrolled:
         if enrolled_course['day'] == course['day']:
             if enrolled_course['time'] == course['time']:
-                flash("Course time conflicts with another class you're taking.")
+                flash("Course time conflicts with another class you're taking.", "error")
                 return redirect("/coursecatalog")
             if (enrolled_course['time'] in conflicts.get(course['time'])):
-                flash("Course time conflicts with another class you're taking.")
+                flash("Course time conflicts with another class you're taking.", "error")
                 return redirect("/coursecatalog")
                    
     if not conflict:
@@ -1557,7 +1559,7 @@ def showcourse(dpt, courseno):
                 error = "You are missing the prerequisite " + missing_prereqs[0]
             else:
                 error = "You are missing the prerequisites " + missing_prereqs[0] + " and " + missing_prereqs[1]
-            flash(error)
+            flash(error, "error")
             return redirect("/coursecatalog")
 
     if not conflict and not missing_prereqs and not holds and not capacity:
@@ -1566,7 +1568,7 @@ def showcourse(dpt, courseno):
 
 
         if student['program'] == 'PhD' and not courseno.startswith('6'):
-            flash("PhD Students can not take courses below 6000.")
+            flash("PhD Students can not take courses below 6000.", "error")
             return redirect("/coursecatalog")
         else:
             cursor.execute("SELECT credits FROM courses WHERE course_number = %s AND department = %s", (courseno, dpt))
@@ -1579,6 +1581,8 @@ def showcourse(dpt, courseno):
             cursor.execute("UPDATE courses_offered SET capacity = %s WHERE departmentname = %s AND coursenumber = %s AND semester = %s AND year = %s AND sectionnum = %s", (new_capacity, dpt, courseno, course['semester'], course['year'], course['sectionnum']))
 
             mydb.commit()
+            yay = "You have successfully registered for " + course["departmentname"] + " " + str(course["coursenumber"]) + "!"
+            flash(yay, "success")
  
     cursor.execute("SELECT * FROM enrollment WHERE uid = %s AND department = %s AND course_number = %s", (studentid, dpt, courseno,))
     enrolledIn = cursor.fetchone()

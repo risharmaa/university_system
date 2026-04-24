@@ -4,6 +4,16 @@
         <title>{{title}}</title>
     </head>
     <body>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <ul>
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+
         <h1>{{dpt}} {{crn}} | {{sem}} {{year}}</h1>
         <h2>Section #{{sectionno}}</h2>
         {% for student in students: %}
