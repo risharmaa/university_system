@@ -1470,7 +1470,7 @@ def courseCatalog():
             grade = cursor.fetchone()
             if grade:
                 grade = grade['grade']
-                if grade == 'D' or grade == 'F':
+                if grade == 'F':
                     item['retake'] = True
                 elif grade != 'IP':
                     item['passed'] = True
@@ -1607,6 +1607,71 @@ def alumnilist():
     alum = cursor.fetchall()
     
     return render_template('alumnilist.html', title = "Alumni List", alum = alum)
+
+@app.route('/form1/register')
+def form_registration():
+    if session['user']['role'] != 'student':
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+
+    cursor = mydb.cursor(dictionary = True)
+    cursor.execute("SELECT course_number, department FROM form_courses WHERE form_id = %s", (session['user']['uid'],))
+    courses = cursor.fetchall()
+
+    for item in courses:
+        cursor.execute("SELECT * FROM courses_offered WHERE departmentname = %s AND coursenumber = %s", (item['department'], item['course_number']))
+        class = cursor.fetchone()
+        # checking user's enrollment for the class
+        cursor.execute("SELECT * FROM enrollment WHERE department = %s AND course_number = %s WHERE uid = %s", (item['department'], item['course_number'], session['user']['uid']))
+        enrolled = cursor.fetchall()
+
+        missing_prereqs = []
+        cursor.execute("SELECT prereqdpt, prereqnum, courses.title FROM prereqs " \
+            "INNER JOIN courses ON prereqs.prereqdpt=courses.department AND prereqs.prereqnum=courses.course_number " \
+            "WHERE dptname=%s AND coursenumber=%s", (item['department'], item['course_number'],))
+        prerequisites = cursor.fetchall()
+        if prerequisites is not None:
+            for prereq in prerequisites:
+                cursor.execute("SELECT * FROM enrollment WHERE (uid=%s AND department=%s AND course_number=%s AND grade != 'IP')", (studentid, prereq['prereqdpt'], prereq['prereqnum'],))
+                completed = cursor.fetchone()
+                if not completed:
+                    missing_prereqs.append(prereq['prereqdpt'] + ' ' + str(prereq['prereqnum']))
+                
+
+        # check if the class is offered this semester
+        if class is None:
+            noCourse = "" + item['department'] + " " + item['course_number'] + " is not offered this semester."
+            flash(noCourse, "error")
+            break    
+        # check if the student already passed/is still taking the class
+        elif enrolled['grade'] != 'F':
+            if enrolled['grade'] == 'IP':
+                taking = "You are already taking" + item['department'] + " " + item['course_number'] + "."
+                flash(taking, "error")
+                break
+            else:
+                taken = "You have already taken" + item['department'] + " " + item['course_number'] + "."
+                flash(taken, "error")
+                break
+        # check for prereqs
+        elif missing_prereqs:
+            if len(missing_prereqs) == 1:
+                missing = "You are missing the prerequisite " + missing_prereqs[0] + " for " + item['department'] + " " + item['course_number'] + "."
+            else:
+                missing = "You are missing the prerequisites " + missing_prereqs[0] + " and " + missing_prereqs[1] + " for " + item['department'] + " " + item['course_number'] + "."
+            flash(missing, "error")
+            break
+        # check if capacity is 0
+        elif class['capacity'] == 0:
+            full = "" + item['department'] + " " + item['course_number'] + " is full."
+            flash(full, "error")
+            break
+        # check for time conflicts
+        # check for PhD errors
+        
+
+    return redirect('/form1')
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
