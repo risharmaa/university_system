@@ -1685,7 +1685,7 @@ def form_registration():
             if len(missing_prereqs) == 1:
                 missing = "You are missing the prerequisite " + missing_prereqs[0] + " for " + item['department'] + " " + str(item['course_number']) + "."
             else:
-                missing = "You are missing the prerequisites " + missing_prereqs[0] + " and " + missing_prereqs[1] + " for " + str(item['department']) + " " + item['course_number'] + "."
+                missing = "You are missing the prerequisites " + missing_prereqs[0] + " and " + missing_prereqs[1] + " for " + item['department'] + " " + str(item['course_number']) + "."
             flash(missing, "error")
             continue
         # check if capacity is 0
