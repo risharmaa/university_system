@@ -36,6 +36,9 @@
       Resubmitting will replace your existing plan.
       Advisor approval: <strong>{{ existing_form.advisor_approval or 'Pending' }}</strong>
     </p>
+    {% if existing_form.advisor_approval %}
+      <a href="/form1/register"><button type="button">Enroll in all classes</button></a>
+    {% endif %}
   {% endif %}
 
   <form method="POST" action="/form1">

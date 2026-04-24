@@ -1576,6 +1576,8 @@ def showcourse(dpt, courseno):
             #updating capacity w/enrollment
             new_capacity = course['capacity'] - 1
             cursor.execute("UPDATE courses_offered SET capacity = %s", (new_capacity,))
+            cursor.execute("UPDATE courses_offered SET capacity = %s WHERE departmentname = %s AND coursenumber = %s AND semester = %s AND year = %s AND sectionnum = %s", (new_capacity, dpt, courseno, course['semester'], course['year'], course['sectionnum']))
+
             mydb.commit()
  
     cursor.execute("SELECT * FROM enrollment WHERE uid = %s AND department = %s AND course_number = %s", (studentid, dpt, courseno,))
@@ -1618,12 +1620,15 @@ def form_registration():
     cursor.execute("SELECT course_number, department FROM form_courses WHERE form_id = %s", (session['user']['uid'],))
     courses = cursor.fetchall()
 
+    cursor.execute("SELECT * FROM students WHERE uid = %s", (session['user']['uid'],))
+    student = cursor.fetchone()
+
     for item in courses:
         cursor.execute("SELECT * FROM courses_offered WHERE departmentname = %s AND coursenumber = %s", (item['department'], item['course_number']))
-        class = cursor.fetchone()
+        c = cursor.fetchone()
         # checking user's enrollment for the class
-        cursor.execute("SELECT * FROM enrollment WHERE department = %s AND course_number = %s WHERE uid = %s", (item['department'], item['course_number'], session['user']['uid']))
-        enrolled = cursor.fetchall()
+        cursor.execute("SELECT * FROM enrollment WHERE department = %s AND course_number = %s AND uid = %s", (item['department'], item['course_number'], session['user']['uid']))
+        enrolledIn = cursor.fetchone()
 
         missing_prereqs = []
         cursor.execute("SELECT prereqdpt, prereqnum, courses.title FROM prereqs " \
@@ -1632,43 +1637,80 @@ def form_registration():
         prerequisites = cursor.fetchall()
         if prerequisites is not None:
             for prereq in prerequisites:
-                cursor.execute("SELECT * FROM enrollment WHERE (uid=%s AND department=%s AND course_number=%s AND grade != 'IP')", (studentid, prereq['prereqdpt'], prereq['prereqnum'],))
+                cursor.execute("SELECT * FROM enrollment WHERE (uid=%s AND department=%s AND course_number=%s AND grade != 'IP')", (session['user']['uid'], prereq['prereqdpt'], prereq['prereqnum'],))
                 completed = cursor.fetchone()
                 if not completed:
                     missing_prereqs.append(prereq['prereqdpt'] + ' ' + str(prereq['prereqnum']))
+
+        cursor.execute("SELECT courses_offered.day, courses_offered.time FROM enrollment INNER JOIN courses_offered ON enrollment.department=courses_offered.departmentname AND enrollment.course_number=courses_offered.coursenumber WHERE enrollment.uid = %s AND enrollment.grade = 'IP'", (session['user']['uid'],))
+        enrolled = cursor.fetchall()
+
+        conflict = False
+
+        conflicts = {
+            '1500-1730': ['1530-1800', '1600-1830'],
+            '1530-1800': ['1500-1730', '1600-1830', '1800-2030'],
+            '1600-1830': ['1500-1730', '1530-1800', '1800-2030'],
+            '1800-2030': ['1530-1800', '1600-1830'],
+        }
+        for enrolled_course in enrolled:
+            if enrolled_course['day'] == c['day']:
+                if enrolled_course['time'] == c['time']:
+                    conflict = True
+            if (enrolled_course['time'] in conflicts.get(c['time'])):
+                conflict = True
                 
 
         # check if the class is offered this semester
-        if class is None:
-            noCourse = "" + item['department'] + " " + item['course_number'] + " is not offered this semester."
+        if c is None:
+            noCourse = "" + item['department'] + " " + str(tem['course_number']) + " is not offered this semester."
             flash(noCourse, "error")
-            break    
+            continue    
         # check if the student already passed/is still taking the class
-        elif enrolled['grade'] != 'F':
-            if enrolled['grade'] == 'IP':
-                taking = "You are already taking" + item['department'] + " " + item['course_number'] + "."
+        elif enrolledIn is not None and enrolledIn['grade'] != 'F':
+            if enrolledIn['grade'] == 'IP':
+                taking = "You are already taking " + item['department'] + " " + str(item['course_number']) + "."
                 flash(taking, "error")
-                break
+                continue
             else:
-                taken = "You have already taken" + item['department'] + " " + item['course_number'] + "."
+                taken = "You have already taken " + item['department'] + " " + str(item['course_number']) + "."
                 flash(taken, "error")
-                break
+                continue
         # check for prereqs
         elif missing_prereqs:
             if len(missing_prereqs) == 1:
-                missing = "You are missing the prerequisite " + missing_prereqs[0] + " for " + item['department'] + " " + item['course_number'] + "."
+                missing = "You are missing the prerequisite " + missing_prereqs[0] + " for " + item['department'] + " " + str(item['course_number']) + "."
             else:
-                missing = "You are missing the prerequisites " + missing_prereqs[0] + " and " + missing_prereqs[1] + " for " + item['department'] + " " + item['course_number'] + "."
+                missing = "You are missing the prerequisites " + missing_prereqs[0] + " and " + missing_prereqs[1] + " for " + str(item['department']) + " " + item['course_number'] + "."
             flash(missing, "error")
-            break
+            continue
         # check if capacity is 0
-        elif class['capacity'] == 0:
-            full = "" + item['department'] + " " + item['course_number'] + " is full."
+        elif c['capacity'] == 0:
+            full = "" + item['department'] + " " + str(item['course_number']) + " is full."
             flash(full, "error")
-            break
+            continue
         # check for time conflicts
+        elif conflict is True:
+            cflict = "" + item['department'] + " " + str(item['course_number']) + " conflicts with another class you're taking."
+            flash(cflict, "error")
+            continue
         # check for PhD errors
-        
+        elif student['program'] == 'PhD' and not item['course_number'].startswith('6'):
+            phd = "You can not take " + item['department'] + " " + str(item['course_number']) + " as a PhD student."
+            flash(phd, "error")
+            continue
+        else:
+            cursor.execute("SELECT credits FROM courses WHERE course_number = %s AND department = %s", (item['course_number'], item['department']))
+            credit_hours = cursor.fetchone()
+            credit_hours = credit_hours['credits']
+            cursor.execute("INSERT INTO enrollment (uid, department, course_number, grade, semester, year, sectionnum, prof_added, credit_hours) VALUES (%s,%s,%s,%s,%s,%s,%s,%s, %s)", (session['user']['uid'], item['department'], item['course_number'], 'IP', c['semester'], c['year'], c['sectionnum'], False, credit_hours))
+            #updating capacity w/enrollment
+            new_capacity = c['capacity'] - 1
+            cursor.execute("UPDATE courses_offered SET capacity = %s WHERE departmentname = %s AND coursenumber = %s AND semester = %s AND year = %s AND sectionnum = %s", (new_capacity, c['departmentname'], c['coursenumber'], c['semester'], c['year'], c['sectionnum']))
+            mydb.commit()
+            yay = "You have registered for " + item['department'] + " " + str(item['course_number']) + "!"
+            flash(yay, "success")
+
 
     return redirect('/form1')
 
