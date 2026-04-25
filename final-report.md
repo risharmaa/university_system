@@ -77,7 +77,7 @@
 
 **Visual Overview**: Include screenshots, an animated gif, or short video showing a feature from each component included in your project (eg APPs, REGs, ADV). It does not need to be an exhaustive video of your functionality, just enough to remind us of how it works/looks.
 
-
+(add description/video)
 
 **Design Justification**: For Integration projects this should focus on how you connected your components together. For Builder projects it should justify your key design decisions. (0.5 - 1 page)
 This project integrates three major subsystems: REGS (course registration), APPS (application and admissions), and ADS (advising and graduation) into a single database. The key design decision was to connect all three systems through a shared users table, using uid as a universal identifier. This allows a person to transition between roles, such as from applicant to student and eventually alumni, without duplicating data. 
@@ -91,9 +91,28 @@ The ADS system builds on top of REGS by using the form and form_courses tables t
 Overall, each subsystem maintains its own functionality while remaining connected to the others, allowing data to flow from application to enrollment to graduation. 
 
 **Special Features**: ~2 sentences describing each extra feature you added beyond the spec
-
+- PhD suggestion: Added a phd suggestion for master students. This suggestion is based on that students transcript and courses they have taken
+- Auto Enroll: After a students form is approved, they can auto enroll in the courses listed in the form that meet the prerequistes and time conflict or previously taken. 
+- Applicant Chat: (add description)
 
 **Work Breakdown**: List teammates and specify the aspects of the project they worked on
-
+- Riya: 
+    - Added REGS code and integrated it with the other parts
+    - Helped construct database
+    - Added auto enroll feature
+    - Added users in issues
+    - Connected AWS
+    - Added required queries for phase 2
+- Kiran Guru: 
+    - Added APPS code and integrated it with other parts
+    - Helped construct database
+    - Added required queries for phase 2
+    - Connected applicants to students
+- Kiran Gill: 
+    - Added ADS code and integrated it with the other parts
+    - Helped construct database
+    - Added phd suggestion feature
+    - Completed ER diagram, design choices, special features, and work breakdown in report
+    - Added required queries for phase 2
 
 
