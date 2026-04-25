@@ -53,8 +53,30 @@
         such as room number, day, time, and instructor, depend on the full key, so the table
         satisfies 2NF. 
 
+    **Forms and Planning Tables** (form, form_courses)
+        The form table contains the information a student submits with the courses they are planning
+        to take. The primary key is form_id which is unique for each submitted form, and uid is a
+        foreign key with a unique constraint to ensure one active form per student. The table
+        follows 3NF because attributes like advisor approval depend only on the form itself. 
+
+        The form_courses table lists the courses included in each form. Its composite primary key
+        ensures that a course is not repeated within the same form. This table follows 3NF because
+        attributes like semester_planned depend on both the form and the specific course. It avoids
+        transitive dependencies by referencing keys instead of storing the same data.
+
+
+    **Programs and Future PhDs Tables** (programs, future_phds)
+        The programs table stores information about each academic program, with program_name as the
+        primary key. Since the primary key consists of a single attribute, there are no partial
+        dependencies so the table is 2NF. All other attributes, such as minimum GPA and credit
+        requirements, depend directly on program_name. 
+        
+        The future_phds table contains only the attribute program_name, which is also the primary
+        key. Since, are non-key attributes, there are no possible partial or transitive
+        dependencies. This means the table satisfies 3NF. 
 
 **Visual Overview**: Include screenshots, an animated gif, or short video showing a feature from each component included in your project (eg APPs, REGs, ADV). It does not need to be an exhaustive video of your functionality, just enough to remind us of how it works/looks.
+
 
 
 **Design Justification**: For Integration projects this should focus on how you connected your components together. For Builder projects it should justify your key design decisions. (0.5 - 1 page)
