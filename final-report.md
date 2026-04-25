@@ -80,7 +80,15 @@
 
 
 **Design Justification**: For Integration projects this should focus on how you connected your components together. For Builder projects it should justify your key design decisions. (0.5 - 1 page)
+This project integrates three major subsystems: REGS (course registration), APPS (application and admissions), and ADS (advising and graduation) into a single database. The key design decision was to connect all three systems through a shared users table, using uid as a universal identifier. This allows a person to transition between roles, such as from applicant to student and eventually alumni, without duplicating data. 
 
+The APPS system is integrated through the applicant table and its related tables such as prior degrees, GRE scores, and recommendation letters. Once an applicant is admitted, their uid can be reused to insert them into the students table, effectively  linking the admissions process to the registration and advising systems. This design eliminates the need to recreate records and ensures that all data remains connected to the students record. The review process is also integrated through the app_review table, allowing faculty to input evaluations. 
+
+The REGS system connects through tables such as courses, courses_offered, and enrollment, which manage course registration, scheduling, and grading. These tables are linked to users via uid, allowing both students and instructors to interact with the the same data. Transcript functionality is supported by quering the enrollment table, which stores completed courses and grades. This structure ensures that course registration, grade submission, and transcript generation are all handled with a good framework.
+
+The ADS system builds on top of REGS by using the form and form_courses tables to represent a student's academic plan. These tables are linked to both students and courses, allowing the system to copmare planned coureses with completed coursework in enrollment. Graduation audits are performed by checking whether the student meets program requirements defined in the programs table. Once all requirments are satisfied, the student is added to the alumni table.
+
+Overall, each subsystem maintains its own functionality while remaining connected to the others, allowing data to flow from application to enrollment to graduation. 
 
 **Special Features**: ~2 sentences describing each extra feature you added beyond the spec
 
