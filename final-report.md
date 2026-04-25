@@ -36,6 +36,7 @@
 
 
 **Design Justification**: For Integration projects this should focus on how you connected your components together. For Builder projects it should justify your key design decisions. (0.5 - 1 page)
+
 This project integrates three major subsystems: REGS (course registration), APPS (application and admissions), and ADS (advising and graduation) into a single database. The key design decision was to connect all three systems through a shared users table, using uid as a universal identifier. This allows a person to transition between roles, such as from applicant to student and eventually alumni, without duplicating data. 
 
 The APPS system is integrated through the applicant table and its related tables such as prior degrees, GRE scores, and recommendation letters. Once an applicant is admitted, their uid can be reused to insert them into the students table, effectively  linking the admissions process to the registration and advising systems. This design eliminates the need to recreate records and ensures that all data remains connected to the students record. The review process is also integrated through the app_review table, allowing faculty to input evaluations. 
