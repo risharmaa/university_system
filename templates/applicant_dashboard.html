@@ -55,11 +55,45 @@
     </form>
   {% endif %}
 
-  <h2>Application Details</h2>
-  <p>Degree Sought: {{ applicant.degree }}</p>
-  <p>GRE Verbal: {{ applicant.gre_verbal or '—' }} | GRE Quant: {{ applicant.gre_quant or '—' }} | Year: {{ applicant.gre_year or '—' }}</p>
-  <p>Work Experience: {{ applicant.work_experience or '—' }}</p>
-  <p>Areas of Interest: {{ applicant.areas_of_interest or '—' }}</p>
+  <form method="POST" action="{{ url_for('applicant_dashboard') }}">
+    <h3>Personal Information</h3>
+    <label>First Name:</label>
+    <input type="text" name="fname" value="{{ applicant.fname }}" required><br><br>
+
+    <label>Last Name:</label>
+    <input type="text" name="lname" value="{{ applicant.lname }}" required><br><br>
+
+    <label>Email:</label>
+    <input type="email" name="email" value="{{ applicant.email }}" required><br><br>
+
+    <label>Address:</label>
+    <input type="text" name="address" value="{{ applicant.address }}"><br><br>
+
+
+    <h3>Application Information</h3>
+    <label>Degree Sought:</label>
+    <select name="degree">
+      <option value="MS" {% if applicant.degree == "MS" %}selected{% endif %}>MS</option>
+      <option value="PhD" {% if applicant.degree == "PhD" %}selected{% endif %}>PhD</option>
+    </select> <br><br>
+
+    <label>GRE Verbal:</label>
+    <input type="number" name="gre_verbal" value="{{ applicant.gre_verbal or '—' }}"><br><br>
+
+    <label>GRE Quant:</label>
+    <input type="number" name="gre_quant" value="{{ applicant.gre_quant or '—' }}"><br><br>
+
+    <label>GRE Year:</label>
+    <input type="number" name="gre_year" value="{{ applicant.gre_year or '—' }}"><br><br>
+
+    <label>Work Experience:</label>
+    <textarea name="work_experience">{{ applicant.work_experience or '—' }}</textarea><br><br>
+
+    <label>Areas of Interest:</label>
+    <textarea name="areas_of_interest">{{ applicant.areas_of_interest or '—' }}</textarea><br><br>
+
+    <button type="submit">Update Information</button>
+  </form>
 
   <h2>Prior Degrees</h2>
   {% if degrees %}

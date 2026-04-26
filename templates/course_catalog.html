@@ -5,6 +5,16 @@
     </head>
 
     <body>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <ul>
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+        
         <h1> Course Catalog </h1>
 
         <form action="/coursecatalog" method="GET">
@@ -14,11 +24,63 @@
         <input type="submit" name="submit">
         </form>
 
-        <ul> 
-            {% for row in course: %}
-            <h3> <a href="/course/{{row.department}}/{{row.course_number}}"> {{row.department}} {{row.course_number}}: {{row.title}}</a> </h3>
-            {% endfor %}
-        </ul>
+ 
+        {% for row in course: %}
+            <details>
+            <summary>
+            <h3>{{row.department}} {{row.course_number}}: {{row.title}}</h3>
+            </summary>
+            <Strong>Course Information:</Strong>
+            <ul>
+                <li>Credits: {{row.credits}}</li>
+                <li>Semester: {{row.semester}} {{row.year}} </li>
+                <li>Section Number: {{row.sectionnum}} </li>
+                <li>Instructor: {{row.fname}} {{row.lname}} </li>
+            </ul>
+            <strong>Prerequisites</strong>
+            {% if row.prereqs %}
+                {% for item in row.prereqs %}
+                <ul>
+                    <li> {{item.prereqdpt}} {{item.prereqnum}}</li>
+                </ul>
+                {% endfor %}
+            {% else %}
+            <ul>
+                <li>None</li>
+            </ul>
+            {% endif %}
+            <strong>Meeting Times</strong>
+            <ul>
+                <li>Time: 
+                    {% if row.day == 'M' %} Monday,
+                    {% elif row.day == 'T' %} Tuesday,
+                    {% elif row.day == 'W' %} Wednesday,
+                    {% elif row.day == 'R' %} Thursday,
+                    {% elif row.day == 'F' %} Friday,
+                    {% endif %}
+                    {% if row.time == '1500-1730' %} 3:00pm - 5:30pm
+                    {% elif row.time == '1800-2030' %} 6:00pm - 8:30pm
+                    {% elif row.time == '1530-1800' %} 3:30pm - 6:00pm
+                    {% elif row.time == '1600-1830' %} 4:00pm - 6:30pm
+                    {% endif %}
+                </li>
+                <li>Building: {{row.buildingname}}</li>
+                <li>Room: {{row.roomno}}</li>
+                <li>Capacity: {{row.capacity}}</li>
+                </ul>
+            </ul>
+            {% if session['user']['role'] == 'student' %}
+                {% if row.retake %}
+                    <a href="/course/{{row.department}}/{{row.course_number}}"><button type="button">Enroll</button></a>
+                {% elif row.enrolledIn and not row.passed %}
+                    <a href="/course/{{row.department}}/{{row.course_number}}"><button type="button">Unenroll</button></a>
+                {% elif not row.passed %}
+                    <a href="/course/{{row.department}}/{{row.course_number}}"><button type="button">Enroll</button></a>
+                {% endif %}
+            {% endif %}
+            </details>
+            
+        {% endfor %}
 
         {% if session['user']['role'] == 'faculty' %}
             <p><a href="{{ url_for('faculty') }}">
@@ -33,6 +95,42 @@
         {% endif %}
         {% if session['user']['role'] == 'student' %}
             <p><a href="{{ url_for('student') }}"> Student Dashboard</a></p>
+        {% endif %}
+
+        {% if session['user']['role'] == 'student' %}
+        <h2>View Schedule</h2>
+            {% set rows = {'1500-1730':0, '1530-1800':1, '1600-1830':2, '1800-2030':6} %}
+        {% set labels = [
+            '3:00pm - 3:30pm', '3:30pm - 4:00pm', '4:00pm - 4:30pm', '4:30pm - 5:00pm', '5:00pm - 5:30pm', '5:30pm - 6:00pm', '6:00pm - 6:30pm', '6:30pm - 7:00pm', '7:00pm - 7:30pm', '7:30pm - 8:00pm', '8:00pm - 8:30pm'] %}
+        {% set week = ['M', 'T', 'W', 'R', 'F'] %}
+       
+        <table style="border-collapse: collapse;">
+            <tr>
+                <th style="border: 2px solid black; padding: 8px;"></th>
+                <th style="border: 2px solid black; padding: 8px;">Monday</th>
+                <th style="border: 2px solid black; padding: 8px;">Tuesday</th>
+                <th style="border: 2px solid black; padding: 8px;">Wednesday</th>
+                <th style="border: 2px solid black; padding: 8px;">Thursday</th>
+                <th style="border: 2px solid black; padding: 8px;">Friday</th>
+            </tr>
+            <tr>
+                {% for row in range(11): %}
+                <tr style="border: 2px solid black;">
+                    <th>{{labels[row]}}</th>
+                    {% for day in week %}
+                        {% for class in schedule if class['day'] == day and rows[class['time']] == row %}
+                                <td rowspan="5" style="border: 2px solid black; padding: 8px; background-color: rgb(59, 3, 71); color: white;">{{class['department']}} {{class['course_number']}}</td>
+                            {% else %}
+                                {% for class in schedule if class['day'] == day and row > rows[class['time']] and rows[class['time']]+5 > row %}
+                                {% else %}
+                                    <td style="border: 0px"></td>
+                                {% endfor %}
+                        {% endfor %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tr>
+        </table>
         {% endif %}
 
     </body>

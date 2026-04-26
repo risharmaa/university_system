@@ -56,6 +56,7 @@ CREATE TABLE alumni (
   uid               int(8) NOT NULL,
   degree            varchar(20),
   graduation_year   int(4),
+  graduation_semester varchar(10),
   PRIMARY KEY (uid),
   FOREIGN KEY (uid) REFERENCES users(uid)
 );
@@ -71,9 +72,11 @@ CREATE TABLE applicant (
   work_experience TEXT,  -- Prior work experience
   areas_of_interest TEXT,  -- Areas of interest
   transcript_received BOOLEAN DEFAULT FALSE,
-  transcript_method VARCHAR(10) DEFAULT NULL,  -- 'upload' or 'mail'
-  transcript_path VARCHAR(255) DEFAULT NULL,   -- file path if uploaded
+  transcript_method VARCHAR(10) DEFAULT NULL,
+  transcript_path VARCHAR(255) DEFAULT NULL,
   deposit_submitted BOOLEAN DEFAULT FALSE,
+  year_applied int(4),
+  semester_applied varchar(10),
   status VARCHAR(50) DEFAULT 'incomplete',  -- e.g., 'incomplete', 'under review', 'admitted', 'rejected'
   PRIMARY KEY (uid),
   FOREIGN KEY (uid) REFERENCES users(uid)
@@ -264,7 +267,7 @@ INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_ye
 INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year, registration_hold) VALUES(87654321, 'PhD', 12121212, 'active', 2023, TRUE);
 
 -- inserting alumni from the sample data  
-INSERT INTO alumni (uid, degree, graduation_year) VALUES (77777777, 'MS', 2014);
+INSERT INTO alumni (uid, degree, graduation_year, graduation_semester) VALUES (77777777, 'MS', 2014, 'Fall');
 
 -- inserting grad secretary from the sample data  
 INSERT INTO secretary (uid) VALUES (33333333);
@@ -392,9 +395,9 @@ INSERT INTO users (uid, username, password, role, fname, lname, email, address) 
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (99887766, '99887766', 'pass', 'applicant', 'Keith', 'Richards', 'keithrichards@gmail.com', 'Chicago');
 
 -- Applicant details
-INSERT INTO applicant (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_experience, areas_of_interest, transcript_received, status) VALUES (11223344, '123-45-6789', 'MS', 158, 165, 2024, '2 years at Google', 'Machine Learning, Databases', TRUE, 'under review');
-INSERT INTO applicant (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_experience, areas_of_interest, transcript_received, status) VALUES (55443322, '987-65-4321', 'PhD', 162, 170, 2023, '5 years at Meta', 'AI, Cybersecurity', FALSE, 'incomplete');
-INSERT INTO applicant (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_experience, areas_of_interest, transcript_received, status) VALUES (99887766, '111-22-3333', 'MS', 155, 160, 2024, '1 year at startup', 'Networks, Cloud Computing', TRUE, 'admitted');
+INSERT INTO applicant (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_experience, areas_of_interest, transcript_received, year_applied, semester_applied, status) VALUES (11223344, '123-45-6789', 'MS', 158, 165, 2024, '2 years at Google', 'Machine Learning, Databases', TRUE, 2026, 'Fall', 'under review');
+INSERT INTO applicant (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_experience, areas_of_interest, transcript_received, year_applied, semester_applied, status) VALUES (55443322, '987-65-4321', 'PhD', 162, 170, 2023, '5 years at Meta', 'AI, Cybersecurity', FALSE, 2026, 'Fall', 'incomplete');
+INSERT INTO applicant (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_experience, areas_of_interest, transcript_received, year_applied, semester_applied, status) VALUES (99887766, '111-22-3333', 'MS', 155, 160, 2024, '1 year at startup', 'Networks, Cloud Computing', TRUE, 2026, 'Spring', 'admitted');
 
 -- Prior degrees
 INSERT INTO prior_degree (uid, degree_type, year, gpa, university) VALUES (11223344, 'Bachelors', 2022, 3.80, 'MIT');

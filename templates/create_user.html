@@ -30,13 +30,23 @@
             <option value="admin">Admin</option>
             <option value="secretary">Secretary</option>
         </select><br>
-        <input type="text" name="program" placeholder="Program (students)"><br>
+        <select name="program">
+          <option value="">Select Program (students)</option>
+          <option value="MS">MS</option>
+          <option value ="PhD">PhD</option>
+        </select><br>
         <select name="degree">
-          <option value="">Select Degree</option>
+          <option value="">Select Degree (alumni)</option>
           <option value="MS">MS</option>
           <option value ="PhD">PhD</option>
         </select><br>
         <input type="number" name="graduation_year" placeholder="Graduation Year (alumni)"><br>
+        <select name="graduation_semester">
+          <option value="">Select Graduation Semester (almuni)</option>
+          <option value="Spring">Spring</option>
+          <option value ="Summer">Summer</option>
+          <option value ="Fall">Fall</option>
+        </select><br>
         <input type="text" name="address" placeholder="Address (alumni & students)"><br>
         <button type="submit">Create User</button>
     </form>
