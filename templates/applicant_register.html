@@ -1,71 +1,203 @@
-<!DOCTYPE html>
-<html>
-<head><title>Apply - GWU CS</title></head>
-<body>
-  <h1>Graduate Application</h1>
-  {% with messages = get_flashed_messages(with_categories=true) %}{% for c,m in messages %}
-  <p><strong>{{ m }}</strong></p>{% endfor %}{% endwith %}
-  <form method="POST">
-    <h3>Personal Information</h3>
-    First Name: <input type="text" name="fname" required><br><br>
-    Last Name: <input type="text" name="lname" required><br><br>
-    Email: <input type="email" name="email" required><br><br>
-    SSN (XXX-XX-XXXX): <input type="text" name="ssn" placeholder="123-45-6789" required><br><br>
-    Address: <input type="text" name="address"><br><br>
-    Degree Sought:
-    <select name="degree" required>
-      <option value="">Select</option>
-      <option value="MS">MS</option>
-      <option value="PhD">PhD</option>
-    </select><br><br>
-    <h3>Appplication Term</h3>
-    Year:
-    <input type="number" name="year_applied" required><br><br>
-    Semester:
-    <select name="semester_applied" required>
-      <option value="">Select</option>
-      <option value="Spring">Spring</option>
-      <option value="Summer">Summer</option>
-      <option value="Fall">Fall</option>
-    </select><br><br>
+{% extends "basic.html" %}
+{% block title %}Graduate Application - GWU CS{% endblock %}
+{% block content %}
+<style>
+  .section-card { border-left: 4px solid #002147; border-radius: 0 12px 12px 0; }
+  .section-card .card-header { background: #002147; color: #F2C75C; font-weight: 600; border-radius: 0 11px 0 0; }
+  .page-banner { background: linear-gradient(135deg, #002147 60%, #003580); color: #F2C75C; border-radius: 14px; padding: 28px 36px; margin-bottom: 28px; }
+  .page-banner h2 { font-size: 1.9rem; font-weight: 700; margin-bottom: 4px; }
+  .page-banner p  { color: #ffffffcc; margin: 0; font-size: 1rem; }
+  .degree-row { background: #f8f9fa; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; border: 1px solid #dee2e6; }
+</style>
 
-    <h3>Transcript Submission</h3>
-    <select name="transcript_method" required>
-      <option value="">Select</option>
-      <option value="upload">Upload</option>
-      <option value="mail">Mail</option>
-    </select><br><br>
-
-    <h3>GRE Scores</h3>
-    Verbal: <input type="number" name="gre_verbal" min="130" max="170">
-    Quantitative: <input type="number" name="gre_quant" min="130" max="170">
-    Year: <input type="number" name="gre_year" min="2000" max="2030"><br><br>
-
-    <h3>Prior Degrees</h3>
-    <div id="degrees-container">
-      <div class="degree-row">
-        Type: <select name="deg_type[]"><option value="">--</option><option>Bachelors</option><option>Masters</option></select>
-        Year: <input type="number" name="deg_year[]" size="5">
-        GPA: <input type="number" step="0.01" name="deg_gpa[]" size="5">
-        University: <input type="text" name="deg_univ[]"><br>
-      </div>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    <div class="alert alert-{{ 'danger' if cat=='error' else 'success' }} alert-dismissible fade show" role="alert">
+      {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
-    <button type="button" onclick="addDegree()">+ Add Another Degree</button><br><br>
+  {% endfor %}
+{% endwith %}
 
-    <h3>Additional Information</h3>
-    Work Experience:<br><textarea name="work_experience" rows="3" cols="50"></textarea><br><br>
-    Areas of Interest:<br><textarea name="areas_of_interest" rows="3" cols="50"></textarea><br><br>
+<div class="page-banner">
+  <h2>📋 Graduate Admission Application</h2>
+  <p>George Washington University &mdash; Department of Computer Science</p>
+</div>
 
-    <input type="submit" value="Submit Application">
-  </form>
-  <br><a href="/login">Already applied? Log in</a>
-  <script>
-  function addDegree() {
-    const c = document.getElementById('degrees-container');
-    const r = c.querySelector('.degree-row').cloneNode(true);
-    r.querySelectorAll('input,select').forEach(el => el.value = '');
-    c.appendChild(r);
-  }
-  </script>
-</body>
-</html>
+<form method="POST">
+  <div class="row g-4">
+
+    <!-- Left column -->
+    <div class="col-lg-6">
+
+      <!-- Personal Info -->
+      <div class="card section-card shadow-sm mb-4">
+        <div class="card-header">Personal Information</div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <label class="form-label small fw-semibold">First Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="fname" required>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label small fw-semibold">Last Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="lname" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Email <span class="text-danger">*</span></label>
+              <input type="email" class="form-control" name="email" required>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label small fw-semibold">SSN (XXX-XX-XXXX) <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="ssn" placeholder="123-45-6789" required>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label small fw-semibold">Degree Sought <span class="text-danger">*</span></label>
+              <select class="form-select" name="degree" required>
+                <option value="">Select</option>
+                <option value="MS">MS</option>
+                <option value="PhD">PhD</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Address</label>
+              <input type="text" class="form-control" name="address" placeholder="Street, City, State, ZIP">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Application Term -->
+      <div class="card section-card shadow-sm mb-4">
+        <div class="card-header">Application Term</div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <label class="form-label small fw-semibold">Semester <span class="text-danger">*</span></label>
+              <select class="form-select" name="semester_applied" required>
+                <option value="">Select</option>
+                <option value="Spring">Spring</option>
+                <option value="Summer">Summer</option>
+                <option value="Fall">Fall</option>
+              </select>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label small fw-semibold">Year <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" name="year_applied" min="2024" max="2030" placeholder="e.g. 2026" required>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transcript -->
+      <div class="card section-card shadow-sm mb-4">
+        <div class="card-header">Transcript Submission</div>
+        <div class="card-body">
+          <label class="form-label small fw-semibold">How will you submit your transcript? <span class="text-danger">*</span></label>
+          <select class="form-select" name="transcript_method" required>
+            <option value="">Select method</option>
+            <option value="upload">Upload digitally (after login)</option>
+            <option value="mail">Mail to the department</option>
+          </select>
+          <div class="form-text mt-1">You can upload your transcript from your applicant dashboard after submitting this form.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right column -->
+    <div class="col-lg-6">
+
+      <!-- GRE Scores -->
+      <div class="card section-card shadow-sm mb-4">
+        <div class="card-header">GRE Scores</div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-sm-4">
+              <label class="form-label small fw-semibold">Verbal (130–170)</label>
+              <input type="number" class="form-control" name="gre_verbal" min="130" max="170">
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label small fw-semibold">Quantitative (130–170)</label>
+              <input type="number" class="form-control" name="gre_quant" min="130" max="170">
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label small fw-semibold">Year Taken</label>
+              <input type="number" class="form-control" name="gre_year" min="2000" max="2030" placeholder="e.g. 2024">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prior Degrees -->
+      <div class="card section-card shadow-sm mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>Prior Degrees</span>
+          <button type="button" class="btn btn-sm btn-outline-light" onclick="addDegree()">+ Add Degree</button>
+        </div>
+        <div class="card-body">
+          <div id="degrees-container">
+            <div class="degree-row">
+              <div class="row g-2">
+                <div class="col-sm-4">
+                  <label class="form-label small fw-semibold">Type</label>
+                  <select class="form-select form-select-sm" name="deg_type[]">
+                    <option value="">--</option>
+                    <option>Bachelors</option>
+                    <option>Masters</option>
+                  </select>
+                </div>
+                <div class="col-sm-2">
+                  <label class="form-label small fw-semibold">Year</label>
+                  <input type="number" class="form-control form-control-sm" name="deg_year[]" min="1950" max="2030">
+                </div>
+                <div class="col-sm-2">
+                  <label class="form-label small fw-semibold">GPA</label>
+                  <input type="number" class="form-control form-control-sm" step="0.01" min="0" max="4" name="deg_gpa[]">
+                </div>
+                <div class="col-sm-4">
+                  <label class="form-label small fw-semibold">University</label>
+                  <input type="text" class="form-control form-control-sm" name="deg_univ[]">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Info -->
+      <div class="card section-card shadow-sm mb-4">
+        <div class="card-header">Additional Information</div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Work Experience</label>
+            <textarea class="form-control" name="work_experience" rows="3" placeholder="Describe relevant work experience..."></textarea>
+          </div>
+          <div class="mb-1">
+            <label class="form-label small fw-semibold">Areas of Interest</label>
+            <textarea class="form-control" name="areas_of_interest" rows="3" placeholder="e.g. Machine Learning, Cybersecurity, Systems..."></textarea>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Submit Row -->
+  <div class="d-flex justify-content-between align-items-center mt-2 mb-5">
+    <a href="/login" class="text-muted text-decoration-none"><i class="bi bi-arrow-left"></i> Already applied? Log in</a>
+    <button type="submit" class="btn btn-lg fw-bold px-5" style="background:#002147;color:#F2C75C;">
+      Submit Application <i class="bi bi-send"></i>
+    </button>
+  </div>
+</form>
+
+<script>
+function addDegree() {
+  const container = document.getElementById('degrees-container');
+  const template = container.querySelector('.degree-row');
+  const clone = template.cloneNode(true);
+  clone.querySelectorAll('input, select').forEach(el => el.value = '');
+  container.appendChild(clone);
+}
+</script>
+{% endblock %}
