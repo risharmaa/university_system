@@ -14,6 +14,7 @@ from flask import (
 import os
 from datetime import datetime
 from werkzeug.security import check_password_hash, generate_password_hash
+from chatbot import advising_chat
 
 
 app = Flask(__name__)
@@ -1717,6 +1718,17 @@ def form_registration():
 
 
     return redirect('/form1')
+
+@app.route('/advising', methods=["GET", "POST"])
+def chatbot_advising():
+    if session['user']['role'] != 'student':
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    uid = session['user']['uid']
+    message = request.form.get("question")
+    answer = advising_chat(message, uid)
+
+    return render_template("advising.html", answer = answer, title = "Advisor Chatbot")
 
 
 if __name__ == "__main__":
