@@ -1,121 +1,180 @@
-<!DOCTYPE html>
-<html>
-<head><title>Applications</title></head>
-<body>
-  <h1>Applications Dashboard</h1>
-  {% with messages = get_flashed_messages(with_categories=true) %}{% for c,m in messages %}
-  <p><strong>{{ m }}</strong></p>{% endfor %}{% endwith %}
-  {% if role == 'faculty' or role == 'secretary' %}
+{% extends "basic.html" %}
+{% block title %}Applications - GWU CS{% endblock %}
+{% block content %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    <div class="alert alert-{{ 'danger' if cat=='error' else 'success' }} alert-dismissible fade show">
+      {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endwith %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2 class="fw-bold mb-0">Applications Dashboard</h2>
+    <span class="text-muted small">
+      {% if role == 'faculty' %}Reviewer / CAC View{% elif role == 'secretary' %}Graduate Secretary View{% else %}Admin View{% endif %}
+    </span>
+  </div>
+  <div class="d-flex gap-2">
+    {% if role == 'faculty' %}
+      <a href="{{ url_for('faculty') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Faculty Dashboard</a>
+    {% elif role == 'secretary' %}
+      <a href="{{ url_for('secretary') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Secretary Dashboard</a>
+    {% endif %}
+    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
+  </div>
+</div>
+
+<!-- Filters -->
+{% if role == 'faculty' or role == 'secretary' or role == 'admin' %}
+<div class="card shadow-sm mb-4">
+  <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">🔍 Search &amp; Filter</div>
+  <div class="card-body">
     <form action="/applications" method="GET">
-      <label for="uid">Applicant ID:</label>
-      <input type="text" name="uid" placeholder = "Applicant ID">
-      <label for="lname">Applicant Last Name:</label>
-      <input type="text" name="lname" placeholder = "Applicant Last Name">
-      {% if role == 'secretary' %}
-        <label for="degree">Potential Degree:</label>
-        <br><select name="degree" id="degree">
-          <option value="">All Degree Types</option>
-          <option value="PhD">PhD</option>
-          <option value="MS">MS</option> 
-        </select>
-        <label for="semester">Semester Applied:</label>
-        <select name="semester" id="semester">
-          <option value="">All Semesters</option>
-          <option value="Spring">Spring</option>
-          <option value="Fall">Fall</option> 
-        </select>
-        <label for="year">Year Applied:</label>
-        <input type="text" name="year" placeholder = "Year Applied">
-      {% endif %}
-      <input type="submit" name="submit">
+      <div class="row g-2 align-items-end">
+        <div class="col-sm-3">
+          <label class="form-label small fw-semibold">Applicant ID</label>
+          <input type="text" class="form-control form-control-sm" name="uid" placeholder="UID" value="{{ request.args.get('uid','') }}">
+        </div>
+        <div class="col-sm-3">
+          <label class="form-label small fw-semibold">Last Name</label>
+          <input type="text" class="form-control form-control-sm" name="lname" placeholder="Last name" value="{{ request.args.get('lname','') }}">
+        </div>
+        {% if role == 'secretary' or role == 'admin' %}
+        <div class="col-sm-2">
+          <label class="form-label small fw-semibold">Degree</label>
+          <select class="form-select form-select-sm" name="degree">
+            <option value="">All</option>
+            <option value="PhD" {{ 'selected' if request.args.get('degree')=='PhD' }}>PhD</option>
+            <option value="MS"  {{ 'selected' if request.args.get('degree')=='MS'  }}>MS</option>
+          </select>
+        </div>
+        <div class="col-sm-2">
+          <label class="form-label small fw-semibold">Semester</label>
+          <select class="form-select form-select-sm" name="semester">
+            <option value="">All</option>
+            <option value="Spring" {{ 'selected' if request.args.get('semester')=='Spring' }}>Spring</option>
+            <option value="Summer" {{ 'selected' if request.args.get('semester')=='Summer' }}>Summer</option>
+            <option value="Fall"   {{ 'selected' if request.args.get('semester')=='Fall'   }}>Fall</option>
+          </select>
+        </div>
+        <div class="col-sm-1">
+          <label class="form-label small fw-semibold">Year</label>
+          <input type="text" class="form-control form-control-sm" name="year" placeholder="Year" value="{{ request.args.get('year','') }}">
+        </div>
+        {% endif %}
+        <div class="col-sm-1">
+          <button type="submit" class="btn btn-sm w-100 fw-semibold" style="background:#002147;color:#F2C75C;">Search</button>
+        </div>
+      </div>
     </form>
-  {% endif %}
-  <table border="1">
-    <tr>
-      <th>UID</th><th>Name</th><th>Degree</th><th>Status</th>
-      {% if role in ('admin', 'secretary') %}<th>Transcript</th><th>Deposit</th>{% endif %}
-      {% if role == 'faculty' %}<th>Completeness</th>{% endif %}
-      <th>Actions</th>
-    </tr>
-    {% for a in applicants %}
-    <tr>
-      <td>{{ a.uid }}</td>
-      <td>{{ a.fname }} {{ a.lname }}</td>
-      <td>{{ a.degree }}</td>
-      <td>{{ a.status }}</td>
-      {% if role in ('admin', 'secretary') %}
-      <td>
-        {% if a.transcript_received %}Received
-        {% elif a.transcript_method == 'mail' %}Mailed – not confirmed
-          <form method="POST" action="{{ url_for('update_transcript', uid=a.uid) }}" style="display:inline">
-            <input type="submit" value="Confirm Receipt">
-          </form>
-        {% elif a.transcript_method == 'upload' %}Uploaded
-        {% else %}Not submitted{% endif %}
-      </td>
-      <td>
-        {% if a.status == 'accepted' and a.deposit_submitted %}
-          Submitted
-          {% if role == 'secretary' %}
-          <form method="POST" action="{{ url_for('confirm_enrollment', uid=a.uid) }}" style="display:inline">
-            <input type="submit" value="Confirm & Enroll">
-          </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- Table -->
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover table-striped mb-0">
+      <thead class="table-dark">
+        <tr>
+          <th>UID</th><th>Name</th><th>Degree</th><th>Status</th>
+          {% if role in ('admin', 'secretary') %}<th>Transcript</th><th>Deposit</th>{% endif %}
+          {% if role == 'faculty' %}<th>Completeness</th>{% endif %}
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in applicants %}
+        <tr>
+          <td class="fw-semibold">{{ a.uid }}</td>
+          <td>{{ a.fname }} {{ a.lname }}</td>
+          <td><span class="badge bg-secondary">{{ a.degree }}</span></td>
+          <td>
+            {% if a.status == 'incomplete' %}
+              <span class="badge bg-warning text-dark">Incomplete</span>
+            {% elif a.status == 'under review' %}
+              <span class="badge bg-info text-dark">Under Review</span>
+            {% elif a.status == 'admitted' %}
+              <span class="badge bg-success">Admitted</span>
+            {% elif a.status == 'admitted_with_aid' %}
+              <span class="badge bg-success">Admitted w/ Aid</span>
+            {% elif a.status == 'rejected' %}
+              <span class="badge bg-danger">Rejected</span>
+            {% elif a.status == 'accepted' %}
+              <span class="badge bg-primary">Accepted</span>
+            {% elif a.status == 'declined' %}
+              <span class="badge bg-secondary">Declined</span>
+            {% else %}
+              <span class="badge bg-secondary">{{ a.status }}</span>
+            {% endif %}
+          </td>
+
+          {% if role in ('admin', 'secretary') %}
+          <td>
+            {% if a.transcript_received %}
+              <span class="badge bg-success"><i class="bi bi-check-lg"></i> Received</span>
+            {% elif a.transcript_method == 'mail' %}
+              <span class="badge bg-warning text-dark">Mailed</span>
+              <form method="POST" action="{{ url_for('update_transcript', uid=a.uid) }}" class="d-inline ms-1">
+                <button type="submit" class="btn btn-sm btn-outline-success py-0">Confirm</button>
+              </form>
+            {% elif a.transcript_method == 'upload' %}
+              <span class="badge bg-info text-dark">Uploaded</span>
+            {% else %}
+              <span class="badge bg-secondary">Not submitted</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if a.status == 'accepted' and a.deposit_submitted %}
+              <span class="badge bg-success">Submitted</span>
+              {% if role == 'secretary' %}
+              <form method="POST" action="{{ url_for('confirm_enrollment', uid=a.uid) }}" class="d-inline ms-1">
+                <button type="submit" class="btn btn-sm btn-outline-primary py-0">Enroll</button>
+              </form>
+              {% endif %}
+            {% elif a.status == 'accepted' %}
+              <span class="badge bg-warning text-dark">Pending</span>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
           {% endif %}
-        {% elif a.status == 'accepted' %}
-          Pending
-        {% else %}—{% endif %}
-      </td>
-      {% endif %}
-      {% if role == 'faculty' %}
-      <td>
-        {% if not a.transcript_received %} No transcript<br>{% endif %}
-        {% if a.letters_submitted == 0 %}
-          No letters submitted 
+
+          {% if role == 'faculty' %}
+          <td class="small">
+            {% if not a.transcript_received %}
+              <span class="text-danger"><i class="bi bi-x-circle me-1"></i>No transcript</span><br>
+            {% else %}
+              <span class="text-success"><i class="bi bi-check-circle me-1"></i>Transcript OK</span><br>
+            {% endif %}
+            {% if a.letters_submitted == 0 %}
+              <span class="text-danger"><i class="bi bi-x-circle me-1"></i>No letters</span>
+            {% else %}
+              <span class="text-success"><i class="bi bi-check-circle me-1"></i>{{ a.letters_submitted }} letter(s)</span>
+            {% endif %}
+          </td>
+          {% endif %}
+
+          <td>
+            <div class="d-flex gap-1 flex-wrap">
+              {% if a.status in ('under review', 'incomplete') and role in ('admin', 'secretary', 'faculty') %}
+                <a href="{{ url_for('review_applicant', uid=a.uid) }}" class="btn btn-sm btn-outline-primary py-0">Review</a>
+              {% endif %}
+              {% if role in ('admin', 'secretary') or fac %}
+                <a href="{{ url_for('final_decision', uid=a.uid) }}" class="btn btn-sm btn-outline-dark py-0">Decision</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
         {% else %}
-          Letters submitted
-        {% endif %}
-      </td>
-      {% endif %}
-      {% if role == 'secretary' %}
-      <td>
-        <form method="POST" action="{{ url_for('update_transcript', uid=a.uid) }}">
-          <span>{{ "Received" if a.transcript_received else "Pending" }}</span>
+        <tr><td colspan="8" class="text-center text-muted py-4">No applications found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 
-          {% if a.transcript_method == "mail" %}
-            <select name="transcript_received">
-              <option value="1" {% if a.transcript_received %}selected{% endif %}>Received</option>
-              <option value="0" {% if not a.transcript_received %}selected{% endif %}>Not Received</option>
-            </select>
-            <button type="submit">Update</button>
-          {% else %}
-            <span style="color:gray;">Uploaded</span>
-          {% endif %}
-        </form>
-      </td>
-      {% endif %}
-      <td>
-        {% if a.status in ('under review', 'incomplete') and role in ('admin', 'secretary', 'faculty') %}
-          <a href="{{ url_for('review_applicant', uid=a.uid) }}">Review</a>
-        {% endif %}
-
-        {% if role in ('admin', 'secretary') or fac %}
-          | <a href="{{ url_for('final_decision', uid=a.uid) }}">Decision</a>
-        {% endif %}
-      </td>
-    </tr>
-    {% else %}
-    <tr><td colspan="6">No applications found.</td></tr>
-    {% endfor %}
-  </table>
-
-  <br>
-  <a href="{{ url_for('faculty') }}">
-    <button type="button">Faculty Dashboard</button>
-  </a>
-  <br>
-  <br>
-
-  <a href="{{ url_for('logout') }}">
-    <button type="button">Logout </button><br>
-</body>
-</html>
+{% endblock %}
