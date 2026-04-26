@@ -1,135 +1,266 @@
-<!DOCTYPE html>
-<html>
-<head><title>Applicant Dashboard</title></head>
-<body>
-  <h1>Welcome, {{ applicant.fname }} {{ applicant.lname }}</h1>
-  {% with messages = get_flashed_messages(with_categories=true) %}{% for c,m in messages %}
-  <p><strong>{{ m }}</strong></p>{% endfor %}{% endwith %}
+{% extends "basic.html" %}
+{% block title %}Applicant Dashboard - GWU CS{% endblock %}
+{% block content %}
+<style>
+  /* Progress stepper */
+  .stepper { display:flex; align-items:flex-start; justify-content:space-between; position:relative; margin-bottom:32px; }
+  .stepper::before { content:''; position:absolute; top:18px; left:10%; right:10%; height:3px; background:#dee2e6; z-index:0; }
+  .step { flex:1; text-align:center; position:relative; z-index:1; }
+  .step-circle {
+    width:36px; height:36px; border-radius:50%; margin:0 auto 6px;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:0.85rem; border:3px solid #dee2e6;
+    background:#fff; color:#adb5bd; transition:all .3s;
+  }
+  .step.done .step-circle  { background:#28a745; border-color:#28a745; color:#fff; }
+  .step.active .step-circle { background:#002147; border-color:#002147; color:#F2C75C; }
+  .step.bad .step-circle   { background:#dc3545; border-color:#dc3545; color:#fff; }
+  .step-label { font-size:0.72rem; color:#6c757d; font-weight:600; text-transform:uppercase; letter-spacing:.03em; }
+  .step.active .step-label { color:#002147; }
+  .step.done .step-label   { color:#28a745; }
+  .step.bad .step-label    { color:#dc3545; }
 
-  <h2>Application Status:
-    {% if applicant.status == 'incomplete' %}Application Incomplete – please ensure transcript and recommendation letters are submitted
-    {% elif applicant.status == 'under review' %}Application Complete and Under Review – No Decision Yet
-    {% elif applicant.status in ('admitted', 'admitted_with_aid') %}Congratulations, you have been admitted! The formal letter of acceptance will be mailed.
-    {% elif applicant.status == 'rejected' %}Your application for admission has been denied.
-    {% elif applicant.status == 'accepted' %}You have accepted the offer of admission.
-    {% elif applicant.status == 'declined' %}You have declined the offer of admission.
-    {% else %}{{ applicant.status }}{% endif %}
-  </h2>
+  /* Status banner */
+  .status-banner { border-radius:12px; padding:16px 22px; font-size:1.05rem; font-weight:600; margin-bottom:24px; }
 
-  {% if applicant.status in ('admitted', 'admitted_with_aid') %}
-  <h3>Respond to Offer</h3>
-  <form method="POST" action="{{ url_for('respond_offer') }}" style="display:inline">
-    <input type="hidden" name="response" value="accepted">
-    <input type="submit" value="Accept Offer">
-  </form>
-  <form method="POST" action="{{ url_for('respond_offer') }}" style="display:inline">
-    <input type="hidden" name="response" value="declined">
-    <input type="submit" value="Decline Offer">
-  </form>
-  {% endif %}
+  /* Action card highlight */
+  .action-card { border:2px solid #F2C75C; border-radius:12px; }
+  .action-card .card-header { background:#002147; color:#F2C75C; font-weight:600; border-radius:10px 10px 0 0; }
 
-  {% if applicant.status == 'accepted' %}
-  <h3>Deposit</h3>
-  {% if applicant.deposit_submitted %}
-  <p>Deposit submitted — waiting for Graduate Secretary confirmation.</p>
-  {% else %}
-  <p>Please submit your enrollment deposit, then click below to notify the Graduate Secretary.</p>
-  <form method="POST" action="{{ url_for('submit_deposit') }}">
-    <input type="submit" value="I Have Submitted My Deposit">
-  </form>
-  {% endif %}
-  {% endif %}
+  .section-card .card-header { background:#002147; color:#F2C75C; font-weight:600; }
+</style>
 
-  <h3>Transcript</h3>
-  {% if applicant.transcript_received %}
-    <p>Transcript received. ✓</p>
-  {% elif applicant.transcript_method == 'mail' %}
-    <p>You indicated you will mail your transcript. Waiting for admissions committee to confirm receipt.</p>
-  {% else %}
-    <form method="POST" action="{{ url_for('applicant_transcript') }}" enctype="multipart/form-data">
-      <p>How would you like to submit your transcript?</p>
-      <input type="radio" name="transcript_method" value="upload" required> Upload transcript now<br>
-      <input type="file" name="transcript_file" accept=".pdf,.jpg,.png"><br><br>
-      <input type="radio" name="transcript_method" value="mail"> I will mail it directly to the college<br><br>
-      <input type="submit" value="Submit">
-    </form>
-  {% endif %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    <div class="alert alert-{{ 'danger' if cat=='error' else 'success' }} alert-dismissible fade show">
+      {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endwith %}
 
-  <form method="POST" action="{{ url_for('applicant_dashboard') }}">
-    <h3>Personal Information</h3>
-    <label>First Name:</label>
-    <input type="text" name="fname" value="{{ applicant.fname }}" required><br><br>
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h2 class="fw-bold mb-0">Welcome, {{ applicant.fname }} {{ applicant.lname }}</h2>
+    <span class="text-muted">UID: {{ applicant.uid }} &mdash; {{ applicant.degree }} Program</span>
+  </div>
+  <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
+</div>
 
-    <label>Last Name:</label>
-    <input type="text" name="lname" value="{{ applicant.lname }}" required><br><br>
+<!-- Progress Stepper -->
+{% set st = applicant.status %}
+<div class="stepper">
+  <div class="step done">
+    <div class="step-circle"><i class="bi bi-check-lg"></i></div>
+    <div class="step-label">Applied</div>
+  </div>
+  <div class="step {{ 'done' if st not in ('incomplete',) else 'active' }}">
+    <div class="step-circle">2</div>
+    <div class="step-label">Materials</div>
+  </div>
+  <div class="step {{ 'done' if st in ('admitted','admitted_with_aid','rejected','accepted','declined') else ('active' if st == 'under review' else '') }}">
+    <div class="step-circle">3</div>
+    <div class="step-label">Under Review</div>
+  </div>
+  <div class="step {{ 'done' if st in ('accepted','declined') else ('active' if st in ('admitted','admitted_with_aid') else ('bad' if st=='rejected' else '')) }}">
+    <div class="step-circle">4</div>
+    <div class="step-label">Decision</div>
+  </div>
+  <div class="step {{ 'active' if st in ('accepted','declined') else '' }}">
+    <div class="step-circle">5</div>
+    <div class="step-label">Enrolled</div>
+  </div>
+</div>
 
-    <label>Email:</label>
-    <input type="email" name="email" value="{{ applicant.email }}" required><br><br>
+<!-- Status Banner -->
+{% if st == 'incomplete' %}
+  <div class="status-banner alert alert-warning">⚠️ Application Incomplete — please ensure your transcript and recommendation letters are submitted.</div>
+{% elif st == 'under review' %}
+  <div class="status-banner alert alert-info">🔍 Application Complete &amp; Under Review — No decision yet. We'll update your dashboard when a decision is made.</div>
+{% elif st in ('admitted', 'admitted_with_aid') %}
+  <div class="status-banner alert alert-success">🎉 Congratulations! You have been admitted{{ ' with financial aid' if st == 'admitted_with_aid' }}! A formal letter of acceptance will be mailed to you.</div>
+{% elif st == 'rejected' %}
+  <div class="status-banner alert alert-danger">📋 We regret to inform you that your application for admission has been denied.</div>
+{% elif st == 'accepted' %}
+  <div class="status-banner alert alert-success">✅ You have accepted the offer of admission. Please complete your enrollment deposit below.</div>
+{% elif st == 'declined' %}
+  <div class="status-banner alert alert-secondary">You have declined the offer of admission. Contact the department if you have questions.</div>
+{% endif %}
 
-    <label>Address:</label>
-    <input type="text" name="address" value="{{ applicant.address }}"><br><br>
+<div class="row g-4">
+  <!-- LEFT: Forms -->
+  <div class="col-md-5">
 
+    <!-- Personal Info -->
+    <div class="card shadow-sm section-card mb-4">
+      <div class="card-header">Personal Information</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('applicant_dashboard') }}">
+          <div class="mb-2"><label class="form-label small fw-semibold">First Name</label>
+            <input type="text" class="form-control form-control-sm" name="fname" value="{{ applicant.fname }}" required></div>
+          <div class="mb-2"><label class="form-label small fw-semibold">Last Name</label>
+            <input type="text" class="form-control form-control-sm" name="lname" value="{{ applicant.lname }}" required></div>
+          <div class="mb-2"><label class="form-label small fw-semibold">Email</label>
+            <input type="email" class="form-control form-control-sm" name="email" value="{{ applicant.email }}" required></div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Address</label>
+            <input type="text" class="form-control form-control-sm" name="address" value="{{ applicant.address or '' }}"></div>
 
-    <h3>Application Information</h3>
-    <label>Degree Sought:</label>
-    <select name="degree">
-      <option value="MS" {% if applicant.degree == "MS" %}selected{% endif %}>MS</option>
-      <option value="PhD" {% if applicant.degree == "PhD" %}selected{% endif %}>PhD</option>
-    </select> <br><br>
+          <hr class="my-2">
+          <div class="mb-2"><label class="form-label small fw-semibold">Degree Sought</label>
+            <select class="form-select form-select-sm" name="degree">
+              <option value="MS" {{ 'selected' if applicant.degree == 'MS' }}>MS</option>
+              <option value="PhD" {{ 'selected' if applicant.degree == 'PhD' }}>PhD</option>
+            </select></div>
+          <div class="row g-2 mb-2">
+            <div class="col-4"><label class="form-label small fw-semibold">GRE Verbal</label>
+              <input type="number" class="form-control form-control-sm" name="gre_verbal" value="{{ applicant.gre_verbal or '' }}"></div>
+            <div class="col-4"><label class="form-label small fw-semibold">GRE Quant</label>
+              <input type="number" class="form-control form-control-sm" name="gre_quant" value="{{ applicant.gre_quant or '' }}"></div>
+            <div class="col-4"><label class="form-label small fw-semibold">GRE Year</label>
+              <input type="number" class="form-control form-control-sm" name="gre_year" value="{{ applicant.gre_year or '' }}"></div>
+          </div>
+          <div class="mb-2"><label class="form-label small fw-semibold">Work Experience</label>
+            <textarea class="form-control form-control-sm" name="work_experience" rows="2">{{ applicant.work_experience or '' }}</textarea></div>
+          <div class="mb-3"><label class="form-label small fw-semibold">Areas of Interest</label>
+            <textarea class="form-control form-control-sm" name="areas_of_interest" rows="2">{{ applicant.areas_of_interest or '' }}</textarea></div>
+          <button type="submit" class="btn btn-sm w-100 fw-semibold" style="background:#002147;color:#F2C75C;">Update Information</button>
+        </form>
+      </div>
+    </div>
 
-    <label>GRE Verbal:</label>
-    <input type="number" name="gre_verbal" value="{{ applicant.gre_verbal or '—' }}"><br><br>
+    <!-- Prior Degrees -->
+    <div class="card shadow-sm section-card mb-4">
+      <div class="card-header">Prior Degrees</div>
+      <div class="card-body p-0">
+        {% if degrees %}
+        <table class="table table-sm table-striped mb-0">
+          <thead class="table-dark"><tr><th>Type</th><th>University</th><th>Year</th><th>GPA</th></tr></thead>
+          <tbody>
+            {% for d in degrees %}
+            <tr><td>{{ d.degree_type }}</td><td>{{ d.university }}</td><td>{{ d.year }}</td><td>{{ d.gpa }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted small p-3 mb-0">No prior degrees on file.</p>
+        {% endif %}
+      </div>
+    </div>
 
-    <label>GRE Quant:</label>
-    <input type="number" name="gre_quant" value="{{ applicant.gre_quant or '—' }}"><br><br>
+  </div>
 
-    <label>GRE Year:</label>
-    <input type="number" name="gre_year" value="{{ applicant.gre_year or '—' }}"><br><br>
+  <!-- RIGHT: Actions + Letters -->
+  <div class="col-md-7">
 
-    <label>Work Experience:</label>
-    <textarea name="work_experience">{{ applicant.work_experience or '—' }}</textarea><br><br>
+    <!-- Offer Response (admitted) -->
+    {% if st in ('admitted', 'admitted_with_aid') %}
+    <div class="card action-card shadow mb-4">
+      <div class="card-header">🎓 Respond to Your Offer</div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">Please respond to your offer of admission. This action cannot be undone.</p>
+        <div class="d-flex gap-3">
+          <form method="POST" action="{{ url_for('respond_offer') }}" class="flex-fill">
+            <input type="hidden" name="response" value="accepted">
+            <button type="submit" class="btn btn-success w-100 fw-semibold">✅ Accept Offer</button>
+          </form>
+          <form method="POST" action="{{ url_for('respond_offer') }}" class="flex-fill">
+            <input type="hidden" name="response" value="declined">
+            <button type="submit" class="btn btn-outline-danger w-100 fw-semibold">✗ Decline Offer</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
-    <label>Areas of Interest:</label>
-    <textarea name="areas_of_interest">{{ applicant.areas_of_interest or '—' }}</textarea><br><br>
+    <!-- Deposit (accepted) -->
+    {% if st == 'accepted' %}
+    <div class="card action-card shadow mb-4">
+      <div class="card-header">💳 Enrollment Deposit</div>
+      <div class="card-body">
+        {% if applicant.deposit_submitted %}
+          <div class="alert alert-info mb-0">Deposit submitted — waiting for Graduate Secretary confirmation.</div>
+        {% else %}
+          <p class="text-muted small mb-3">Submit your enrollment deposit through the GWU payment portal, then click below to notify the Graduate Secretary.</p>
+          <form method="POST" action="{{ url_for('submit_deposit') }}">
+            <button type="submit" class="btn w-100 fw-semibold" style="background:#002147;color:#F2C75C;">I Have Submitted My Deposit</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
 
-    <button type="submit">Update Information</button>
-  </form>
+    <!-- Transcript -->
+    <div class="card shadow-sm section-card mb-4">
+      <div class="card-header">📄 Transcript</div>
+      <div class="card-body">
+        {% if applicant.transcript_received %}
+          <div class="alert alert-success mb-0"><i class="bi bi-check-circle-fill me-2"></i>Transcript received and on file.</div>
+        {% elif applicant.transcript_method == 'mail' %}
+          <div class="alert alert-warning mb-0"><i class="bi bi-envelope me-2"></i>You indicated you will mail your transcript. Waiting for the admissions committee to confirm receipt.</div>
+        {% else %}
+          <form method="POST" action="{{ url_for('applicant_transcript') }}" enctype="multipart/form-data">
+            <p class="small text-muted mb-3">Choose how to submit your official transcript:</p>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="radio" name="transcript_method" id="tr-upload" value="upload" required>
+              <label class="form-check-label fw-semibold" for="tr-upload">Upload digitally</label>
+            </div>
+            <div class="mb-3 ms-4">
+              <input type="file" class="form-control form-control-sm" name="transcript_file" accept=".pdf,.jpg,.png">
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="radio" name="transcript_method" id="tr-mail" value="mail">
+              <label class="form-check-label fw-semibold" for="tr-mail">Mail directly to the department</label>
+            </div>
+            <button type="submit" class="btn btn-sm fw-semibold" style="background:#002147;color:#F2C75C;">Submit</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
 
-  <h2>Prior Degrees</h2>
-  {% if degrees %}
-  <table border="1">
-    <tr><th>Type</th><th>University</th><th>Year</th><th>GPA</th></tr>
-    {% for d in degrees %}
-    <tr><td>{{ d.degree_type }}</td><td>{{ d.university }}</td><td>{{ d.year }}</td><td>{{ d.gpa }}</td></tr>
-    {% endfor %}
-  </table>
-  {% else %}<p>No prior degrees on file.</p>
-  {% endif %}
+    <!-- Recommendation Letters -->
+    <div class="card shadow-sm section-card mb-4">
+      <div class="card-header">✉️ Recommendation Letters</div>
+      <div class="card-body p-0">
+        {% if letters %}
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-dark"><tr><th>Writer</th><th>Institution</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {% for l in letters %}
+            <tr>
+              <td>{{ l.writer_name }}<br><small class="text-muted">{{ l.writer_title }}</small></td>
+              <td>{{ l.institution_name }}</td>
+              <td><span class="badge {{ 'bg-success' if l.is_submitted else 'bg-warning text-dark' }}">{{ 'Submitted' if l.is_submitted else 'Pending' }}</span></td>
+              <td>{% if not l.is_submitted %}<a href="{{ url_for('submit_letter', letter_id=l.id) }}" class="btn btn-sm btn-outline-secondary">Link</a>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted small p-3 mb-0">No recommendation letters requested yet.</p>
+        {% endif %}
+      </div>
+    </div>
 
-  <h2>Recommendation Letters</h2>
-  {% if letters %}
-  <table border="1">
-    <tr><th>Writer</th><th>Institution</th><th>Status</th><th>Submission Link</th></tr>
-    {% for l in letters %}
-    <tr>
-      <td>{{ l.writer_name }} ({{ l.writer_title }})</td>
-      <td>{{ l.institution_name }}</td>
-      <td>{{ 'Submitted' if l.is_submitted else 'Pending' }}</td>
-      <td>{% if not l.is_submitted %}<a href="{{ url_for('submit_letter', letter_id=l.id) }}">Link</a>{% else %}—{% endif %}</td>
-    </tr>
-    {% endfor %}
-  </table>
-  {% else %}<p>No recommendation letters requested yet.</p>
-  {% endif %}
+    <!-- Request Letter -->
+    <div class="card shadow-sm section-card">
+      <div class="card-header">➕ Request a Recommendation Letter</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('request_recommendation') }}">
+          <div class="row g-2 mb-2">
+            <div class="col-sm-6"><label class="form-label small fw-semibold">Writer Name</label>
+              <input type="text" class="form-control form-control-sm" name="writer_name" required></div>
+            <div class="col-sm-6"><label class="form-label small fw-semibold">Writer Email</label>
+              <input type="email" class="form-control form-control-sm" name="writer_email" required></div>
+            <div class="col-sm-6"><label class="form-label small fw-semibold">Title / Role</label>
+              <input type="text" class="form-control form-control-sm" name="writer_title"></div>
+            <div class="col-sm-6"><label class="form-label small fw-semibold">Institution</label>
+              <input type="text" class="form-control form-control-sm" name="institution_name"></div>
+          </div>
+          <button type="submit" class="btn btn-sm fw-semibold mt-1" style="background:#002147;color:#F2C75C;">Send Request</button>
+        </form>
+      </div>
+    </div>
 
-  <h2>Request a Recommendation Letter</h2>
-  <form method="POST" action="{{ url_for('request_recommendation') }}">
-    Writer Name: <input type="text" name="writer_name" required><br><br>
-    Writer Email: <input type="email" name="writer_email" required><br><br>
-    Writer Title: <input type="text" name="writer_title"><br><br>
-    Institution: <input type="text" name="institution_name"><br><br>
-    <input type="submit" value="Send Request">
-  </form>
-  <br><a href="{{ url_for('logout') }}">Logout</a>
-</body>
-</html>
+  </div>
+</div>
+{% endblock %}
