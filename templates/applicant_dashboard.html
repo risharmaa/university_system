@@ -40,7 +40,20 @@
   {% endif %}
   {% endif %}
 
-  <p>Transcript Received: {{ 'Yes' if applicant.transcript_received else 'No' }}</p>
+  <h3>Transcript</h3>
+  {% if applicant.transcript_received %}
+    <p>Transcript received. ✓</p>
+  {% elif applicant.transcript_method == 'mail' %}
+    <p>You indicated you will mail your transcript. Waiting for admissions committee to confirm receipt.</p>
+  {% else %}
+    <form method="POST" action="{{ url_for('applicant_transcript') }}" enctype="multipart/form-data">
+      <p>How would you like to submit your transcript?</p>
+      <input type="radio" name="transcript_method" value="upload" required> Upload transcript now<br>
+      <input type="file" name="transcript_file" accept=".pdf,.jpg,.png"><br><br>
+      <input type="radio" name="transcript_method" value="mail"> I will mail it directly to the college<br><br>
+      <input type="submit" value="Submit">
+    </form>
+  {% endif %}
 
   <h2>Application Details</h2>
   <p>Degree Sought: {{ applicant.degree }}</p>

@@ -21,10 +21,13 @@
       <td>{{ a.status }}</td>
       {% if role in ('admin', 'secretary') %}
       <td>
-        {{ 'Yes' if a.transcript_received else 'No' }}
-        <form method="POST" action="{{ url_for('update_transcript', uid=a.uid) }}" style="display:inline">
-          <input type="submit" value="Toggle">
-        </form>
+        {% if a.transcript_received %}Received
+        {% elif a.transcript_method == 'mail' %}Mailed – not confirmed
+          <form method="POST" action="{{ url_for('update_transcript', uid=a.uid) }}" style="display:inline">
+            <input type="submit" value="Confirm Receipt">
+          </form>
+        {% elif a.transcript_method == 'upload' %}Uploaded
+        {% else %}Not submitted{% endif %}
       </td>
       <td>
         {% if a.status == 'accepted' and a.deposit_submitted %}

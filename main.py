@@ -18,6 +18,9 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
 app.secret_key ="secret_key"
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 mydb = mysql.connector.connect(
     host="regs26-sharma.ca1y0o4q8i1b.us-east-1.rds.amazonaws.com",
     user="admin",
@@ -1013,6 +1016,34 @@ def applicant_dashboard():
     return render_template("applicant_dashboard.html", applicant=applicant, letters=letters, degrees=degrees)
 
 
+@app.route("/applicant/transcript", methods=["POST"])
+def applicant_transcript():
+    if "user" not in session or session["user"]["role"] != "applicant":
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    uid = session["user"]["uid"]
+    method = request.form.get("transcript_method")
+    cursor = mydb.cursor(dictionary=True)
+    if method == "upload":
+        f = request.files.get("transcript_file")
+        if not f or f.filename == "":
+            flash("Please select a file to upload.", "error")
+            return redirect(url_for("applicant_dashboard"))
+        filename = f"transcript_{uid}_{f.filename}"
+        filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        f.save(filepath)
+        cursor.execute("UPDATE applicant SET transcript_method='upload', transcript_path=%s, transcript_received=TRUE WHERE uid=%s", (filename, uid))
+        mydb.commit()
+        _check_completeness(uid, cursor)
+        mydb.commit()
+        flash("Transcript uploaded successfully.", "success")
+    elif method == "mail":
+        cursor.execute("UPDATE applicant SET transcript_method='mail' WHERE uid=%s", (uid,))
+        mydb.commit()
+        flash("Got it. Please mail your transcript. The admissions committee will confirm receipt.", "success")
+    return redirect(url_for("applicant_dashboard"))
+
+
 @app.route("/applicant/respond_offer", methods=["POST"])
 def respond_offer():
     if "user" not in session or session["user"]["role"] != "applicant":
@@ -1156,13 +1187,13 @@ def applications():
             return redirect(url_for("faculty"))
         fac = fac["cac"]
         cursor.execute(
-            "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.deposit_submitted, "
+            "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, a.deposit_submitted, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
         )
     else:
         cursor.execute(
-            "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.deposit_submitted, "
+            "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, a.deposit_submitted, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
         )

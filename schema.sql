@@ -71,6 +71,8 @@ CREATE TABLE applicant (
   work_experience TEXT,  -- Prior work experience
   areas_of_interest TEXT,  -- Areas of interest
   transcript_received BOOLEAN DEFAULT FALSE,
+  transcript_method VARCHAR(10) DEFAULT NULL,  -- 'upload' or 'mail'
+  transcript_path VARCHAR(255) DEFAULT NULL,   -- file path if uploaded
   deposit_submitted BOOLEAN DEFAULT FALSE,
   status VARCHAR(50) DEFAULT 'incomplete',  -- e.g., 'incomplete', 'under review', 'admitted', 'rejected'
   PRIMARY KEY (uid),
