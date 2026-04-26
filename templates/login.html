@@ -1,28 +1,94 @@
-<!DOCTYPE html>
-<html>
+{% extends "basic.html" %}
+{% block title %}Login - GWU CS{% endblock %}
+{% block container_class %}container-fluid p-0{% endblock %}
+{% block content %}
+<style>
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in { animation: fadeInUp 0.6s ease forwards; }
+  .left-panel {
+    background-color: #002147;
+    min-height: calc(100vh - 56px);
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 50px 40px; color: #F2C75C; text-align: center;
+  }
+  .left-panel h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 16px; }
+  .left-panel p  { font-size: 1.15rem; color: #ffffffcc; line-height: 1.7; }
+  .left-panel .divider { width: 60px; height: 3px; background-color: #F2C75C; margin: 20px auto; }
+  .right-panel {
+    background-color: #f8f9fa;
+    background-image: radial-gradient(#d0d0d0 1px, transparent 1px);
+    background-size: 20px 20px;
+    min-height: calc(100vh - 56px);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-card { width: 100%; max-width: 440px; }
+  .login-card .card { border: none; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
+  .login-card .card-header { background-color: #002147; color: #F2C75C; border-radius: 16px 16px 0 0; padding: 20px; }
+</style>
 
-  <head>
-    <title>Login</title>
-  </head>
-  
-  <body>
-    <h1>Login</h1>
-    <form action="/login" method = "POST">
-        <label for="username">Username: </label>
-        <input type = "text" id="username" name="username" required>
-        <br>
-        <label for="password">Password: </label>
-        <input type = "password" id="password" name="password" required> 
-        <br>
-        <button type="submit">Login</button>
-    </form>
-    <p>{{error}}</p>
+<div class="row g-0">
+  <div class="col-md-5 left-panel">
+    <div>
+      <h1>GWU CS<br>Graduate System</h1>
+      <div class="divider"></div>
+      <p>Admissions, Advising &amp;<br>Registration — <em>all in one place.</em></p>
+      <p class="mt-4" style="font-size:0.95rem; color:#ffffff88;">
+        George Washington University<br>Department of Computer Science
+      </p>
+    </div>
+  </div>
 
-    <form action="{{ url_for('resetdb') }}">
-        <button type="submit">Reset Database</button>
-    </form>
-    <br><a href="{{ url_for('applicant_register') }}">Apply for Admission</a>
-    
-  </body>
+  <div class="col-md-7 right-panel">
+    <div class="login-card fade-in px-4">
+      <div class="card">
+        <div class="card-header text-center">
+          <h4 class="mb-0">Sign In</h4>
+        </div>
+        <div class="card-body p-4">
+          <form action="/login" method="POST">
+            <div class="mb-3">
+              <label for="username" class="form-label fw-semibold">Username</label>
+              <input type="text" class="form-control form-control-lg" id="username" name="username" placeholder="Enter your username" required>
+            </div>
+            <div class="mb-4">
+              <label for="password" class="form-label fw-semibold">Password</label>
+              <div class="input-group">
+                <input type="password" class="form-control form-control-lg" id="password" name="password" placeholder="Enter your password" required>
+                <button type="button" class="btn btn-outline-secondary" onclick="togglePassword()">
+                  <i class="bi bi-eye" id="eye-icon"></i>
+                </button>
+              </div>
+            </div>
+            <div class="d-grid mb-3">
+              <button type="submit" class="btn btn-lg fw-bold" style="background-color:#002147; color:#F2C75C;">Sign In</button>
+            </div>
+            <div class="text-center">
+              <a href="{{ url_for('applicant_register') }}" class="text-decoration-none" style="color:#002147;">
+                <i class="bi bi-person-plus"></i> Apply for Graduate Admission
+              </a>
+            </div>
+          </form>
+        </div>
+        <div class="card-footer text-center bg-white border-0 pb-3">
+          <form action="{{ url_for('resetdb') }}" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Reset Database</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-</html>
+<script>
+  function togglePassword() {
+    const pwd = document.getElementById("password");
+    const icon = document.getElementById("eye-icon");
+    if (pwd.type === "password") { pwd.type = "text"; icon.classList.replace("bi-eye","bi-eye-slash"); }
+    else { pwd.type = "password"; icon.classList.replace("bi-eye-slash","bi-eye"); }
+  }
+</script>
+{% endblock %}
