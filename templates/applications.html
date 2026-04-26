@@ -9,7 +9,7 @@
   <table border="1">
     <tr>
       <th>UID</th><th>Name</th><th>Degree</th><th>Status</th>
-      {% if role in ('admin', 'secretary') %}<th>Transcript</th>{% endif %}
+      {% if role in ('admin', 'secretary') %}<th>Transcript</th><th>Deposit</th>{% endif %}
       {% if role == 'faculty' %}<th>Completeness</th>{% endif %}
       <th>Actions</th>
     </tr>
@@ -25,6 +25,18 @@
         <form method="POST" action="{{ url_for('update_transcript', uid=a.uid) }}" style="display:inline">
           <input type="submit" value="Toggle">
         </form>
+      </td>
+      <td>
+        {% if a.status == 'accepted' and a.deposit_submitted %}
+          Submitted
+          {% if role == 'secretary' %}
+          <form method="POST" action="{{ url_for('confirm_enrollment', uid=a.uid) }}" style="display:inline">
+            <input type="submit" value="Confirm & Enroll">
+          </form>
+          {% endif %}
+        {% elif a.status == 'accepted' %}
+          Pending
+        {% else %}—{% endif %}
       </td>
       {% endif %}
       {% if role == 'faculty' %}

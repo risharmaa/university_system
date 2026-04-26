@@ -28,6 +28,18 @@
   </form>
   {% endif %}
 
+  {% if applicant.status == 'accepted' %}
+  <h3>Deposit</h3>
+  {% if applicant.deposit_submitted %}
+  <p>Deposit submitted — waiting for Graduate Secretary confirmation.</p>
+  {% else %}
+  <p>Please submit your enrollment deposit, then click below to notify the Graduate Secretary.</p>
+  <form method="POST" action="{{ url_for('submit_deposit') }}">
+    <input type="submit" value="I Have Submitted My Deposit">
+  </form>
+  {% endif %}
+  {% endif %}
+
   <p>Transcript Received: {{ 'Yes' if applicant.transcript_received else 'No' }}</p>
 
   <h2>Application Details</h2>

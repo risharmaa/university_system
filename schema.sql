@@ -71,6 +71,7 @@ CREATE TABLE applicant (
   work_experience TEXT,  -- Prior work experience
   areas_of_interest TEXT,  -- Areas of interest
   transcript_received BOOLEAN DEFAULT FALSE,
+  deposit_submitted BOOLEAN DEFAULT FALSE,
   status VARCHAR(50) DEFAULT 'incomplete',  -- e.g., 'incomplete', 'under review', 'admitted', 'rejected'
   PRIMARY KEY (uid),
   FOREIGN KEY (uid) REFERENCES users(uid)

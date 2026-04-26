@@ -1024,23 +1024,55 @@ def respond_offer():
         flash("Invalid response.", "error")
         return redirect(url_for("applicant_dashboard"))
     cursor = mydb.cursor(dictionary=True)
-    cursor.execute("SELECT a.*, u.fname, u.lname, u.email, u.address FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid=%s", (uid,))
+    cursor.execute("SELECT status FROM applicant WHERE uid=%s", (uid,))
     row = cursor.fetchone()
     if not row or row["status"] not in ("admitted", "admitted_with_aid"):
         flash("No offer to respond to.", "error")
         return redirect(url_for("applicant_dashboard"))
     cursor.execute("UPDATE applicant SET status=%s WHERE uid=%s", (response, uid))
-    if response == "accepted":
-        cursor.execute("UPDATE users SET role='student' WHERE uid=%s", (uid,))
-        cursor.execute("INSERT INTO students (uid, program) VALUES (%s, %s)", (uid, row["degree"]))
-        mydb.commit()
-        session["user"]["role"] = "student"
-        session.modified = True
-        flash("You have accepted the offer. Welcome to GWU!", "success")
-        return redirect(url_for("student"))
     mydb.commit()
-    flash("You have declined the offer.", "success")
+    if response == "accepted":
+        flash("You have accepted the offer! Please submit your deposit and mark it below.", "success")
+    else:
+        flash("You have declined the offer.", "success")
     return redirect(url_for("applicant_dashboard"))
+
+
+@app.route("/applicant/submit_deposit", methods=["POST"])
+def submit_deposit():
+    if "user" not in session or session["user"]["role"] != "applicant":
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    uid = session["user"]["uid"]
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT status FROM applicant WHERE uid=%s", (uid,))
+    row = cursor.fetchone()
+    if not row or row["status"] != "accepted":
+        flash("You must accept the offer before submitting a deposit.", "error")
+        return redirect(url_for("applicant_dashboard"))
+    cursor.execute("UPDATE applicant SET deposit_submitted=TRUE WHERE uid=%s", (uid,))
+    mydb.commit()
+    flash("Deposit marked as submitted. The Graduate Secretary will confirm it.", "success")
+    return redirect(url_for("applicant_dashboard"))
+
+
+@app.route("/secretary/confirm_enrollment/<int:uid>", methods=["POST"])
+def confirm_enrollment(uid):
+    if not _is_secretary_session():
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT a.*, u.fname, u.lname, u.email, u.address FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid=%s", (uid,))
+    app_row = cursor.fetchone()
+    if not app_row or app_row["status"] != "accepted" or not app_row["deposit_submitted"]:
+        flash("Applicant has not accepted or submitted deposit.", "error")
+        return redirect(url_for("applications"))
+    cursor.execute("UPDATE users SET role='student' WHERE uid=%s", (uid,))
+    cursor.execute("INSERT INTO students (uid, program) VALUES (%s, %s)", (uid, app_row["degree"]))
+    mydb.commit()
+    flash(f"{app_row['fname']} {app_row['lname']} has been enrolled as a student.", "success")
+    return redirect(url_for("applications"))
+
 
 
 @app.route("/applicant/request_recommendation", methods=["POST"])
@@ -1124,13 +1156,13 @@ def applications():
             return redirect(url_for("faculty"))
         fac = fac["cac"]
         cursor.execute(
-            "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.deposit_submitted, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
         )
     else:
         cursor.execute(
-            "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, "
+            "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.deposit_submitted, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
         )
