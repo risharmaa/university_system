@@ -1,6 +1,7 @@
 import os
 import google.generativeai as genai 
 from dotenv import load_dotenv
+from google.generativeai import types
 
 # load environment variable from the .env file
 load_dotenv()
@@ -17,19 +18,17 @@ with open("schema.sql", "r") as f:
     sql_schema = f.read()
 
 def advising_chat(user_input, uid):
-    config=types.GenerateContentConfig(
-        system_instruction=f"""You are a college advisor. Using this SQL schema: {sql_schema}, help students (defined by {uid}) 
+    system_instruction=f"""You are a college advisor. Using this SQL schema: {sql_schema}, help students (defined by {uid}) 
         to pick classes based on their interests using the courses table. Before submitting your suggestion, check the 
         courses_offered table to make sure that the class is offered this semester. Also check the enrollment table for
         the student using {uid} to see if the student has already taken that class (do not recommend that class!)
         """
-    )
 
     # creating the generative model
     model = genai.GenerativeModel(model_name = 'gemini-2.5-flash', system_instruction = system_instruction)
 
     try:
-        # Call the model
+        # call the model
         response = model.generate_content(user_input)
         return response.text
     except Exception as e:
