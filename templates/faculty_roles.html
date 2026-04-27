@@ -1,54 +1,102 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Faculty Roles</title>
-</head>
-<body>
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <ul>
-      {% for category, message in messages %}
-        <li class="{{ category }}">{{ message }}</li>
-      {% endfor %}
-      </ul>
+{% extends "basic.html" %}
+{% block title %}Faculty Dashboard - GWU CS{% endblock %}
+{% block content %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    <div class="alert alert-{{ 'danger' if cat=='error' else 'success' }} alert-dismissible fade show">
+      {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endwith %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0">Faculty Dashboard</h2>
+    <span class="text-muted">{{ session["user"]["fname"] }} {{ session["user"]["lname"] }}</span>
+  </div>
+  <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-box-arrow-right me-1"></i>Logout
+  </a>
+</div>
+
+<h5 class="fw-semibold text-muted mb-3 text-uppercase" style="letter-spacing:.06em;font-size:.8rem;">Your Roles</h5>
+<div class="row g-3 mb-4">
+
+  {% for role in roles %}
+
+    {% if role == "advisor" %}
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100" style="border-top:4px solid #002147;">
+        <div class="card-body d-flex flex-column">
+          <div class="mb-3">
+            <span class="fs-1">🎓</span>
+          </div>
+          <h5 class="fw-bold mb-1">Academic Advisor</h5>
+          <p class="text-muted small flex-grow-1">View and manage your advisees, track their progress, and provide academic guidance.</p>
+          <a href="{{ url_for('facultyadvisor') }}" class="btn fw-semibold mt-auto" style="background:#002147;color:#F2C75C;">
+            View Advisees <i class="bi bi-arrow-right ms-1"></i>
+          </a>
+        </div>
+      </div>
+    </div>
     {% endif %}
-  {% endwith %}
- <h1>Select Faculty Role</h1>
- <p>Signed in as {{ session["user"]["fname"] }} {{ session["user"]["lname"] }}</p>
- <h3>Available Roles</h3>
- <ul>
-    {% for role in roles %}
-        {% if role == "advisor" %}
-            <li>
-                <a href="{{ url_for('facultyadvisor') }}">
-                    View Advisees
-                </a>
-            </li>
-        {% endif %}
 
-        {% if role == "reviewer" %}
-            <li>
-                <a href="{{ url_for('applications') }}">
-                    Reviewer - Review Applications
-                </a>
-            </li>
-        {% endif %}
+    {% if role == "reviewer" %}
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100" style="border-top:4px solid #0d6efd;">
+        <div class="card-body d-flex flex-column">
+          <div class="mb-3">
+            <span class="fs-1">📋</span>
+          </div>
+          <h5 class="fw-bold mb-1">Application Reviewer</h5>
+          <p class="text-muted small flex-grow-1">Review graduate applications, submit GAS ratings, and recommend advisors for applicants.</p>
+          <a href="{{ url_for('applications') }}" class="btn btn-primary fw-semibold mt-auto">
+            Review Applications <i class="bi bi-arrow-right ms-1"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
-        {% if role == "cac" %}
-            <li>
-                <a href="{{ url_for('applications') }}">
-                    CAC - Review Applications
-                </a>
-            </li>
-        {% endif %}
-    {% endfor %}
-    <li><a href = "/viewgrades">View Grades</a></li>
-    <li><a href = "/coursecatalog">View Courses</a></li>
- </ul>
- <a href= "{{ url_for('logout') }}">
-    <button type="button">Logout </button><br>
+    {% if role == "cac" %}
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100" style="border-top:4px solid #F2C75C;">
+        <div class="card-body d-flex flex-column">
+          <div class="mb-3">
+            <span class="fs-1">⚖️</span>
+          </div>
+          <h5 class="fw-bold mb-1">CAC Member</h5>
+          <p class="text-muted small flex-grow-1">Committee on Admissions — view all faculty reviews and make final admission decisions.</p>
+          <a href="{{ url_for('applications') }}" class="btn fw-semibold mt-auto" style="background:#F2C75C;color:#002147;">
+            Open Applications <i class="bi bi-arrow-right ms-1"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  {% endfor %}
+</div>
+
+<h5 class="fw-semibold text-muted mb-3 text-uppercase" style="letter-spacing:.06em;font-size:.8rem;">Quick Access</h5>
+<div class="row g-3">
+  <div class="col-sm-6 col-md-3">
+    <a href="/viewgrades" class="card shadow-sm text-decoration-none text-dark h-100">
+      <div class="card-body text-center py-4">
+        <i class="bi bi-bar-chart-fill fs-2 text-primary mb-2 d-block"></i>
+        <div class="fw-semibold">View Grades</div>
+      </div>
     </a>
-</body>
- </body>
- </html>
+  </div>
+  <div class="col-sm-6 col-md-3">
+    <a href="/coursecatalog" class="card shadow-sm text-decoration-none text-dark h-100">
+      <div class="card-body text-center py-4">
+        <i class="bi bi-book-fill fs-2 text-success mb-2 d-block"></i>
+        <div class="fw-semibold">Course Catalog</div>
+      </div>
+    </a>
+  </div>
+</div>
+
+{% endblock %}
