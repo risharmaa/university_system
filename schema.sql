@@ -252,17 +252,21 @@ INSERT INTO users (uid, username, password, role, fname, lname, email, address) 
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (66666666, '66666666', 'pass', 'student','George', 'Harrison', 'georgeharrison@gmail.com', 'Manhattan');
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (87654321, '87654321', 'pass','student','Ringo', 'Starr', 'ringostarr@gmail.com', 'Paris');
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (12121212, '12121212', 'pass','faculty','Gabe', 'Parmer', 'gabeparmer@gmail.com', 'Balitmore');
-INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (22222222, '22222222', 'pass','faculty','Bhagirath', 'Narahari', 'bhagirathnarahari@gmail.com', 'Boston');
-INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (33333333, '33333333', 'pass','secretary','Bob', 'Smith', 'bobsmith@gmail.com', 'Lawrenceville');
+INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (21212121, '21212121', 'pass','faculty','Bhagirath', 'Narahari', 'bhagirathnarahari@gmail.com', 'Boston');
+INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (11111112, '11111112', 'pass','faculty','Heller', 'Wood', 'hellerwood@gmail.com', 'Aldie');
+
+INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (31313131, '31313131', 'pass','secretary','Bob', 'Smith', 'bobsmith@gmail.com', 'Lawrenceville');
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (77777777, '77777777', 'pass','alumni','Eric', 'Clapton', 'ericclapton@gmail.com', 'Richmond');
-INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (44444444, '44444444', 'pass','admin','Ava', 'White', 'avawhite@gmail.com', 'Andover');
+INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (41414141, '41414141', 'pass','admin','Ava', 'White', 'avawhite@gmail.com', 'Andover');
 
 -- inserting faculty/advisor from the sample data
 INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (12121212, true, false, true);
-INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (22222222, false, true, true);
+INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (21212121, false, true, true);
+INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (11111112, false, true, true);
+
 
 -- inserting students from the sample data
-INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year, registration_hold) VALUES(55555555, 'MS', 22222222, 'active', 2023, TRUE);
+INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year, registration_hold) VALUES(55555555, 'MS', 21212121, 'active', 2023, TRUE);
 INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year, registration_hold) VALUES(66666666, 'MS', 12121212, 'active', 2024, TRUE);
 INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year, registration_hold) VALUES(87654321, 'PhD', 12121212, 'active', 2023, TRUE);
 
@@ -270,7 +274,7 @@ INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_ye
 INSERT INTO alumni (uid, degree, graduation_year, graduation_semester) VALUES (77777777, 'MS', 2014, 'Fall');
 
 -- inserting grad secretary from the sample data  
-INSERT INTO secretary (uid) VALUES (33333333);
+INSERT INTO secretary (uid) VALUES (31313131);
 
 -- inserting courses
 INSERT INTO courses (course_number, title, credits, department) VALUES (6221, 'SW Paradigms', 3, 'CSCI');
@@ -355,7 +359,7 @@ INSERT INTO users (uid, username, password, role, fname, lname, email, address) 
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (13131313,'13131313', 'pass', 'faculty', 'Carol', 'Reed', 'carolreed@gwu.edu', 'Washington DC');
 
 -- inserting students for regs
-INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year, registration_hold) VALUES(88888888, 'MS', 22222222, 'active', 2024, TRUE);
+INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year, registration_hold) VALUES(88888888, 'MS', 21212121, 'active', 2024, TRUE);
 INSERT INTO students (uid, program, advisor_id, graduation_status, enrollment_year, registration_hold) VALUES(99999999, 'MS', 12121212, 'active', 2025, TRUE);
 
 -- inserting faculty for regs
@@ -363,26 +367,26 @@ INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (12345678, false, false,
 INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (13131313, true, false, false);
 
 -- inserting courses offered from regs
-INSERT INTO courses_offered VALUES ('CSCI', 6221, 1, 'M', '1500-1730', 10, 22222222, 'SEH', 'Fall', 2026, 30);
-INSERT INTO courses_offered VALUES ('CSCI', 6461, 2, 'T', '1500-1730', 11, 22222222, 'SEH', 'Fall', 2026, 20);
+INSERT INTO courses_offered VALUES ('CSCI', 6221, 1, 'M', '1500-1730', 10, 21212121, 'SEH', 'Fall', 2026, 30);
+INSERT INTO courses_offered VALUES ('CSCI', 6461, 2, 'T', '1500-1730', 11, 21212121, 'SEH', 'Fall', 2026, 20);
 INSERT INTO courses_offered VALUES ('CSCI', 6212, 3, 'W', '1500-1730', 12, 12345678, 'SEH', 'Fall', 2026, 20);
 INSERT INTO courses_offered VALUES ('CSCI', 6232, 5, 'M', '1800-2030', 13, 12345678, 'SEH', 'Fall', 2026, 30);
 INSERT INTO courses_offered VALUES ('CSCI', 6233, 6, 'T', '1800-2030', 14, 12121212, 'SEH', 'Fall', 2026, 25);
 INSERT INTO courses_offered VALUES ('CSCI', 6241, 7, 'W', '1800-2030', 15, 12121212, 'SEH', 'Fall', 2026, 30);
-INSERT INTO courses_offered VALUES ('CSCI', 6242, 8, 'R', '1800-2030', 16, 22222222, 'SEH', 'Fall', 2026, 20);
+INSERT INTO courses_offered VALUES ('CSCI', 6242, 8, 'R', '1800-2030', 16, 21212121, 'SEH', 'Fall', 2026, 20);
 INSERT INTO courses_offered VALUES ('CSCI', 6246, 9, 'T', '1500-1730', 17, 12345678, 'SEH', 'Fall', 2026, 25);
 INSERT INTO courses_offered VALUES ('CSCI', 6251, 10, 'M', '1800-2030', 18, 12121212, 'SEH', 'Fall', 2026, 40);
 INSERT INTO courses_offered VALUES ('CSCI', 6254, 11, 'M', '1530-1800', 19, 12121212, 'SEH', 'Fall', 2026, 30);
 INSERT INTO courses_offered VALUES ('CSCI', 6260, 12, 'R', '1800-2030', 20, 12121212, 'SEH', 'Fall', 2026, 20);
 INSERT INTO courses_offered VALUES ('CSCI', 6262, 13, 'W', '1800-2030', 21, 12345678, 'SEH', 'Fall', 2026, 20);
-INSERT INTO courses_offered VALUES ('CSCI', 6283, 14, 'T', '1800-2030', 22, 22222222, 'SEH', 'Fall', 2026, 20);
-INSERT INTO courses_offered VALUES ('CSCI', 6284, 15, 'M', '1800-2030', 23, 22222222, 'SEH', 'Fall', 2026, 25);
+INSERT INTO courses_offered VALUES ('CSCI', 6283, 14, 'T', '1800-2030', 22, 21212121, 'SEH', 'Fall', 2026, 20);
+INSERT INTO courses_offered VALUES ('CSCI', 6284, 15, 'M', '1800-2030', 23, 21212121, 'SEH', 'Fall', 2026, 25);
 INSERT INTO courses_offered VALUES ('CSCI', 6286, 16, 'W', '1800-2030', 24, 12121212, 'SEH', 'Fall', 2026, 30);
-INSERT INTO courses_offered VALUES ('CSCI', 6384, 18, 'W', '1500-1730', 25, 22222222, 'SEH', 'Fall', 2026, 35);
+INSERT INTO courses_offered VALUES ('CSCI', 6384, 18, 'W', '1500-1730', 25, 21212121, 'SEH', 'Fall', 2026, 35);
 INSERT INTO courses_offered VALUES ('ECE', 6241, 19, 'M', '1800-2030', 26, 12345678, 'SEH', 'Fall', 2026, 30);
-INSERT INTO courses_offered VALUES ('ECE', 6242, 20, 'T', '1800-2030', 27, 22222222, 'SEH', 'Fall', 2026, 25);
+INSERT INTO courses_offered VALUES ('ECE', 6242, 20, 'T', '1800-2030', 27, 21212121, 'SEH', 'Fall', 2026, 25);
 INSERT INTO courses_offered VALUES ('MATH', 6210, 21, 'W', '1800-2030', 28, 12345678, 'SEH', 'Fall', 2026, 25);
-INSERT INTO courses_offered VALUES ('CSCI', 6339, 22, 'R', '1600-1830', 29, 22222222, 'SEH', 'Fall', 2026, 20);
+INSERT INTO courses_offered VALUES ('CSCI', 6339, 22, 'R', '1600-1830', 29, 21212121, 'SEH', 'Fall', 2026, 20);
 
 -- inserting enrollment for Billie Holiday from REGS
 INSERT INTO enrollment (uid, course_number, department, semester, year, grade, credit_hours, sectionnum, prof_added) VALUES (88888888, 6461, 'CSCI', 'Fall', 2026, 'IP', 3, 11, false);
@@ -390,28 +394,25 @@ INSERT INTO enrollment (uid, course_number, department, semester, year, grade, c
 
 -- APPS sample data
 -- Applicant users: 3 applicants at different stages
-INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (11223344, '11223344', 'pass', 'applicant', 'John', 'Lennon', 'johnlennon@gmail.com', 'New York');
-INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (55443322, '55443322', 'pass', 'applicant', 'Mick', 'Jagger', 'mickjagger@gmail.com', 'London');
-INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (99887766, '99887766', 'pass', 'applicant', 'Keith', 'Richards', 'keithrichards@gmail.com', 'Chicago');
+INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (12312312, '12312312', 'pass', 'applicant', 'John', 'Lennon', 'johnlennon@gmail.com', 'New York');
+INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (66666667, '66666667', 'pass', 'applicant', 'Ringo', 'Starr', 'ringostarr2@gmail.com', 'London');
 
 -- Applicant details
-INSERT INTO applicant (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_experience, areas_of_interest, transcript_received, year_applied, semester_applied, status) VALUES (11223344, '123-45-6789', 'MS', 158, 165, 2024, '2 years at Google', 'Machine Learning, Databases', TRUE, 2026, 'Fall', 'under review');
-INSERT INTO applicant (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_experience, areas_of_interest, transcript_received, year_applied, semester_applied, status) VALUES (55443322, '987-65-4321', 'PhD', 162, 170, 2023, '5 years at Meta', 'AI, Cybersecurity', FALSE, 2026, 'Fall', 'incomplete');
-INSERT INTO applicant (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_experience, areas_of_interest, transcript_received, year_applied, semester_applied, status) VALUES (99887766, '111-22-3333', 'MS', 155, 160, 2024, '1 year at startup', 'Networks, Cloud Computing', TRUE, 2026, 'Spring', 'admitted');
+INSERT INTO applicant (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_experience, areas_of_interest, transcript_received, year_applied, semester_applied, status) VALUES (12312312, '111-11-1111', 'MS', 158, 165, 2024, '2 years at Google', 'Machine Learning, Databases', TRUE, 2026, 'Fall', 'under review');
+INSERT INTO applicant (uid, ssn, degree, gre_verbal, gre_quant, gre_year, work_experience, areas_of_interest, transcript_received, year_applied, semester_applied, status) VALUES (66666667, '987-65-4321', 'PhD', 162, 170, 2023, '5 years at Meta', 'AI, Cybersecurity', FALSE, 2026, 'Fall', 'incomplete');
 
 -- Prior degrees
-INSERT INTO prior_degree (uid, degree_type, year, gpa, university) VALUES (11223344, 'Bachelors', 2022, 3.80, 'MIT');
-INSERT INTO prior_degree (uid, degree_type, year, gpa, university) VALUES (55443322, 'Bachelors', 2018, 3.90, 'Stanford');
-INSERT INTO prior_degree (uid, degree_type, year, gpa, university) VALUES (55443322, 'Masters', 2020, 3.75, 'Stanford');
-INSERT INTO prior_degree (uid, degree_type, year, gpa, university) VALUES (99887766, 'Bachelors', 2023, 3.50, 'GWU');
+INSERT INTO prior_degree (uid, degree_type, year, gpa, university) VALUES (12312312, 'Bachelors', 2022, 3.80, 'MIT');
+INSERT INTO prior_degree (uid, degree_type, year, gpa, university) VALUES (66666667, 'Bachelors', 2018, 3.90, 'Stanford');
+INSERT INTO prior_degree (uid, degree_type, year, gpa, university) VALUES (66666667, 'Masters', 2020, 3.75, 'Stanford');
 
 -- Recommendation letters
-INSERT INTO recommendation_letter (uid, writer_name, writer_email, writer_title, institution_name, letter_content, is_submitted, submission_date) VALUES (11223344, 'Dr. Alice Smith', 'alice@mit.edu', 'Professor', 'MIT', 'John is an exceptional student with strong analytical skills.', TRUE, '2025-01-10 10:00:00');
-INSERT INTO recommendation_letter (uid, writer_name, writer_email, writer_title, institution_name) VALUES (11223344, 'Dr. Bob Jones', 'bob@google.com', 'Senior Engineer', 'Google');
-INSERT INTO recommendation_letter (uid, writer_name, writer_email, writer_title, institution_name) VALUES (55443322, 'Dr. Carol Lee', 'carol@stanford.edu', 'Professor', 'Stanford');
+INSERT INTO recommendation_letter (uid, writer_name, writer_email, writer_title, institution_name, letter_content, is_submitted, submission_date) VALUES (12312312, 'Dr. Alice Smith', 'alice@mit.edu', 'Professor', 'MIT', 'John is an exceptional student with strong analytical skills.', TRUE, '2025-01-10 10:00:00');
+INSERT INTO recommendation_letter (uid, writer_name, writer_email, writer_title, institution_name) VALUES (12312312, 'Dr. Bob Jones', 'bob@google.com', 'Senior Engineer', 'Google');
+INSERT INTO recommendation_letter (uid, writer_name, writer_email, writer_title, institution_name) VALUES (66666667, 'Dr. Carol Lee', 'carol@stanford.edu', 'Professor', 'Stanford');
 
 -- Review by Bhagirath for John Lennon
-INSERT INTO app_review (uid, reviewer_uid, rating, deficiency_courses, reject_reasons, comment, recommended_advisor) VALUES (11223344, 22222222, 2, NULL, NULL, 'Strong candidate with solid GPA and work experience.', 12121212);
+INSERT INTO app_review (uid, reviewer_uid, rating, deficiency_courses, reject_reasons, comment, recommended_advisor) VALUES (12312312, 21212121, 2, NULL, NULL, 'Strong candidate with solid GPA and work experience.', 12121212);
 
 -- inserting values for prereqs
 INSERT INTO prereqs VALUES (6233, 'CSCI', 6232, 'CSCI');
