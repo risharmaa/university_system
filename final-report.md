@@ -50,7 +50,7 @@ Overall, each subsystem maintains its own functionality while remaining connecte
 **Special Features**: ~2 sentences describing each extra feature you added beyond the spec
 - PhD suggestion: Added a phd suggestion for master students. This suggestion is based on that students transcript and courses they have taken
 - Auto Enroll: After a students form is approved, they can auto enroll in the courses listed in the form that meet the prerequistes and time conflict or previously taken. 
-- Applicant Chat: (add description)
+- Advising Chat: Students can enter/ask questions they have about potential courses to take, and the chat bot will utilize gemini's AI to look over the schema and recommend classes. 
 
 **Work Breakdown**: List teammates and specify the aspects of the project they worked on
 - Riya: 
@@ -60,11 +60,13 @@ Overall, each subsystem maintains its own functionality while remaining connecte
     - Added users in issues
     - Connected AWS
     - Added required queries for phase 2
+    - Added chatbox for extra feature (Gemini AI)
 - Kiran Guru: 
     - Added APPS code and integrated it with other parts
     - Helped construct database
     - Added required queries for phase 2
     - Connected applicants to students
+    - Added styling for website
 - Kiran Gill: 
     - Added ADS code and integrated it with the other parts
     - Helped construct database
