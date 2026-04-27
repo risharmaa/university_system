@@ -1,88 +1,115 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Admin Dashboard</title>
-</head>
+{% extends "basic.html" %}
+{% block title %}Admin Dashboard - GWU CS{% endblock %}
+{% block content %}
 
-<body>
-
-    
-    <h1>Welcome, {{ session.user.fname }}</h1>
-    <br>
-
-    <h2>Admin:</h2>
-    <ul>
-        {% for ad in admins %}
-            <li>
-                <a href="{{ url_for('admin_update', uid=ad['uid']) }}">
-                    {{ ad['fname'] }} {{ ad["lname"] }}
-                </a>
-            </li>
-        {% endfor %}
-    </ul>
-    <br>
-
-    <h2>Secretary:</h2>
-    <ul>
-        {% for sec in secretary %}
-            <li>
-                <a href="{{ url_for('admin_update', uid=sec['uid']) }}">
-                    {{ sec['fname'] }} {{ sec["lname"] }}
-                </a>
-            </li>
-        {% endfor %}
-    </ul>
-    <br>
-
-    <h2>Faculty:</h2>
-    <ul>
-        {% for fac in faculty %}
-        <li>
-            <a href="{{ url_for('admin_update', uid=fac['uid']) }}">
-                {{ fac['fname'] }} {{ fac["lname"] }}
-            </a>
-        </li>
-        {% endfor %}
-    </ul>
-    <br>
-
-    <h2>Alumni:</h2>
-    <ul>
-        {% for alum in alumni %}
-            <li>
-                <a href="{{ url_for('admin_update', uid=alum['uid']) }}">
-                    {{ alum['fname'] }} {{ alum["lname"] }} 
-                </a>
-            </li>
-        {% endfor %}
-    </ul>
-    <br>
-
-    <h2>Students:</h2>
-    <ul>
-        {% for stu in students %}
-            <li>
-                <a href="{{ url_for('admin_update', uid=stu['uid']) }}">
-                    {{ stu['fname'] }} {{ stu["lname"] }} 
-                </a>
-            </li>
-        {% endfor %}
-    </ul>
-    <br>
-
-
-    <a href="{{ url_for('create_user')}}">
-      <button type="submit">Create New User</button>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0">Admin Dashboard</h2>
+    <span class="text-muted">Welcome, {{ session.user.fname }}</span>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('create_user') }}" class="btn btn-sm fw-semibold" style="background:#002147;color:#F2C75C;">
+      <i class="bi bi-person-plus me-1"></i>Create User
     </a>
-    <br>
-    <br>
-    <p><a href = "/coursecatalog">View Courses</a></p>
-    <p><a href="{{ url_for('applications') }}">Review Applications</a></p>
-    <a href="/logout">
-      <button type="submit">Logout</button>
+    <a href="/logout" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-box-arrow-right me-1"></i>Logout
     </a>
-</body>
+  </div>
+</div>
 
+<!-- Quick Nav -->
+<div class="row g-2 mb-4">
+  <div class="col-6 col-md-3">
+    <a href="{{ url_for('applications') }}" class="card shadow-sm text-decoration-none text-dark h-100">
+      <div class="card-body text-center py-3">
+        <i class="bi bi-file-earmark-person fs-3 mb-1 d-block" style="color:#002147;"></i>
+        <div class="small fw-semibold">Applications</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="{{ url_for('secretary') }}" class="card shadow-sm text-decoration-none text-dark h-100">
+      <div class="card-body text-center py-3">
+        <i class="bi bi-people-fill fs-3 mb-1 d-block text-primary"></i>
+        <div class="small fw-semibold">Students</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="/coursecatalog" class="card shadow-sm text-decoration-none text-dark h-100">
+      <div class="card-body text-center py-3">
+        <i class="bi bi-book-fill fs-3 mb-1 d-block text-success"></i>
+        <div class="small fw-semibold">Courses</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="/viewgrades" class="card shadow-sm text-decoration-none text-dark h-100">
+      <div class="card-body text-center py-3">
+        <i class="bi bi-bar-chart-fill fs-3 mb-1 d-block text-warning"></i>
+        <div class="small fw-semibold">Grades</div>
+      </div>
+    </a>
+  </div>
+</div>
 
-</html>
+<!-- User Tabs -->
+<div class="card shadow-sm">
+  <div class="card-header p-0" style="background:#002147;">
+    <ul class="nav nav-tabs border-0" id="userTabs" role="tablist">
+      {% for tab_id, label, icon, count in [
+          ('admins',    'Admin',     'bi-shield-fill',        admins|length),
+          ('secretary', 'Secretary', 'bi-person-badge-fill',  secretary|length),
+          ('faculty',   'Faculty',   'bi-easel-fill',         faculty|length),
+          ('alumni',    'Alumni',    'bi-mortarboard-fill',   alumni|length),
+          ('students',  'Students',  'bi-people-fill',        students|length)
+      ] %}
+      <li class="nav-item" role="presentation">
+        <button class="nav-link {{ 'active' if loop.first }} fw-semibold text-white"
+                id="{{ tab_id }}-tab" data-bs-toggle="tab" data-bs-target="#{{ tab_id }}"
+                type="button" role="tab"
+                style="border-radius:0; border:none; background:{{ '#003580' if loop.first else 'transparent' }};">
+          <i class="bi {{ icon }} me-1"></i>{{ label }}
+          <span class="badge bg-warning text-dark ms-1">{{ count }}</span>
+        </button>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="tab-content" id="userTabsContent">
 
+    {% for tab_id, label, users in [
+        ('admins',    'Admin',     admins),
+        ('secretary', 'Secretary', secretary),
+        ('faculty',   'Faculty',   faculty),
+        ('alumni',    'Alumni',    alumni),
+        ('students',  'Students',  students)
+    ] %}
+    <div class="tab-pane fade {{ 'show active' if loop.first }}" id="{{ tab_id }}" role="tabpanel">
+      <table class="table table-hover table-striped mb-0">
+        <thead class="table-dark">
+          <tr><th>UID</th><th>Name</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td class="fw-semibold">{{ u.uid }}</td>
+            <td>{{ u.fname }} {{ u.lname }}</td>
+            <td>
+              <a href="{{ url_for('admin_update', uid=u.uid) }}" class="btn btn-sm btn-outline-primary py-0">
+                Edit
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" class="text-center text-muted py-3">No {{ label }} users.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endfor %}
+
+  </div>
+</div>
+
+{% endblock %}
