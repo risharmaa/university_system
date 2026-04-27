@@ -1,36 +1,60 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>{{title}}</title>
-    </head>
-    <body>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <ul>
-        {% for category, message in messages %}
-          <li class="{{ category }}">{{ message }}</li>
-        {% endfor %}
-        </ul>
-        {% endif %}
-        {% endwith %}
+{% extends "basic.html" %}
+{% block title %}Add Grades - GWU CS{% endblock %}
+{% block content %}
 
-        <h1>{{dpt}} {{crn}} | {{sem}} {{year}}</h1>
-        <h2>Section #{{sectionno}}</h2>
-        {% for student in students: %}
-        <h3>{{student['fname']}} {{student['lname']}}</h3>
-        <table>
-            <tr>
-                <td>Grade: {{student['grade']}}</td>
-                <td>
-                    <form action="/{{dpt}}/{{crn}}/{{sectionno}}/{{sem}}/{{year}}" method="POST">
-                        <input type = "hidden" name = "id" value = "{{student['uid']}}">
-                        <input type="text" name="newgrade" placeholder="New Grade">
-                        <input type="submit" name="submit" class = "button">
-                    </form>
-                </td>
-            </tr>
-        </table>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    <div class="alert alert-{{ 'danger' if cat=='error' else 'success' }} alert-dismissible fade show">
+      {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endwith %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0">{{ dpt }} {{ crn }}</h2>
+    <span class="text-muted small">Section {{ sectionno }} &mdash; {{ sem }} {{ year }}</span>
+  </div>
+  <a href="/viewgrades" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Back to Grade Book
+  </a>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">Student Grades</div>
+  <div class="card-body p-0">
+    <table class="table table-hover table-striped mb-0">
+      <thead class="table-dark">
+        <tr><th>Student</th><th>Current Grade</th><th>Update Grade</th></tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+        <tr>
+          <td class="fw-semibold align-middle">{{ student['fname'] }} {{ student['lname'] }}</td>
+          <td class="align-middle">
+            <span class="badge
+              {% if student['grade'] in ['A','A-'] %}bg-success
+              {% elif student['grade'] in ['B+','B'] %}bg-primary
+              {% elif student['grade'] == 'F' %}bg-danger
+              {% elif student['grade'] %}bg-secondary
+              {% else %}bg-warning text-dark{% endif %}">
+              {{ student['grade'] or 'IP' }}
+            </span>
+          </td>
+          <td>
+            <form action="/{{ dpt }}/{{ crn }}/{{ sectionno }}/{{ sem }}/{{ year }}" method="POST" class="d-flex gap-2">
+              <input type="hidden" name="id" value="{{ student['uid'] }}">
+              <input type="text" class="form-control form-control-sm" name="newgrade" placeholder="e.g. A, B+, IP" style="max-width:120px;">
+              <button type="submit" class="btn btn-sm fw-semibold" style="background:#002147;color:#F2C75C;">Save</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="text-center text-muted py-4">No students enrolled.</td></tr>
         {% endfor %}
-        <p><a href= "/viewgrades">Grades List</a></p>
-    </body>
-</html>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
