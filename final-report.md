@@ -2,7 +2,7 @@
 
 **DB Design**: An ER Diagram updated to reflect your final design and an explanation for what normal form you believe your tables meet
     ER Diagram:
-    <img width="2887" height="1673" alt="image" src="https://github.com/user-attachments/assets/911d8d75-6671-4b7f-9101-2e982140ac3a" />
+    <img width="2887" height="1673" alt="image" src="er_diagram.png" />
 
 
 **Users and Role Tables** (users, students, faculty, secretary, alumni)
