@@ -1,14 +1,41 @@
-<!DOCTYPE html>
-<html>
-<head><title>Submit Recommendation Letter</title></head>
-<body>
-  <h1>Recommendation Letter Submission</h1>
-  <p>Dear {{ letter.writer_name }},</p>
-  <p>You have been requested to submit a recommendation letter for a GWU CS graduate applicant.</p>
-  <form method="POST">
-    <label>Letter Content:</label><br>
-    <textarea name="letter_content" rows="10" cols="60" required></textarea><br><br>
-    <input type="submit" value="Submit Letter">
-  </form>
-</body>
-</html>
+{% extends "basic.html" %}
+{% block title %}Submit Recommendation Letter - GWU CS{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center mt-2">
+  <div class="col-lg-7">
+
+    <div class="page-banner card mb-4" style="background:linear-gradient(135deg,#002147 60%,#003580);color:#F2C75C;border-radius:14px;padding:28px 36px;">
+      <h2 class="fw-bold mb-1" style="color:#F2C75C;">📝 Recommendation Letter</h2>
+      <p class="mb-0" style="color:#ffffffcc;">George Washington University &mdash; Department of Computer Science</p>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">Request Details</div>
+      <div class="card-body">
+        <p class="mb-1">Dear <strong>{{ letter.writer_name }}</strong>,</p>
+        <p class="text-muted small mb-0">You have been requested to submit a recommendation letter for a GWU CS graduate program applicant. Please compose your letter in the field below and submit when ready.</p>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">Your Letter</div>
+      <div class="card-body">
+        <form method="POST">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Letter Content <span class="text-danger">*</span></label>
+            <textarea class="form-control" name="letter_content" rows="12"
+              placeholder="Dear Admissions Committee,&#10;&#10;It is my pleasure to recommend..." required></textarea>
+            <div class="form-text">Please write a detailed letter addressing the applicant's academic abilities, character, and potential for graduate study.</div>
+          </div>
+          <button type="submit" class="btn w-100 fw-bold py-2" style="background:#002147;color:#F2C75C;">
+            <i class="bi bi-send me-1"></i>Submit Letter
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
