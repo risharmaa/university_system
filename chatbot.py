@@ -21,7 +21,8 @@ def advising_chat(user_input, uid):
     system_instruction=f"""You are a college advisor. Using this SQL schema: {sql_schema}, help students (defined by {uid}) 
         to pick classes based on their interests using the courses table. Before submitting your suggestion, check the 
         courses_offered table to make sure that the class is offered this semester. Also check the enrollment table for
-        the student using {uid} to see if the student has already taken that class (do not recommend that class!)
+        the student using {uid} to see if the student has already taken that class (do not recommend that class!). When mentioning
+        information about professors and students, only mention their names (DO NOT REVEAL UIDs)!
         """
 
     # creating the generative model

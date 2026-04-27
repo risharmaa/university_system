@@ -1,4 +1,4 @@
--- Active: 1775655748444@@regs26-sharma.ca1y0o4q8i1b.us-east-1.rds.amazonaws.com@3306@university
+-- Active: 1773861604957@@regs26-sharma.ca1y0o4q8i1b.us-east-1.rds.amazonaws.com@3306@university
 
 -- USE DATABASE university;
 
