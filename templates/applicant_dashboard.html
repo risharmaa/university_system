@@ -197,7 +197,20 @@
           <div class="alert alert-success mb-0"><i class="bi bi-check-circle-fill me-2"></i>Transcript received and on file.</div>
         {% elif applicant.transcript_method == 'mail' %}
           <div class="alert alert-warning mb-0"><i class="bi bi-envelope me-2"></i>You indicated you will mail your transcript. Waiting for the admissions committee to confirm receipt.</div>
+        {% elif applicant.transcript_method == 'upload' %}
+          <!-- Chose upload at registration but hasn't uploaded yet -->
+          <p class="small text-muted mb-3">Please upload your official transcript (PDF, JPG, or PNG).</p>
+          <form method="POST" action="{{ url_for('applicant_transcript') }}" enctype="multipart/form-data">
+            <input type="hidden" name="transcript_method" value="upload">
+            <div class="mb-3">
+              <input type="file" class="form-control" name="transcript_file" accept=".pdf,.jpg,.png" required>
+            </div>
+            <button type="submit" class="btn btn-sm fw-semibold" style="background:#002147;color:#F2C75C;">
+              <i class="bi bi-upload me-1"></i>Upload Transcript
+            </button>
+          </form>
         {% else %}
+          <!-- No method chosen yet — let them pick -->
           <form method="POST" action="{{ url_for('applicant_transcript') }}" enctype="multipart/form-data">
             <p class="small text-muted mb-3">Choose how to submit your official transcript:</p>
             <div class="form-check mb-2">
