@@ -1,27 +1,52 @@
-<!DOCTYPE html>
-<html>
-<head><title>Letter Request Sent</title></head>
-<body>
-  <h1>Recommendation Letter Request</h1>
-  <p>Your request has been recorded. Please send the following email to your recommender:</p>
-  <hr>
-  <h2>Email Preview</h2>
-  <p><strong>To:</strong> {{ writer_email }}</p>
-  <p><strong>Subject:</strong> Recommendation Letter Request – GWU Graduate Admissions</p>
-  <p><strong>Body:</strong></p>
-  <blockquote>
-    Dear {{ writer_title }} {{ writer_name }},<br><br>
-    I am applying to the Graduate Computer Science program at George Washington University
-    and would like to request a letter of recommendation from you.<br><br>
-    Please submit your letter using the secure link below:<br>
-    <a href="{{ submit_link }}">{{ submit_link }}</a><br><br>
-    Thank you for your time and support.<br><br>
-    Sincerely,<br>
-    {{ applicant.fname }} {{ applicant.lname }}
-  </blockquote>
-  <hr>
-  <p><em>Note: In a live system this email would be sent automatically. Please copy and send it manually.</em></p>
-  <br>
-  <a href="{{ url_for('applicant_dashboard') }}">Back to Dashboard</a>
-</body>
-</html>
+{% extends "basic.html" %}
+{% block title %}Letter Request Sent - GWU CS{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center mt-2">
+  <div class="col-lg-7">
+
+    <div class="text-center mb-4">
+      <div style="font-size:3rem;">✉️</div>
+      <h2 class="fw-bold mb-1">Request Recorded</h2>
+      <p class="text-muted">Copy the email below and send it to your recommender manually.</p>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">📧 Email Preview</div>
+      <div class="card-body">
+        <div class="mb-2 pb-2 border-bottom">
+          <span class="small text-muted fw-semibold">To:</span>
+          <span class="ms-2">{{ writer_email }}</span>
+        </div>
+        <div class="mb-3 pb-2 border-bottom">
+          <span class="small text-muted fw-semibold">Subject:</span>
+          <span class="ms-2">Recommendation Letter Request – GWU Graduate Admissions</span>
+        </div>
+        <div class="bg-light rounded p-3" style="font-family:'EB Garamond',serif;font-size:1.05rem;line-height:1.8;">
+          Dear {{ writer_title }} {{ writer_name }},<br><br>
+          I am applying to the Graduate Computer Science program at George Washington University
+          and would like to request a letter of recommendation from you.<br><br>
+          Please submit your letter using the secure link below:<br>
+          <a href="{{ submit_link }}" class="fw-semibold">{{ submit_link }}</a><br><br>
+          Thank you for your time and support.<br><br>
+          Sincerely,<br>
+          <strong>{{ applicant.fname }} {{ applicant.lname }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-info small">
+      <i class="bi bi-info-circle me-1"></i>
+      In a live system this email would be sent automatically. Please copy and send it manually to your recommender.
+    </div>
+
+    <div class="d-grid">
+      <a href="{{ url_for('applicant_dashboard') }}" class="btn fw-bold py-2" style="background:#002147;color:#F2C75C;">
+        <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+      </a>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
