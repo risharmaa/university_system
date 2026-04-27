@@ -19,6 +19,9 @@ from chatbot import advising_chat
 
 app = Flask(__name__)
 app.secret_key ="secret_key"
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 mydb = mysql.connector.connect(
     host="regs26-sharma.ca1y0o4q8i1b.us-east-1.rds.amazonaws.com",
     user="admin",
@@ -545,6 +548,30 @@ def secretary():
 
 
 
+@app.route("/secretary/stats")
+def secretary_stats():
+    if not _is_secretary_session():
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    degree = request.args.get("degree", "").strip()
+    mydb.commit()
+    cursor = mydb.cursor(dictionary=True)
+    where = "WHERE a.degree=%s" if degree else ""
+    params = (degree,) if degree else ()
+    cursor.execute(f"SELECT COUNT(*) AS total FROM applicant a {where}", params)
+    total = cursor.fetchone()["total"]
+    cursor.execute(f"SELECT COUNT(*) AS admitted FROM applicant a {where} {'AND' if degree else 'WHERE'} a.status IN ('admitted','admitted_with_aid','accepted')", params)
+    admitted = cursor.fetchone()["admitted"]
+    cursor.execute(f"SELECT COUNT(*) AS rejected FROM applicant a {where} {'AND' if degree else 'WHERE'} a.status='rejected'", params)
+    rejected = cursor.fetchone()["rejected"]
+    cursor.execute(f"SELECT AVG((a.gre_verbal + a.gre_quant)/2) AS avg_gre FROM applicant a {where} {'AND' if degree else 'WHERE'} a.status IN ('admitted','admitted_with_aid','accepted') AND a.gre_verbal IS NOT NULL AND a.gre_quant IS NOT NULL", params)
+    avg_gre = cursor.fetchone()["avg_gre"]
+    mydb.commit()
+    return render_template("secretary_stats.html", total=total, admitted=admitted,
+                           rejected=rejected, avg_gre=round(avg_gre, 1) if avg_gre else "N/A",
+                           degree=degree)
+
+
 @app.route("/secretary/student/<int:uid>")
 def secretary_student(uid):
     if not _is_secretary_session():
@@ -1063,6 +1090,34 @@ def applicant_dashboard():
     return render_template("applicant_dashboard.html", applicant=applicant, letters=letters, degrees=degrees)
 
 
+@app.route("/applicant/transcript", methods=["POST"])
+def applicant_transcript():
+    if "user" not in session or session["user"]["role"] != "applicant":
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    uid = session["user"]["uid"]
+    method = request.form.get("transcript_method")
+    cursor = mydb.cursor(dictionary=True)
+    if method == "upload":
+        f = request.files.get("transcript_file")
+        if not f or f.filename == "":
+            flash("Please select a file to upload.", "error")
+            return redirect(url_for("applicant_dashboard"))
+        filename = f"transcript_{uid}_{f.filename}"
+        filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        f.save(filepath)
+        cursor.execute("UPDATE applicant SET transcript_method='upload', transcript_path=%s, transcript_received=TRUE WHERE uid=%s", (filename, uid))
+        mydb.commit()
+        _check_completeness(uid, cursor)
+        mydb.commit()
+        flash("Transcript uploaded successfully.", "success")
+    elif method == "mail":
+        cursor.execute("UPDATE applicant SET transcript_method='mail' WHERE uid=%s", (uid,))
+        mydb.commit()
+        flash("Got it. Please mail your transcript. The admissions committee will confirm receipt.", "success")
+    return redirect(url_for("applicant_dashboard"))
+
+
 @app.route("/applicant/respond_offer", methods=["POST"])
 def respond_offer():
     if "user" not in session or session["user"]["role"] != "applicant":
@@ -1081,8 +1136,48 @@ def respond_offer():
         return redirect(url_for("applicant_dashboard"))
     cursor.execute("UPDATE applicant SET status=%s WHERE uid=%s", (response, uid))
     mydb.commit()
-    flash(f"You have {'accepted' if response == 'accepted' else 'declined'} the offer.", "success")
+    if response == "accepted":
+        flash("You have accepted the offer! Please submit your deposit and mark it below.", "success")
+    else:
+        flash("You have declined the offer.", "success")
     return redirect(url_for("applicant_dashboard"))
+
+
+@app.route("/applicant/submit_deposit", methods=["POST"])
+def submit_deposit():
+    if "user" not in session or session["user"]["role"] != "applicant":
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    uid = session["user"]["uid"]
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT status FROM applicant WHERE uid=%s", (uid,))
+    row = cursor.fetchone()
+    if not row or row["status"] != "accepted":
+        flash("You must accept the offer before submitting a deposit.", "error")
+        return redirect(url_for("applicant_dashboard"))
+    cursor.execute("UPDATE applicant SET deposit_submitted=TRUE WHERE uid=%s", (uid,))
+    mydb.commit()
+    flash("Deposit marked as submitted. The Graduate Secretary will confirm it.", "success")
+    return redirect(url_for("applicant_dashboard"))
+
+
+@app.route("/secretary/confirm_enrollment/<int:uid>", methods=["POST"])
+def confirm_enrollment(uid):
+    if not _is_secretary_session():
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    cursor = mydb.cursor(dictionary=True)
+    cursor.execute("SELECT a.*, u.fname, u.lname, u.email, u.address FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid=%s", (uid,))
+    app_row = cursor.fetchone()
+    if not app_row or app_row["status"] != "accepted" or not app_row["deposit_submitted"]:
+        flash("Applicant has not accepted or submitted deposit.", "error")
+        return redirect(url_for("applications"))
+    cursor.execute("UPDATE users SET role='student' WHERE uid=%s", (uid,))
+    cursor.execute("INSERT INTO students (uid, program) VALUES (%s, %s)", (uid, app_row["degree"]))
+    mydb.commit()
+    flash(f"{app_row['fname']} {app_row['lname']} has been enrolled as a student.", "success")
+    return redirect(url_for("applications"))
+
 
 
 @app.route("/applicant/request_recommendation", methods=["POST"])
@@ -1171,16 +1266,18 @@ def applications():
             return redirect(url_for("faculty"))
         fac = fac["cac"]
         if uid:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
-            "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
-            "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid = %s ORDER BY a.status, u.lname", (uid,))
+            cursor.execute(
+                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, a.deposit_submitted, "
+                "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+                "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid = %s ORDER BY a.status, u.lname", (uid,))
         elif lname:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
-            "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
-            "FROM applicant a JOIN users u ON a.uid=u.uid WHERE u.lname = %s ORDER BY a.status, u.lname", (lname,))
+            cursor.execute(
+                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, a.deposit_submitted, "
+                "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+                "FROM applicant a JOIN users u ON a.uid=u.uid WHERE u.lname = %s ORDER BY a.status, u.lname", (lname,))
         else:
             cursor.execute(
-                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
+                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, a.deposit_submitted, "
                 "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
                 "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
             )
@@ -1213,16 +1310,18 @@ def applications():
             )
     else:
         if uid:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
-            "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
-            "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid = %s ORDER BY a.status, u.lname", (uid,))
+            cursor.execute(
+                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, a.deposit_submitted, "
+                "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+                "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid = %s ORDER BY a.status, u.lname", (uid,))
         elif lname:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
-            "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
-            "FROM applicant a JOIN users u ON a.uid=u.uid WHERE u.lname = %s ORDER BY a.status, u.lname", (lname,))
+            cursor.execute(
+                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, a.deposit_submitted, "
+                "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
+                "FROM applicant a JOIN users u ON a.uid=u.uid WHERE u.lname = %s ORDER BY a.status, u.lname", (lname,))
         else:
             cursor.execute(
-                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
+                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, a.deposit_submitted, "
                 "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
                 "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
             )
@@ -1349,18 +1448,7 @@ def final_decision(uid):
         if decision in ("admitted", "admitted_with_aid", "rejected"):
             cursor.execute("UPDATE applicant SET status=%s WHERE uid=%s", (decision, uid))
             mydb.commit()
-            if decision in ("admitted", "admitted_with_aid"):
-                new_uid = int(''.join([str(secrets.randbelow(10)) for _ in range(8)]))
-                hashed = generate_password_hash("pass", method='pbkdf2:sha256')
-                cursor.execute(
-                    "INSERT INTO users (uid,username,password,role,fname,lname,email,address) VALUES (%s,%s,%s,'student',%s,%s,%s,%s)",
-                    (new_uid, str(new_uid), hashed, applicant['fname'], applicant['lname'], applicant.get('email',''), applicant.get('address',''))
-                )
-                cursor.execute("INSERT INTO students (uid,program) VALUES (%s,%s)", (new_uid, applicant['degree']))
-                mydb.commit()
-                flash(f"Decision: {decision}. Student account created — Username: {new_uid}, Password: pass", "success")
-            else:
-                flash(f"Decision recorded: {decision}.", "success")
+            flash(f"Decision recorded: {decision}. The applicant can now log in to accept or decline.", "success")
             return redirect(url_for("applications"))
     mydb.commit()
     return render_template("final_decision.html", applicant=applicant, reviews=reviews, faculty_list=faculty_list, can_see_reviews=can_see_reviews, avg=avg['rating'] if avg else None)
