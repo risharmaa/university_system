@@ -1689,7 +1689,7 @@ def showcourse(dpt, courseno):
                 flash("Course time conflicts with another class you're taking.", "error")
                 return redirect("/coursecatalog")
                    
-    if not conflict:
+    if not conflicts:
         cursor.execute("SELECT prereqdpt, prereqnum FROM prereqs WHERE dptname=%s AND coursenumber=%s", (dpt, courseno,))
         prereqs = cursor.fetchall()
 
