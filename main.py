@@ -134,7 +134,10 @@ def create_user():
             if role == "student":
                 cursor.execute("INSERT INTO students (uid, program, graduation_status) VALUES (%s, %s, %s)", (uid, request.form.get("program"), "active"))
             elif role == "faculty":
-                cursor.execute("INSERT INTO faculty (uid, cac, reviewer, advisor) VALUES (%s, %s, %s, %s)", (uid, False, False, False))
+                advisor = True if request.form.get("advisor") else False
+                reviewer = True if request.form.get("reviewer") else False
+                cac = True if request.form.get("cac") else False
+                cursor.execute("INSERT INTO faculty (uid, cac, reviewer, advisor) VALUES (%s, %s, %s, %s)", (uid, cac, reviewer, advisor))
             elif role == "secretary":
                 cursor.execute("INSERT INTO secretary (uid) VALUES (%s)", (uid,))
             elif role == "alumni":
