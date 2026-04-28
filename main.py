@@ -543,8 +543,15 @@ def secretary():
 
     cursor.execute("SELECT u.uid, u.fname, u.lname FROM faculty f JOIN users u ON f.uid = u.uid WHERE f.advisor = 1")
     advisors = cursor.fetchall()
+
+    cursor.execute(
+        "SELECT a.uid, u.fname, u.lname, a.degree FROM applicant a "
+        "JOIN users u ON a.uid = u.uid "
+        "WHERE a.status = 'accepted' AND a.deposit_submitted = TRUE"
+    )
+    pending_deposits = cursor.fetchall()
     mydb.commit()
-    return render_template("secretary.html", students=rows, query=q, current_user=current_user, advisors=advisors, selected_advisor=advisor_id, selected_degree=degree)
+    return render_template("secretary.html", students=rows, query=q, current_user=current_user, advisors=advisors, selected_advisor=advisor_id, selected_degree=degree, pending_deposits=pending_deposits)
 
 
 
