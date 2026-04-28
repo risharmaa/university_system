@@ -1657,11 +1657,16 @@ def showcourse(dpt, courseno):
  
   missing_prereqs = []
 
+  holds = False
+
+  capacity = False
+
   if enrolledIn:
     cursor.execute("DELETE FROM enrollment WHERE (uid=%s AND department=%s AND course_number=%s)", (studentid, dpt, courseno,))
     mydb.commit()
   else:
     if course['capacity'] == 0:
+        capacity = True
         flash("This course is full.", "error")
         return redirect("/coursecatalog")
 
@@ -1669,6 +1674,7 @@ def showcourse(dpt, courseno):
     hold = cursor.fetchone()
     if hold['registration_hold'] == True:
         flash("You have a registration hold. Please contact your advisor to fix.", "error")
+        holds = True
         return redirect("/coursecatalog")
 
     cursor.execute("SELECT courses_offered.day, courses_offered.time FROM enrollment INNER JOIN courses_offered ON enrollment.department=courses_offered.departmentname AND enrollment.course_number=courses_offered.coursenumber WHERE enrollment.uid = %s AND enrollment.grade = 'IP'", (studentid,))
@@ -1680,16 +1686,19 @@ def showcourse(dpt, courseno):
         '1600-1830': ['1500-1730', '1530-1800', '1800-2030'],
         '1800-2030': ['1530-1800', '1600-1830'],
     }
+    conflict = False
     for enrolled_course in enrolled:
         if enrolled_course['day'] == course['day']:
             if enrolled_course['time'] == course['time']:
                 flash("Course time conflicts with another class you're taking.", "error")
+                conflict = True
                 return redirect("/coursecatalog")
             if (enrolled_course['time'] in conflicts.get(course['time'])):
+                conflict = True
                 flash("Course time conflicts with another class you're taking.", "error")
                 return redirect("/coursecatalog")
                    
-    if not conflicts:
+    if not conflict:
         cursor.execute("SELECT prereqdpt, prereqnum FROM prereqs WHERE dptname=%s AND coursenumber=%s", (dpt, courseno,))
         prereqs = cursor.fetchall()
 
@@ -1707,7 +1716,7 @@ def showcourse(dpt, courseno):
             flash(error, "error")
             return redirect("/coursecatalog")
 
-    if not conflicts and not missing_prereqs and not holds and not capacity:
+    if not conflict and not missing_prereqs and not holds and not capacity:
         cursor.execute("SELECT program FROM students WHERE uid=%s", (studentid,))
         student = cursor.fetchone()
 
