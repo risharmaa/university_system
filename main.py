@@ -555,6 +555,58 @@ def secretary():
 
 
 
+@app.route("/secretary/graduating")
+def secretary_graduating():
+    if not _is_secretary_session():
+        flash("Access denied.", "error")
+        return redirect(url_for("login"))
+    semester = request.args.get("semester", "").strip()
+    year     = request.args.get("year", "").strip()
+    program  = request.args.get("program", "").strip()
+    mydb.commit()
+    cursor = mydb.cursor(dictionary=True)
+
+    # Alumni who have already been formally graduated
+    alumni_sql = (
+        "SELECT u.uid, u.fname, u.lname, u.email, a.degree AS program, "
+        "a.graduation_semester AS semester, a.graduation_year AS year, 'Graduated' AS grad_status "
+        "FROM alumni a JOIN users u ON a.uid = u.uid WHERE 1=1"
+    )
+    alumni_params = []
+    if semester:
+        alumni_sql += " AND a.graduation_semester = %s"
+        alumni_params.append(semester)
+    if year:
+        alumni_sql += " AND a.graduation_year = %s"
+        alumni_params.append(year)
+    if program:
+        alumni_sql += " AND a.degree = %s"
+        alumni_params.append(program)
+    alumni_sql += " ORDER BY u.lname, u.fname"
+    cursor.execute(alumni_sql, tuple(alumni_params))
+    graduated = cursor.fetchall()
+
+    # Students cleared for graduation but not yet formally processed
+    cleared_sql = (
+        "SELECT u.uid, u.fname, u.lname, u.email, s.program, "
+        "NULL AS semester, NULL AS year, 'Cleared — Pending' AS grad_status "
+        "FROM students s JOIN users u ON s.uid = u.uid "
+        "WHERE s.graduation_status = 'cleared_for_graduation'"
+    )
+    cleared_params = []
+    if program:
+        cleared_sql += " AND s.program = %s"
+        cleared_params.append(program)
+    cleared_sql += " ORDER BY u.lname, u.fname"
+    cursor.execute(cleared_sql, tuple(cleared_params))
+    cleared = cursor.fetchall()
+
+    mydb.commit()
+    return render_template("graduating_students.html",
+        graduated=graduated, cleared=cleared,
+        semester=semester, year=year, program=program)
+
+
 @app.route("/secretary/stats")
 def secretary_stats():
     if not _is_secretary_session():

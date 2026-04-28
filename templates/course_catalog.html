@@ -54,6 +54,16 @@
   </div>
 </div>
 
+{% if session['user']['role'] == 'student' %}
+{% set rows = {'1500-1730':0, '1530-1800':1, '1600-1830':2, '1800-2030':6} %}
+{% set labels = ['3:00–3:30','3:30–4:00','4:00–4:30','4:30–5:00','5:00–5:30','5:30–6:00','6:00–6:30','6:30–7:00','7:00–7:30','7:30–8:00','8:00–8:30'] %}
+{% set week = ['M','T','W','R','F'] %}
+{% set days_full = {'M':'Mon','T':'Tue','W':'Wed','R':'Thu','F':'Fri'} %}
+<div class="row g-4">
+  <!-- Left: Course Accordion -->
+  <div class="col-lg-7">
+{% endif %}
+
 <!-- Course Accordion -->
 <div class="accordion shadow-sm mb-4" id="courseAccordion">
   {% for row in course %}
@@ -129,49 +139,49 @@
     </div>
   </div>
   {% else %}
-  <div class="card-body text-center text-muted py-4">No courses match your search.</div>
+  <div class="p-4 text-center text-muted">No courses match your search.</div>
   {% endfor %}
 </div>
 
-<!-- Schedule Grid (students only) -->
 {% if session['user']['role'] == 'student' %}
-{% set rows = {'1500-1730':0, '1530-1800':1, '1600-1830':2, '1800-2030':6} %}
-{% set labels = ['3:00–3:30','3:30–4:00','4:00–4:30','4:30–5:00','5:00–5:30','5:30–6:00','6:00–6:30','6:30–7:00','7:00–7:30','7:30–8:00','8:00–8:30'] %}
-{% set week = ['M','T','W','R','F'] %}
-{% set days_full = {'M':'Mon','T':'Tue','W':'Wed','R':'Thu','F':'Fri'} %}
+  </div><!-- end col-lg-7 -->
 
-<div class="card shadow-sm mb-4">
-  <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">📅 Your Current Schedule</div>
-  <div class="card-body p-0 overflow-auto">
-    <table class="table table-bordered mb-0 text-center" style="min-width:600px;">
-      <thead class="table-dark">
-        <tr>
-          <th style="width:110px;">Time</th>
-          {% for d in week %}<th>{{ days_full[d] }}</th>{% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in range(11) %}
-        <tr>
-          <td class="small text-muted fw-semibold" style="white-space:nowrap;">{{ labels[row] }}</td>
-          {% for day in week %}
-            {% for class in schedule if class['day'] == day and rows[class['time']] == row %}
-              <td rowspan="5" style="background:#002147;color:#F2C75C;font-weight:600;vertical-align:middle;">
-                {{ class['department'] }} {{ class['course_number'] }}
-              </td>
-            {% else %}
-              {% for class in schedule if class['day'] == day and row > rows[class['time']] and rows[class['time']]+5 > row %}
-              {% else %}
-                <td style="border:0;"></td>
+  <!-- Right: Schedule (sticky) -->
+  <div class="col-lg-5">
+    <div class="card shadow-sm" style="position:sticky;top:20px;">
+      <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">📅 Your Schedule</div>
+      <div class="card-body p-0 overflow-auto">
+        <table class="table table-bordered mb-0 text-center" style="min-width:320px;font-size:.82rem;">
+          <thead class="table-dark">
+            <tr>
+              <th style="width:80px;">Time</th>
+              {% for d in week %}<th>{{ days_full[d] }}</th>{% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in range(11) %}
+            <tr>
+              <td class="text-muted fw-semibold" style="white-space:nowrap;font-size:.75rem;">{{ labels[row] }}</td>
+              {% for day in week %}
+                {% for class in schedule if class['day'] == day and rows[class['time']] == row %}
+                  <td rowspan="5" style="background:#002147;color:#F2C75C;font-weight:600;vertical-align:middle;font-size:.8rem;">
+                    {{ class['department'] }} {{ class['course_number'] }}
+                  </td>
+                {% else %}
+                  {% for class in schedule if class['day'] == day and row > rows[class['time']] and rows[class['time']]+5 > row %}
+                  {% else %}
+                    <td style="border:0;"></td>
+                  {% endfor %}
+                {% endfor %}
               {% endfor %}
+            </tr>
             {% endfor %}
-          {% endfor %}
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
-</div>
+</div><!-- end row -->
 {% endif %}
 
 {% endblock %}
