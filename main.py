@@ -547,7 +547,7 @@ def secretary():
     cursor.execute(
         "SELECT a.uid, u.fname, u.lname, a.degree FROM applicant a "
         "JOIN users u ON a.uid = u.uid "
-        "WHERE a.status = 'accepted' AND a.deposit_submitted = TRUE"
+        "WHERE a.status = 'accepted' AND a.deposit_submitted = TRUE AND u.role = 'applicant'"
     )
     pending_deposits = cursor.fetchall()
     mydb.commit()
@@ -1287,28 +1287,28 @@ def applications():
             )
     elif role == "secretary":
         if uid:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, a.deposit_submitted, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.uid = %s ORDER BY a.status, u.lname", (uid,))
         elif lname:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, a.deposit_submitted, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid WHERE u.lname = %s ORDER BY a.status, u.lname", (lname,))
         elif year:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, a.deposit_submitted, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.year_applied = %s ORDER BY a.status, u.lname", (year,))
         elif degree:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, a.deposit_submitted, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.degree = %s ORDER BY a.status, u.lname", (degree,))
         elif semester:
-            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
+            cursor.execute("SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, a.deposit_submitted, "
             "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
             "FROM applicant a JOIN users u ON a.uid=u.uid WHERE a.semester_applied = %s ORDER BY a.status, u.lname", (semester,))
         else:
             cursor.execute(
-                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, "
+                "SELECT a.uid, u.fname, u.lname, a.degree, a.status, a.transcript_received, a.transcript_method, a.deposit_submitted, "
                 "(SELECT COUNT(*) FROM recommendation_letter WHERE uid=a.uid AND is_submitted=TRUE) AS letters_submitted "
                 "FROM applicant a JOIN users u ON a.uid=u.uid ORDER BY a.status, u.lname"
             )

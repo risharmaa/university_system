@@ -104,9 +104,26 @@
   <div class="col-md-5">
     <div class="card shadow-sm border-2" style="border-color:#002147!important;">
       <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">
-        ⚖️ Make Final Decision
+        ⚖️ {{ 'Override Decision' if applicant.status in ('admitted','admitted_with_aid','rejected') else 'Make Final Decision' }}
       </div>
       <div class="card-body">
+
+        <!-- Show current decision if one exists -->
+        {% if applicant.status in ('admitted', 'admitted_with_aid', 'rejected') %}
+        <div class="alert {{ 'alert-success' if applicant.status in ('admitted','admitted_with_aid') else 'alert-danger' }} mb-3">
+          <div class="small fw-semibold mb-1">Current Decision</div>
+          {% if applicant.status == 'admitted' %}✅ Admitted
+          {% elif applicant.status == 'admitted_with_aid' %}🎓 Admitted with Aid
+          {% elif applicant.status == 'rejected' %}✗ Rejected{% endif %}
+        </div>
+        {% if session['user']['role'] == 'secretary' %}
+        <div class="alert alert-warning small mb-3">
+          <i class="bi bi-exclamation-triangle me-1"></i>
+          As Graduate Secretary you can override the CAC decision below.
+        </div>
+        {% endif %}
+        {% endif %}
+
         <form method="POST">
           <div class="mb-4">
             <label class="form-label fw-semibold">Decision <span class="text-danger">*</span></label>
@@ -136,7 +153,8 @@
           </div>
 
           <button type="submit" class="btn w-100 fw-bold py-2" style="background:#002147;color:#F2C75C;">
-            Submit Decision <i class="bi bi-check2-circle ms-1"></i>
+            {{ 'Override Decision' if applicant.status in ('admitted','admitted_with_aid','rejected') else 'Submit Decision' }}
+            <i class="bi bi-check2-circle ms-1"></i>
           </button>
         </form>
       </div>
