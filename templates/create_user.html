@@ -117,6 +117,23 @@
             </div>
           </div>
 
+          <!-- Faculty fields -->
+          <div id="facultyFields" class="d-none border rounded p-3 mb-3" style="border-color:#002147!important;">
+            <div class="small fw-bold text-muted mb-2 text-uppercase">Faculty Roles</div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="advisor" value="1">
+                <label class="form-check-label">Advisor</label>
+              </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="reviewer" value="1">
+                <label class="form-check-label">Reviewer</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="cac" value="1">
+              <label class="form-check-label">CAC Member</label>
+            </div>
+          </div>
+
           <button type="submit" class="btn w-100 fw-bold py-2 mt-2" style="background:#002147;color:#F2C75C;">
             <i class="bi bi-person-plus me-1"></i>Create User
           </button>
@@ -131,6 +148,7 @@ function toggleRoleFields() {
   const role = document.getElementById('roleSelect').value;
   document.getElementById('studentFields').classList.toggle('d-none', role !== 'student');
   document.getElementById('alumniFields').classList.toggle('d-none', role !== 'alumni');
+  document.getElementById('facultyFields').classList.toggle('d-none', role !== 'faculty');
 }
 </script>
 {% endblock %}
