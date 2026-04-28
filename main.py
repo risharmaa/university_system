@@ -1707,7 +1707,7 @@ def showcourse(dpt, courseno):
             flash(error, "error")
             return redirect("/coursecatalog")
 
-    if not conflict and not missing_prereqs and not holds and not capacity:
+    if not conflicts and not missing_prereqs and not holds and not capacity:
         cursor.execute("SELECT program FROM students WHERE uid=%s", (studentid,))
         student = cursor.fetchone()
 
