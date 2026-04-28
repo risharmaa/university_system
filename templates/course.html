@@ -1,132 +1,243 @@
-<html>
-    <head>
-        <title> {{title}} </title>
-    </head>
+{% extends "basic.html" %}
+{% block title %}{{ course.department }} {{ course.course_number }} - GWU CS{% endblock %}
+{% block content %}
 
-    <body>  
-        {% if course %}
-            <h2> {{course['department']}} {{course['course_number']}}: {{course['title']}} </h2>
-            <ul>
-                <strong>Course Information</strong>
-                <ul>
-                <li>Credits: {{course.credits}}</li>
-                <li>Semester: {{course.semester}} {{course.year}}</li>
-                </ul>
-                
-            <p></p>
-    
-                <strong> Prerequisites: </strong>
-                <ul>
-                    {% if prerequisites %}
-                        {% for prereq in prerequisites: %}
-                            <li><a href="/course/{{prereq.prereqdpt}}/{{prereq.prereqnum}}">{{prereq.prereqdpt}} {{prereq.prereqnum}}: {{prereq.title}}</a></li>
-                        {% endfor %}
-                    {% else %}
-                        <li> None </li>
-                    {% endif %}
-                </ul>
-            <p></p>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    <div class="alert alert-{{ 'danger' if cat=='error' else 'success' }} alert-dismissible fade show">
+      {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endwith %}
 
-                <strong>Section Information</strong>
-                <ul>
-                <li>Section: {{course.sectionnum}}</li>
-                <li>Instructor: {{course.fname}} {{course.lname}}</li>
-                </ul>
-                <p></p>
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0">
+      {% if course %}
+        {{ course.department }} {{ course.course_number }}
+      {% else %}
+        Course Not Found
+      {% endif %}
+    </h2>
+    <span class="text-muted small">{% if course %}{{ course.title }}{% endif %}</span>
+  </div>
+  <a href="/coursecatalog" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Course Catalog
+  </a>
+</div>
 
-                <strong>Meeting Times</strong>
-                <ul>
-                <li>Time: 
-                    {% if course.day == 'M' %} Monday,
-                    {% elif course.day == 'T' %} Tuesday,
-                    {% elif course.day == 'W' %} Wednesday,
-                    {% elif course.day == 'R' %} Thursday,
-                    {% elif course.day == 'F' %} Friday,
-                    {% endif %}
-                    {% if course.time == '1500-1730' %} 3:00pm - 5:30pm
-                    {% elif course.time == '1800-2030' %} 6:00pm - 8:30pm
-                    {% elif course.time == '1530-1800' %} 3:30pm - 6:00pm
-                    {% elif course.time == '1600-1830' %} 4:00pm - 6:30pm
-                    {% endif %}
-                </li>
-                <li>Building: {{course.buildingname}}</li>
-                <li>Room: {{course.roomno}}</li>
-                <li>Capacity: {{course.capacity}}</li>
-                </ul>
-                <p></p>
-            </ul>
+{% if course %}
 
-            {% if session['user']['role'] == 'student' %}
-                {% if enrolledIn %}
-                    {% if enrolledIn.grade == "IP" %}
-                        <p> <div style="color: green;">You are enrolled in this course. </div></p>
-                        <form action="/course/{{course.department}}/{{course.course_number}}" method="POST">
-                            <input type="submit" value="Unenroll">
-                        </form>
-                    {% else %}
-                        <p> <div style="color: red;">You have already taken this course. </div></p>
-                    {% endif %}
-                {% elif conflict %}
-                    <p> <div style="color: red;">Course conflicts with another course you're enrolled in. </div></p>
-                {% elif phd_err %}
-                    <p> <div style="color: red;">PhD students can only take 6000-level courses. </div></p>
-                {% elif missing_prereqs %}
-                    <p> <div style="color: red;">You are missing the pre-requisites:
-                        {% for prereq in missing_prereqs %} <li>{{prereq}}</li> {% endfor %}
-                    </div></p>
-                {% elif holds %}
-                    <p> <div style="color: red;">You have a registration hold on your account. Please contact your advisor to fix. </div></p>
-                {% elif capacity %}
-                    <p> <div style="color: red;">This class has filled up.</div></p>
-                {% else %}
-                    <form action="/course/{{course.department}}/{{course.course_number}}" method="POST">
-                        <input type="submit" value="Enroll">
-                    </form>
-                {% endif %}
+<!-- Enrollment Status Banner -->
+{% if session['user']['role'] == 'student' %}
+  {% if enrolledIn and enrolledIn.grade == 'IP' %}
+    <div class="alert alert-success d-flex align-items-center mb-4">
+      <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+      <div>You are currently enrolled in this course.</div>
+    </div>
+  {% elif enrolledIn %}
+    <div class="alert alert-secondary d-flex align-items-center mb-4">
+      <i class="bi bi-patch-check-fill me-2 fs-5"></i>
+      <div>You have already completed this course.</div>
+    </div>
+  {% elif conflict %}
+    <div class="alert alert-danger d-flex align-items-center mb-4">
+      <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+      <div>This course conflicts with another course you're enrolled in.</div>
+    </div>
+  {% elif phd_err %}
+    <div class="alert alert-danger d-flex align-items-center mb-4">
+      <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+      <div>PhD students can only take 6000-level courses.</div>
+    </div>
+  {% elif missing_prereqs %}
+    <div class="alert alert-danger mb-4">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <strong>Missing prerequisites:</strong>
+      <ul class="mb-0 mt-1">
+        {% for prereq in missing_prereqs %}<li>{{ prereq }}</li>{% endfor %}
+      </ul>
+    </div>
+  {% elif holds %}
+    <div class="alert alert-warning d-flex align-items-center mb-4">
+      <i class="bi bi-lock-fill me-2 fs-5"></i>
+      <div>You have a registration hold. Please contact your advisor.</div>
+    </div>
+  {% elif capacity %}
+    <div class="alert alert-warning d-flex align-items-center mb-4">
+      <i class="bi bi-people-fill me-2 fs-5"></i>
+      <div>This course has reached full capacity.</div>
+    </div>
+  {% endif %}
+{% endif %}
 
-            {% endif %}
-        
+<!-- Course Detail Cards -->
+<div class="row g-4 mb-4">
+  <!-- Course Info -->
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">
+        <i class="bi bi-book-fill me-2"></i>Course Info
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          <li class="py-2 border-bottom">
+            <span class="text-muted small">Department</span>
+            <div class="fw-semibold">{{ course.department }}</div>
+          </li>
+          <li class="py-2 border-bottom">
+            <span class="text-muted small">Course Number</span>
+            <div class="fw-semibold">{{ course.course_number }}</div>
+          </li>
+          <li class="py-2 border-bottom">
+            <span class="text-muted small">Credits</span>
+            <div><span class="badge bg-secondary">{{ course.credits }} credits</span></div>
+          </li>
+          <li class="py-2">
+            <span class="text-muted small">Term</span>
+            <div class="fw-semibold">{{ course.semester }} {{ course.year }}</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section & Meeting -->
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">
+        <i class="bi bi-clock-fill me-2"></i>Section &amp; Meeting
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          <li class="py-2 border-bottom">
+            <span class="text-muted small">Section</span>
+            <div class="fw-semibold">{{ course.sectionnum }}</div>
+          </li>
+          <li class="py-2 border-bottom">
+            <span class="text-muted small">Instructor</span>
+            <div class="fw-semibold">{{ course.fname }} {{ course.lname }}</div>
+          </li>
+          <li class="py-2 border-bottom">
+            <span class="text-muted small">Day &amp; Time</span>
+            <div class="fw-semibold">
+              {% if course.day == 'M' %}Monday{% elif course.day == 'T' %}Tuesday{% elif course.day == 'W' %}Wednesday{% elif course.day == 'R' %}Thursday{% elif course.day == 'F' %}Friday{% endif %},
+              {% if course.time == '1500-1730' %}3:00pm – 5:30pm
+              {% elif course.time == '1800-2030' %}6:00pm – 8:30pm
+              {% elif course.time == '1530-1800' %}3:30pm – 6:00pm
+              {% elif course.time == '1600-1830' %}4:00pm – 6:30pm
+              {% endif %}
+            </div>
+          </li>
+          <li class="py-2 border-bottom">
+            <span class="text-muted small">Location</span>
+            <div class="fw-semibold">{{ course.buildingname }}, Room {{ course.roomno }}</div>
+          </li>
+          <li class="py-2">
+            <span class="text-muted small">Capacity</span>
+            <div class="fw-semibold">{{ course.capacity }}</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prerequisites -->
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">
+        <i class="bi bi-diagram-3-fill me-2"></i>Prerequisites
+      </div>
+      <div class="card-body">
+        {% if prerequisites %}
+          <div class="d-flex flex-wrap gap-2">
+            {% for prereq in prerequisites %}
+            <a href="/course/{{ prereq.prereqdpt }}/{{ prereq.prereqnum }}"
+               class="badge text-decoration-none border fw-semibold"
+               style="background:#002147;color:#F2C75C;font-size:.85rem;padding:.4em .75em;">
+              {{ prereq.prereqdpt }} {{ prereq.prereqnum }}
+              {% if prereq.title %}<span class="fw-normal ms-1 opacity-75">{{ prereq.title }}</span>{% endif %}
+            </a>
+            {% endfor %}
+          </div>
         {% else %}
-            <p> <div style="color: red;">This course is not offered this semester. </div></p>
+          <p class="text-muted mb-0"><i class="bi bi-check-circle me-1"></i>No prerequisites</p>
         {% endif %}
-        {% if session['user']['role'] == 'student' %}
-        <details>
-        <summary>View Schedule</summary>
-            {% set rows = {'1500-1730':0, '1530-1800':1, '1600-1830':2, '1800-2030':6} %}
-        {% set labels = [
-            '3:00pm - 3:30pm', '3:30pm - 4:00pm', '4:00pm - 4:30pm', '4:30pm - 5:00pm', '5:00pm - 5:30pm', '5:30pm - 6:00pm', '6:00pm - 6:30pm', '6:30pm - 7:00pm', '7:00pm - 7:30pm', '7:30pm - 8:00pm', '8:00pm - 8:30pm'] %}
-        {% set week = ['M', 'T', 'W', 'R', 'F'] %}
-       
-        <table style="border-collapse: collapse;">
-            <tr>
-                <th style="border: 2px solid black; padding: 8px;"></th>
-                <th style="border: 2px solid black; padding: 8px;">Monday</th>
-                <th style="border: 2px solid black; padding: 8px;">Tuesday</th>
-                <th style="border: 2px solid black; padding: 8px;">Wednesday</th>
-                <th style="border: 2px solid black; padding: 8px;">Thursday</th>
-                <th style="border: 2px solid black; padding: 8px;">Friday</th>
-            </tr>
-            <tr>
-                {% for row in range(11): %}
-                <tr style="border: 2px solid black;">
-                    <th>{{labels[row]}}</th>
-                    {% for day in week %}
-                        {% for class in schedule if class['day'] == day and rows[class['time']] == row %}
-                                <td rowspan="5" style="border: 2px solid black; padding: 8px; background-color: rgb(59, 3, 71);"><a style="color: white" href="/course/{{class['department']}}/{{class['course_number']}}">{{class['department']}} {{class['course_number']}}</a></td>
-                            {% else %}
-                                {% for class in schedule if class['day'] == day and row > rows[class['time']] and rows[class['time']]+5 > row %}
-                                {% else %}
-                                    <td style="border: 0px"></td>
-                                {% endfor %}
-                        {% endfor %}
-                    {% endfor %}
-                </tr>
-                {% endfor %}
-            </tr>
-        </table>
-        </details>
-        {% endif %}
-        <p><a href = "/coursecatalog">Course Catalog</a></p>
+      </div>
+    </div>
+  </div>
+</div>
 
-    </body>
-</html>
+<!-- Enroll / Unenroll -->
+{% if session['user']['role'] == 'student' %}
+<div class="mb-4">
+  {% if enrolledIn and enrolledIn.grade == 'IP' %}
+    <form action="/course/{{ course.department }}/{{ course.course_number }}" method="POST"
+          onsubmit="return confirm('Are you sure you want to unenroll from this course?');">
+      <button type="submit" class="btn btn-danger fw-semibold">
+        <i class="bi bi-x-circle me-1"></i>Unenroll from {{ course.department }} {{ course.course_number }}
+      </button>
+    </form>
+  {% elif not enrolledIn and not conflict and not phd_err and not missing_prereqs and not holds and not capacity %}
+    <form action="/course/{{ course.department }}/{{ course.course_number }}" method="POST">
+      <button type="submit" class="btn fw-semibold" style="background:#002147;color:#F2C75C;">
+        <i class="bi bi-plus-circle me-1"></i>Enroll in {{ course.department }} {{ course.course_number }}
+      </button>
+    </form>
+  {% endif %}
+</div>
+
+<!-- Schedule -->
+{% set rows = {'1500-1730':0, '1530-1800':1, '1600-1830':2, '1800-2030':6} %}
+{% set labels = ['3:00–3:30','3:30–4:00','4:00–4:30','4:30–5:00','5:00–5:30','5:30–6:00','6:00–6:30','6:30–7:00','7:00–7:30','7:30–8:00','8:00–8:30'] %}
+{% set week = ['M','T','W','R','F'] %}
+{% set days_full = {'M':'Mon','T':'Tue','W':'Wed','R':'Thu','F':'Fri'} %}
+<div class="card shadow-sm mb-4">
+  <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">📅 Your Current Schedule</div>
+  <div class="card-body p-0 overflow-auto">
+    <table class="table table-bordered mb-0 text-center" style="min-width:320px;font-size:.82rem;">
+      <thead class="table-dark">
+        <tr>
+          <th style="width:90px;">Time</th>
+          {% for d in week %}<th>{{ days_full[d] }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in range(11) %}
+        <tr>
+          <td class="text-muted fw-semibold" style="white-space:nowrap;font-size:.75rem;">{{ labels[row] }}</td>
+          {% for day in week %}
+            {% for class in schedule if class['day'] == day and rows[class['time']] == row %}
+              <td rowspan="5" style="background:#002147;color:#F2C75C;font-weight:600;vertical-align:middle;font-size:.8rem;">
+                <a href="/course/{{ class['department'] }}/{{ class['course_number'] }}" style="color:#F2C75C;text-decoration:none;">
+                  {{ class['department'] }} {{ class['course_number'] }}
+                </a>
+              </td>
+            {% else %}
+              {% for class in schedule if class['day'] == day and row > rows[class['time']] and rows[class['time']]+5 > row %}
+              {% else %}
+                <td style="border:0;"></td>
+              {% endfor %}
+            {% endfor %}
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% else %}
+<!-- Course not found -->
+<div class="card shadow-sm">
+  <div class="card-body text-center py-5">
+    <i class="bi bi-journal-x fs-1 text-muted mb-3 d-block"></i>
+    <h5 class="text-muted">This course is not offered this semester.</h5>
+    <a href="/coursecatalog" class="btn btn-sm mt-2 fw-semibold" style="background:#002147;color:#F2C75C;">Back to Catalog</a>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
