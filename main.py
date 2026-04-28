@@ -1016,10 +1016,7 @@ def applicant_register():
         interests     = request.form.get("areas_of_interest", "").strip()
 
         transcript_method = request.form.get("transcript_method")
-        if transcript_method == "upload":
-            transcript_received = True
-        else:
-            transcript_received = False
+        transcript_received = False  # always False at registration; set True only after actual upload or mail confirmation
         if not _is_valid_ssn(ssn):
             flash("SSN must be in XXX-XX-XXXX format.", "error")
             return render_template("applicant_register.html")
