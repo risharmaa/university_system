@@ -1,13 +1,37 @@
-<!DOCTYPE html>
-<html>
-<head><title>Letter Submitted</title></head>
-<body>
-  {% if already %}
-  <h1>Already Submitted</h1>
-  <p>This recommendation letter has already been submitted.</p>
-  {% else %}
-  <h1>Thank You!</h1>
-  <p>Your recommendation letter has been successfully submitted.</p>
-  {% endif %}
-</body>
-</html>
+{% extends "basic.html" %}
+{% block title %}{{ 'Already Submitted' if already else 'Letter Submitted' }} - GWU CS{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center mt-4">
+  <div class="col-lg-5 text-center">
+    {% if already %}
+      <div class="mb-3" style="font-size:4rem;">⚠️</div>
+      <h2 class="fw-bold mb-2">Already Submitted</h2>
+      <p class="text-muted">This recommendation letter has already been submitted. No further action is needed.</p>
+    {% else %}
+      <svg class="mb-3" width="80" height="80" viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="36" fill="none" stroke="#28a745" stroke-width="4"
+          stroke-dasharray="226" stroke-dashoffset="226"
+          style="animation:draw-circle .6s ease forwards"/>
+        <polyline points="22,42 34,54 58,28" fill="none" stroke="#28a745" stroke-width="5"
+          stroke-linecap="round" stroke-linejoin="round"
+          stroke-dasharray="80" stroke-dashoffset="80"
+          style="animation:draw-check .4s ease .5s forwards"/>
+      </svg>
+      <style>
+        @keyframes draw-circle { to { stroke-dashoffset:0; } }
+        @keyframes draw-check  { to { stroke-dashoffset:0; } }
+      </style>
+      <h2 class="fw-bold mb-2">Thank You!</h2>
+      <p class="text-muted">Your recommendation letter has been successfully submitted to GWU CS Graduate Admissions.</p>
+    {% endif %}
+
+    <div class="alert {{ 'alert-warning' if already else 'alert-success' }} mt-3">
+      {{ 'This letter was previously recorded in our system.' if already else 'The applicant and admissions committee have been notified.' }}
+    </div>
+
+    <p class="text-muted small mt-3">You may close this window. No further action is required.</p>
+  </div>
+</div>
+
+{% endblock %}

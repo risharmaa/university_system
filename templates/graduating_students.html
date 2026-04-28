@@ -1,0 +1,134 @@
+{% extends "basic.html" %}
+{% block title %}Graduating Students - GWU CS{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0">Graduating Students</h2>
+    <span class="text-muted small">
+      {% if semester or year or program %}
+        {{ program or 'All Programs' }} &mdash; {{ semester or 'All Semesters' }} {{ year or '' }}
+      {% else %}
+        All Programs &mdash; All Terms
+      {% endif %}
+    </span>
+  </div>
+  <a href="{{ url_for('secretary') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+  </a>
+</div>
+
+<!-- Filter -->
+<div class="card shadow-sm mb-4">
+  <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">🎓 Generate Graduation List</div>
+  <div class="card-body">
+    <form method="GET" action="{{ url_for('secretary_graduating') }}">
+      <div class="row g-2 align-items-end">
+        <div class="col-sm-3">
+          <label class="form-label small fw-semibold">Degree Program</label>
+          <select class="form-select form-select-sm" name="program">
+            <option value="" {{ 'selected' if not program }}>All Programs</option>
+            <option value="MS"  {{ 'selected' if program == 'MS'  }}>MS</option>
+            <option value="PhD" {{ 'selected' if program == 'PhD' }}>PhD</option>
+          </select>
+        </div>
+        <div class="col-sm-3">
+          <label class="form-label small fw-semibold">Semester</label>
+          <select class="form-select form-select-sm" name="semester">
+            <option value="" {{ 'selected' if not semester }}>All Semesters</option>
+            <option value="Spring" {{ 'selected' if semester == 'Spring' }}>Spring</option>
+            <option value="Summer" {{ 'selected' if semester == 'Summer' }}>Summer</option>
+            <option value="Fall"   {{ 'selected' if semester == 'Fall'   }}>Fall</option>
+          </select>
+        </div>
+        <div class="col-sm-3">
+          <label class="form-label small fw-semibold">Year</label>
+          <input type="text" class="form-control form-control-sm" name="year" placeholder="e.g. 2026" value="{{ year }}">
+        </div>
+        <div class="col-sm-3">
+          <button type="submit" class="btn btn-sm w-100 fw-semibold" style="background:#002147;color:#F2C75C;">
+            <i class="bi bi-search me-1"></i>Generate List
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Summary Badges -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="card shadow-sm text-center py-3" style="border-top:4px solid #28a745;">
+      <div class="display-6 fw-bold text-success">{{ graduated|length }}</div>
+      <div class="small text-muted fw-semibold mt-1">Formally Graduated</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card shadow-sm text-center py-3" style="border-top:4px solid #ffc107;">
+      <div class="display-6 fw-bold text-warning">{{ cleared|length }}</div>
+      <div class="small text-muted fw-semibold mt-1">Cleared — Pending Processing</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card shadow-sm text-center py-3" style="border-top:4px solid #002147;">
+      <div class="display-6 fw-bold" style="color:#002147;">{{ graduated|length + cleared|length }}</div>
+      <div class="small text-muted fw-semibold mt-1">Total</div>
+    </div>
+  </div>
+</div>
+
+<!-- Cleared for graduation (pending) -->
+{% if cleared %}
+<div class="card shadow-sm mb-4">
+  <div class="card-header fw-semibold bg-warning text-dark">
+    ⏳ Cleared for Graduation — Pending Formal Processing ({{ cleared|length }})
+  </div>
+  <div class="card-body p-0">
+    <table class="table table-hover table-striped mb-0">
+      <thead class="table-dark">
+        <tr><th>UID</th><th>Name</th><th>Email</th><th>Program</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        {% for s in cleared %}
+        <tr>
+          <td class="fw-semibold">{{ s.uid }}</td>
+          <td>{{ s.fname }} {{ s.lname }}</td>
+          <td><a href="mailto:{{ s.email }}" class="text-decoration-none">{{ s.email }}</a></td>
+          <td><span class="badge bg-secondary">{{ s.program }}</span></td>
+          <td><span class="badge bg-warning text-dark">Cleared — Pending</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Formally graduated alumni -->
+<div class="card shadow-sm">
+  <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">
+    🎓 Formally Graduated ({{ graduated|length }})
+  </div>
+  <div class="card-body p-0">
+    <table class="table table-hover table-striped mb-0">
+      <thead class="table-dark">
+        <tr><th>UID</th><th>Name</th><th>Email</th><th>Program</th><th>Graduation Term</th></tr>
+      </thead>
+      <tbody>
+        {% for s in graduated %}
+        <tr>
+          <td class="fw-semibold">{{ s.uid }}</td>
+          <td>{{ s.fname }} {{ s.lname }}</td>
+          <td><a href="mailto:{{ s.email }}" class="text-decoration-none">{{ s.email }}</a></td>
+          <td><span class="badge bg-secondary">{{ s.program }}</span></td>
+          <td>{{ s.semester }} {{ s.year }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center text-muted py-4">No graduated students match your filters.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

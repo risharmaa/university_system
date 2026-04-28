@@ -1,62 +1,165 @@
-<!DOCTYPE html>
-<html>
-<head><title>Final Decision</title></head>
-<body>
-  <h1>Final Decision: {{ applicant.fname }} {{ applicant.lname }}</h1>
-  {% with messages = get_flashed_messages(with_categories=true) %}{% for c,m in messages %}
-  <p><strong>{{ m }}</strong></p>{% endfor %}{% endwith %}
+{% extends "basic.html" %}
+{% block title %}Final Decision - GWU CS{% endblock %}
+{% block content %}
 
-  <h2>Applicant Details</h2>
-  <p>Degree: {{ applicant.degree }} | Current Status: {{ applicant.status }}</p>
-  <p>Transcript Received: {{ 'Yes' if applicant.transcript_received else 'No' }}</p>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    <div class="alert alert-{{ 'danger' if cat=='error' else 'success' }} alert-dismissible fade show">
+      {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endwith %}
 
-  {% if can_see_reviews %}
-  <h2>Faculty Reviews</h2>
-  {% if reviews %}
-  <p>Average Rating: {{avg}}</p>
-  <table border="1">
-    <tr><th>Reviewer</th><th>GAS Rating</th><th>Deficiency Courses</th><th>Reject Reasons</th><th>Recommended Advisor</th><th>Comments</th></tr>
-    {% for r in reviews %}
-    <tr>
-      <td>{{ r.reviewer_fname }} {{ r.reviewer_lname }}</td>
-      <td>{{ r.rating }} -
-        {% if r.rating == 0 %}Reject
-        {% elif r.rating == 1 %}Borderline
-        {% elif r.rating == 2 %}Admit (no aid)
-        {% elif r.rating == 3 %}Admit with Aid
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0">Final Decision</h2>
+    <span class="text-muted small">{{ applicant.fname }} {{ applicant.lname }} &mdash; UID: {{ applicant.uid }}</span>
+  </div>
+  <a href="{{ url_for('applications') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back to Applications</a>
+</div>
+
+<div class="row g-4">
+  <!-- Left: Applicant summary + reviews -->
+  <div class="col-md-7">
+
+    <!-- Applicant summary -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">Applicant Summary</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-sm-4 text-center">
+            <div class="small text-muted fw-semibold">Degree</div>
+            <span class="badge bg-secondary fs-6">{{ applicant.degree }}</span>
+          </div>
+          <div class="col-sm-4 text-center">
+            <div class="small text-muted fw-semibold">Current Status</div>
+            {% if applicant.status == 'under review' %}
+              <span class="badge bg-info text-dark fs-6">Under Review</span>
+            {% elif applicant.status == 'incomplete' %}
+              <span class="badge bg-warning text-dark fs-6">Incomplete</span>
+            {% elif applicant.status in ('admitted','admitted_with_aid') %}
+              <span class="badge bg-success fs-6">Admitted</span>
+            {% elif applicant.status == 'rejected' %}
+              <span class="badge bg-danger fs-6">Rejected</span>
+            {% else %}
+              <span class="badge bg-secondary fs-6">{{ applicant.status }}</span>
+            {% endif %}
+          </div>
+          <div class="col-sm-4 text-center">
+            <div class="small text-muted fw-semibold">Transcript</div>
+            {% if applicant.transcript_received %}
+              <span class="badge bg-success fs-6"><i class="bi bi-check-lg"></i> Received</span>
+            {% else %}
+              <span class="badge bg-danger fs-6">Not received</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Faculty Reviews -->
+    {% if can_see_reviews %}
+    <div class="card shadow-sm mb-4">
+      <div class="card-header fw-semibold d-flex justify-content-between align-items-center" style="background:#002147;color:#F2C75C;">
+        <span>Faculty Reviews</span>
+        {% if reviews %}
+        <span class="badge bg-warning text-dark fs-6">Avg Rating: {{ "%.2f"|format(avg) }}</span>
         {% endif %}
-      </td>
-      <td>{{ r.deficiency_courses or '—' }}</td>
-      <td>{{ r.reject_reasons or '—' }}</td>
-      <td>{{ r.advisor_fname ~ ' ' ~ r.advisor_lname if r.advisor_fname else '—' }}</td>
-      <td>{{ r.comment or '—' }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-  {% else %}
-  <p>No reviews submitted yet.</p>
-  {% endif %}
-  {% endif %}
+      </div>
+      <div class="card-body p-0">
+        {% if reviews %}
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-dark">
+            <tr><th>Reviewer</th><th>GAS Rating</th><th>Deficiency</th><th>Reject Reasons</th><th>Advisor Rec.</th><th>Comments</th></tr>
+          </thead>
+          <tbody>
+            {% for r in reviews %}
+            <tr>
+              <td class="fw-semibold">{{ r.reviewer_fname }} {{ r.reviewer_lname }}</td>
+              <td>
+                {% if r.rating == 0 %}<span class="badge bg-danger">0 — Reject</span>
+                {% elif r.rating == 1 %}<span class="badge bg-warning text-dark">1 — Borderline</span>
+                {% elif r.rating == 2 %}<span class="badge bg-info text-dark">2 — Admit</span>
+                {% elif r.rating == 3 %}<span class="badge bg-success">3 — Admit w/ Aid</span>
+                {% endif %}
+              </td>
+              <td class="small">{{ r.deficiency_courses or '—' }}</td>
+              <td class="small">{{ r.reject_reasons or '—' }}</td>
+              <td class="small">{{ (r.advisor_fname ~ ' ' ~ r.advisor_lname) if r.advisor_fname else '—' }}</td>
+              <td class="small">{{ r.comment or '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted small p-3 mb-0">No reviews submitted yet.</p>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
 
-  <h2>Make Final Decision</h2>
-  <form method="POST">
-    Decision:
-    <select name="decision" required>
-      <option value="">Select</option>
-      <option value="admitted" {% if applicant.status == 'admitted' %}selected{% endif %}>Admitted</option>
-      <option value="admitted_with_aid" {% if applicant.status == 'admitted_with_aid' %}selected{% endif %}>Admitted with Aid</option>
-      <option value="rejected" {% if applicant.status == 'rejected' %}selected{% endif %}>Rejected</option>
-    </select><br><br>
-    Final Advisor:
-    <select name="final_advisor">
-      <option value="">None</option>
-      {% for f in faculty_list %}<option value="{{ f.uid }}">{{ f.fname }} {{ f.lname }}</option>{% endfor %}
-    </select><br><br>
-    <input type="submit" value="Submit Decision">
-  </form>
-  <a href="{{ url_for('faculty') }}">
-    <button type="button">Switch Role</button>
-  </a>
-  <br><a href="{{ url_for('applications') }}">Back to Applications</a>
-</body>
-</html>
+  </div>
+
+  <!-- Right: Decision form -->
+  <div class="col-md-5">
+    <div class="card shadow-sm border-2" style="border-color:#002147!important;">
+      <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">
+        ⚖️ {{ 'Override Decision' if applicant.status in ('admitted','admitted_with_aid','rejected') else 'Make Final Decision' }}
+      </div>
+      <div class="card-body">
+
+        <!-- Show current decision if one exists -->
+        {% if applicant.status in ('admitted', 'admitted_with_aid', 'rejected') %}
+        <div class="alert {{ 'alert-success' if applicant.status in ('admitted','admitted_with_aid') else 'alert-danger' }} mb-3">
+          <div class="small fw-semibold mb-1">Current Decision</div>
+          {% if applicant.status == 'admitted' %}✅ Admitted
+          {% elif applicant.status == 'admitted_with_aid' %}🎓 Admitted with Aid
+          {% elif applicant.status == 'rejected' %}✗ Rejected{% endif %}
+        </div>
+        {% if session['user']['role'] == 'secretary' %}
+        <div class="alert alert-warning small mb-3">
+          <i class="bi bi-exclamation-triangle me-1"></i>
+          As Graduate Secretary you can override the CAC decision below.
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <form method="POST">
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Decision <span class="text-danger">*</span></label>
+            <div class="d-grid gap-2">
+              <input type="radio" class="btn-check" name="decision" id="dec-admit" value="admitted" required
+                {{ 'checked' if applicant.status == 'admitted' }}>
+              <label class="btn btn-outline-success fw-semibold" for="dec-admit">✅ Admitted</label>
+
+              <input type="radio" class="btn-check" name="decision" id="dec-aid" value="admitted_with_aid"
+                {{ 'checked' if applicant.status == 'admitted_with_aid' }}>
+              <label class="btn btn-outline-primary fw-semibold" for="dec-aid">🎓 Admitted with Aid</label>
+
+              <input type="radio" class="btn-check" name="decision" id="dec-reject" value="rejected"
+                {{ 'checked' if applicant.status == 'rejected' }}>
+              <label class="btn btn-outline-danger fw-semibold" for="dec-reject">✗ Rejected</label>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Assign Final Advisor</label>
+            <select class="form-select" name="final_advisor">
+              <option value="">None</option>
+              {% for f in faculty_list %}
+              <option value="{{ f.uid }}">{{ f.fname }} {{ f.lname }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <button type="submit" class="btn w-100 fw-bold py-2" style="background:#002147;color:#F2C75C;">
+            {{ 'Override Decision' if applicant.status in ('admitted','admitted_with_aid','rejected') else 'Submit Decision' }}
+            <i class="bi bi-check2-circle ms-1"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

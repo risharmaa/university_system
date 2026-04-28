@@ -1,81 +1,102 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Form 1 - Program of Study</title>
-</head>
-<body>
-  <h1>Form 1 &mdash; Program of Study</h1>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, message in messages %}
-      <p style="color: {% if category == 'error' %}red{% else %}green{% endif %}">{{ message }}</p>
-    {% endfor %}
-  {% endwith %}
-  <p>Please enter the courses you plan to take to earn your
-    <strong>{{ student.program or 'MS' }}</strong> degree in Computer Science.</p>
-  <p>You must select at most 12 courses. Unused rows may be left as <em>-- None --</em>.</p>
-  <p>For the MS program, the three core courses
-    (CSCI 6212, CSCI 6221, CSCI 6461) are required, and at most 2 courses may be outside CSCI.</p>
-  <table border="1" cellpadding="6">
-    <tr>
-      <th>UID</th>
-      <th>First Name</th>
-      <th>Last Name</th>
-      <th>Program</th>
-    </tr>
-    <tr>
-      <td>{{ user.uid }}</td>
-      <td>{{ user.fname }}</td>
-      <td>{{ user.lname }}</td>
-      <td>{{ student.program or 'MS' }}</td>
-    </tr>
-  </table>
-  <br>
-  {% if existing_form %}
-    <p style="color: blue;">
-      <strong>Note:</strong> You have already submitted a Form 1.
-      Resubmitting will replace your existing plan.
-      Advisor approval: <strong>{{ existing_form.advisor_approval or 'Pending' }}</strong>
-    </p>
-    {% if existing_form.advisor_approval %}
-      <a href="/form1/register"><button type="button">Enroll in all classes</button></a>
-    {% endif %}
+{% extends "basic.html" %}
+{% block title %}Form 1 - Program of Study{% endblock %}
+{% block content %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    <div class="alert alert-{{ 'danger' if cat=='error' else 'success' }} alert-dismissible fade show">
+      {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endwith %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0">Form 1 — Program of Study</h2>
+    <span class="text-muted small">Plan your courses for the {{ student.program or 'MS' }} degree</span>
+  </div>
+  <a href="/student" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Dashboard</a>
+</div>
+
+<!-- Student Info -->
+<div class="card shadow-sm mb-4" style="border-left:5px solid #002147;">
+  <div class="card-body">
+    <div class="row g-2">
+      <div class="col-sm-3"><div class="small text-muted">UID</div><div class="fw-semibold">{{ user.uid }}</div></div>
+      <div class="col-sm-3"><div class="small text-muted">Name</div><div class="fw-semibold">{{ user.fname }} {{ user.lname }}</div></div>
+      <div class="col-sm-3"><div class="small text-muted">Program</div><span class="badge bg-secondary fs-6">{{ student.program or 'MS' }}</span></div>
+      {% if existing_form %}
+      <div class="col-sm-3">
+        <div class="small text-muted">Advisor Approval</div>
+        {% if existing_form.advisor_approval == 'approved' %}
+          <span class="badge bg-success">Approved</span>
+        {% else %}
+          <span class="badge bg-warning text-dark">{{ existing_form.advisor_approval or 'Pending' }}</span>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if existing_form %}
+<div class="alert alert-info">
+  <i class="bi bi-info-circle me-1"></i>
+  You have already submitted a Form 1. Resubmitting will replace your existing plan.
+  {% if existing_form.advisor_approval %}
+  <a href="/form1/register" class="btn btn-sm btn-success ms-3 fw-semibold">
+    <i class="bi bi-plus-circle me-1"></i>Enroll in All Planned Courses
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="alert alert-light border small mb-4">
+  <i class="bi bi-lightbulb me-1 text-warning"></i>
+  Select up to <strong>12 courses</strong>. Leave unused rows as <em>— None —</em>.
+  {% if student.program == 'MS' %} For MS: CSCI 6212, CSCI 6221, CSCI 6461 are required; at most 2 courses may be outside CSCI.{% endif %}
+</div>
+
+<form method="POST" action="/form1">
+  <div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">Planned Courses</div>
+    <div class="card-body p-0">
+      <table class="table table-striped mb-0">
+        <thead class="table-dark"><tr><th style="width:50px;">#</th><th>Course</th></tr></thead>
+        <tbody>
+          {% for i in range(12) %}
+          {% set sel = existing_courses[i] if existing_courses and i < existing_courses|length else 0 %}
+          <tr>
+            <td class="text-muted fw-semibold">{{ i + 1 }}</td>
+            <td>
+              <select class="form-select form-select-sm" name="course_{{ i }}">
+                <option value="">— None —</option>
+                {% for course in courses %}
+                <option value="{{ course.course_number }}" {{ 'selected' if sel == course.course_number }}>
+                  {{ course.department }} {{ course.course_number }} — {{ course.title }}
+                </option>
+                {% endfor %}
+              </select>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if student.program == "PhD" %}
+  <div class="card shadow-sm mb-4">
+    <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">Thesis Proposal</div>
+    <div class="card-body">
+      <textarea class="form-control" name="thesis" rows="8" placeholder="Describe your thesis proposal...">{{ existing_form.thesis if existing_form and existing_form.thesis else '' }}</textarea>
+    </div>
+  </div>
   {% endif %}
 
-  <form method="POST" action="/form1">
-    <table border="1" cellpadding="6">
-      <tr>
-        <th>#</th>
-        <th>Course</th>
-      </tr>
-      {% for i in range(12) %}
-      {% set sel = existing_courses[i] if existing_courses and i < existing_courses|length else 0 %}
-      <tr>
-        <td>{{ i + 1 }}</td>
-        <td>
-          <select name="course_{{ i }}">
-            <option value="">-- None --</option>
-            {% for course in courses %}
-            <option value="{{ course.course_number }}"
-              {% if sel == course.course_number %}selected{% endif %}>
-              {{ course.department }} {{ course.course_number }} - {{ course.title }}
-            </option>
-            {% endfor %}
-          </select>
-        </td>
-      </tr>
-      {% endfor %}
-    </table> <br>
-    {% if student.program == "PhD" %}
-      <label>Thesis:</label><br>
-      <textarea name="thesis" rows="10" cols="80">
-        {{ existing_form.thesis if existing_form and existing_form.thesis else'' }}
-      </textarea>
-    {% endif %}
-    <br>
-    <button type="submit">Submit Form 1</button>
-  </form>
+  <button type="submit" class="btn fw-bold px-5 py-2" style="background:#002147;color:#F2C75C;">
+    <i class="bi bi-send me-1"></i>Submit Form 1
+  </button>
+</form>
 
-  <br>
-  <a href="/student">&larr; Back to Dashboard</a>
-</body>
-</html>
+{% endblock %}

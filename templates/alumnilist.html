@@ -1,56 +1,73 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Alumni List</title>
-</head>
-<body>
-    <h1>Alumni List</h1>
+{% extends "basic.html" %}
+{% block title %}Alumni List - GWU CS{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0">Alumni Directory</h2>
+    <span class="text-muted small">GWU Department of Computer Science</span>
+  </div>
+  <a href="/secretary" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+  </a>
+</div>
+
+<!-- Filter -->
+<div class="card shadow-sm mb-4">
+  <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">🔍 Filter Alumni</div>
+  <div class="card-body">
     <form method="GET" action="/alumnilist">
-    <label for="program">Degree Type</label>
-    <select name="program" id="program">
-    <option value="">Select Degree</option>
-      <option value = "MS">MS</option>
-      <option value = "PhD">PhD</option>
-    </select>
-    <label for = "grad_year">Graduation Year</label>
-    <input type="text" name="grad_year" placeholder = "Graduation Year">
-    <label for="grad_semester">Semester Graduated</label>
-    <select name="grad_semester" id="grad_semester">
-    <option value="">Select Semester</option>
-      <option value = "Fall">Fall</option>
-      <option value = "Spring">Spring</option>
-    </select>
-    <input type="submit" value="Search">
-  </form>
-    <table border="1" cellpadding="6">
-    <thead>
-      <tr>
-        <th>UID</th>
-        <th>Name</th>
-        <th>Program</th>
-        <th>Graduation Year</th>
-        <th>Graduation Semester</th>
-        <th>Email</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in alum %}
-      <tr>
-        <td>{{ row.uid }}</td>
-        <td>{{ row.fname }} {{ row.lname }}</td>
-        <td>{{ row.degree }}</td>
-        <td>
-          {{ row.graduation_year}}
-        </td>
-        <td>{{ row.graduation_semester }}</td>
-        <td>{{ row.email }}</td>
-      </tr>
-      {% else %}
-      <tr><td colspan="6">No students match.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-    <p><a href="/logout">Logout</a></p>
-    <p><a href="/secretary">Dashboard</a></p>
-</body>
-</html>
+      <div class="row g-2 align-items-end">
+        <div class="col-sm-3">
+          <label class="form-label small fw-semibold">Degree</label>
+          <select class="form-select form-select-sm" name="program">
+            <option value="">All Degrees</option>
+            <option value="MS"  {{ 'selected' if request.args.get('program')=='MS' }}>MS</option>
+            <option value="PhD" {{ 'selected' if request.args.get('program')=='PhD' }}>PhD</option>
+          </select>
+        </div>
+        <div class="col-sm-3">
+          <label class="form-label small fw-semibold">Graduation Year</label>
+          <input type="text" class="form-control form-control-sm" name="grad_year" placeholder="e.g. 2023" value="{{ request.args.get('grad_year','') }}">
+        </div>
+        <div class="col-sm-3">
+          <label class="form-label small fw-semibold">Semester</label>
+          <select class="form-select form-select-sm" name="grad_semester">
+            <option value="">All Semesters</option>
+            <option value="Fall"   {{ 'selected' if request.args.get('grad_semester')=='Fall' }}>Fall</option>
+            <option value="Spring" {{ 'selected' if request.args.get('grad_semester')=='Spring' }}>Spring</option>
+          </select>
+        </div>
+        <div class="col-sm-3">
+          <button type="submit" class="btn btn-sm w-100 fw-semibold" style="background:#002147;color:#F2C75C;">Search</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover table-striped mb-0">
+      <thead class="table-dark">
+        <tr><th>UID</th><th>Name</th><th>Degree</th><th>Graduated</th><th>Email</th></tr>
+      </thead>
+      <tbody>
+        {% for row in alum %}
+        <tr>
+          <td class="fw-semibold">{{ row.uid }}</td>
+          <td>{{ row.fname }} {{ row.lname }}</td>
+          <td><span class="badge bg-secondary">{{ row.degree }}</span></td>
+          <td>{{ row.graduation_semester }} {{ row.graduation_year }}</td>
+          <td><a href="mailto:{{ row.email }}" class="text-decoration-none">{{ row.email }}</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center text-muted py-4">No alumni match your search.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

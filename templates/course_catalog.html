@@ -1,137 +1,187 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title> {{title}} </title>
-    </head>
+{% extends "basic.html" %}
+{% block title %}Course Catalog - GWU CS{% endblock %}
+{% block content %}
 
-    <body>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <ul>
-        {% for category, message in messages %}
-          <li class="{{ category }}">{{ message }}</li>
-        {% endfor %}
-        </ul>
-        {% endif %}
-        {% endwith %}
-        
-        <h1> Course Catalog </h1>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    <div class="alert alert-{{ 'danger' if cat=='error' else 'success' }} alert-dismissible fade show">
+      {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endwith %}
 
-        <form action="/coursecatalog" method="GET">
-        <input type="text" name="dpt" placeholder="Department">
-        <input type="text" name="courseno" placeholder="Course Number">
-        <input type="text" name="title" placeholder="Title">
-        <input type="submit" name="submit">
-        </form>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold mb-0">Course Catalog</h2>
+    <span class="text-muted small">GWU Department of Computer Science</span>
+  </div>
+  <div>
+    {% if session['user']['role'] == 'student' %}
+      <a href="{{ url_for('student') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Dashboard</a>
+    {% elif session['user']['role'] == 'faculty' %}
+      <a href="{{ url_for('faculty') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Dashboard</a>
+    {% elif session['user']['role'] == 'secretary' %}
+      <a href="{{ url_for('secretary') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Dashboard</a>
+    {% elif session['user']['role'] == 'admin' %}
+      <a href="{{ url_for('admin') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Dashboard</a>
+    {% endif %}
+  </div>
+</div>
 
- 
-        {% for row in course: %}
-            <details>
-            <summary>
-            <h3>{{row.department}} {{row.course_number}}: {{row.title}}</h3>
-            </summary>
-            <Strong>Course Information:</Strong>
-            <ul>
-                <li>Credits: {{row.credits}}</li>
-                <li>Semester: {{row.semester}} {{row.year}} </li>
-                <li>Section Number: {{row.sectionnum}} </li>
-                <li>Instructor: {{row.fname}} {{row.lname}} </li>
+<!-- Search -->
+<div class="card shadow-sm mb-4">
+  <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">🔍 Search Courses</div>
+  <div class="card-body">
+    <form action="/coursecatalog" method="GET">
+      <div class="row g-2 align-items-end">
+        <div class="col-sm-3">
+          <label class="form-label small fw-semibold">Department</label>
+          <input type="text" class="form-control form-control-sm" name="dpt" placeholder="e.g. CS" value="{{ request.args.get('dpt','') }}">
+        </div>
+        <div class="col-sm-3">
+          <label class="form-label small fw-semibold">Course Number</label>
+          <input type="text" class="form-control form-control-sm" name="courseno" placeholder="e.g. 6212" value="{{ request.args.get('courseno','') }}">
+        </div>
+        <div class="col-sm-4">
+          <label class="form-label small fw-semibold">Title</label>
+          <input type="text" class="form-control form-control-sm" name="title" placeholder="e.g. Algorithms" value="{{ request.args.get('title','') }}">
+        </div>
+        <div class="col-sm-2">
+          <button type="submit" class="btn btn-sm w-100 fw-semibold" style="background:#002147;color:#F2C75C;">Search</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if session['user']['role'] == 'student' %}
+{% set rows = {'1500-1730':0, '1530-1800':1, '1600-1830':2, '1800-2030':6} %}
+{% set labels = ['3:00–3:30','3:30–4:00','4:00–4:30','4:30–5:00','5:00–5:30','5:30–6:00','6:00–6:30','6:30–7:00','7:00–7:30','7:30–8:00','8:00–8:30'] %}
+{% set week = ['M','T','W','R','F'] %}
+{% set days_full = {'M':'Mon','T':'Tue','W':'Wed','R':'Thu','F':'Fri'} %}
+<div class="row g-4">
+  <!-- Left: Course Accordion -->
+  <div class="col-lg-7">
+{% endif %}
+
+<!-- Course Accordion -->
+<div class="accordion shadow-sm mb-4" id="courseAccordion">
+  {% for row in course %}
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="heading{{ loop.index }}">
+      <button class="accordion-button collapsed fw-semibold" type="button"
+              data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}"
+              aria-expanded="false" aria-controls="collapse{{ loop.index }}">
+        <span style="color:#002147;">{{ row.department }} {{ row.course_number }}</span>
+        <span class="mx-2 text-muted">—</span>
+        {{ row.title }}
+        <span class="badge bg-secondary ms-auto me-3">{{ row.credits }} cr</span>
+      </button>
+    </h2>
+    <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#courseAccordion">
+      <div class="accordion-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="small fw-bold text-muted text-uppercase mb-2" style="letter-spacing:.05em;">Course Info</div>
+            <ul class="list-unstyled small mb-0">
+              <li><i class="bi bi-calendar3 me-2 text-muted"></i>{{ row.semester }} {{ row.year }}</li>
+              <li><i class="bi bi-hash me-2 text-muted"></i>Section {{ row.sectionnum }}</li>
+              <li><i class="bi bi-person me-2 text-muted"></i>{{ row.fname }} {{ row.lname }}</li>
+              <li><i class="bi bi-award me-2 text-muted"></i>{{ row.credits }} credits</li>
             </ul>
-            <strong>Prerequisites</strong>
-            {% if row.prereqs %}
-                {% for item in row.prereqs %}
-                <ul>
-                    <li> {{item.prereqdpt}} {{item.prereqnum}}</li>
-                </ul>
-                {% endfor %}
-            {% else %}
-            <ul>
-                <li>None</li>
-            </ul>
-            {% endif %}
-            <strong>Meeting Times</strong>
-            <ul>
-                <li>Time: 
-                    {% if row.day == 'M' %} Monday,
-                    {% elif row.day == 'T' %} Tuesday,
-                    {% elif row.day == 'W' %} Wednesday,
-                    {% elif row.day == 'R' %} Thursday,
-                    {% elif row.day == 'F' %} Friday,
-                    {% endif %}
-                    {% if row.time == '1500-1730' %} 3:00pm - 5:30pm
-                    {% elif row.time == '1800-2030' %} 6:00pm - 8:30pm
-                    {% elif row.time == '1530-1800' %} 3:30pm - 6:00pm
-                    {% elif row.time == '1600-1830' %} 4:00pm - 6:30pm
-                    {% endif %}
-                </li>
-                <li>Building: {{row.buildingname}}</li>
-                <li>Room: {{row.roomno}}</li>
-                <li>Capacity: {{row.capacity}}</li>
-                </ul>
-            </ul>
-            {% if session['user']['role'] == 'student' %}
-                {% if row.retake %}
-                    <a href="/course/{{row.department}}/{{row.course_number}}"><button type="button">Enroll</button></a>
-                {% elif row.enrolledIn and not row.passed %}
-                    <a href="/course/{{row.department}}/{{row.course_number}}"><button type="button">Unenroll</button></a>
-                {% elif not row.passed %}
-                    <a href="/course/{{row.department}}/{{row.course_number}}"><button type="button">Enroll</button></a>
+          </div>
+          <div class="col-md-6">
+            <div class="small fw-bold text-muted text-uppercase mb-2" style="letter-spacing:.05em;">Meeting Times</div>
+            <ul class="list-unstyled small mb-0">
+              <li><i class="bi bi-clock me-2 text-muted"></i>
+                {% if row.day == 'M' %}Monday{% elif row.day == 'T' %}Tuesday{% elif row.day == 'W' %}Wednesday{% elif row.day == 'R' %}Thursday{% elif row.day == 'F' %}Friday{% endif %},
+                {% if row.time == '1500-1730' %}3:00pm – 5:30pm
+                {% elif row.time == '1800-2030' %}6:00pm – 8:30pm
+                {% elif row.time == '1530-1800' %}3:30pm – 6:00pm
+                {% elif row.time == '1600-1830' %}4:00pm – 6:30pm
                 {% endif %}
+              </li>
+              <li><i class="bi bi-building me-2 text-muted"></i>{{ row.buildingname }}, Room {{ row.roomno }}</li>
+              <li><i class="bi bi-people me-2 text-muted"></i>Capacity: {{ row.capacity }}</li>
+            </ul>
+            {% if row.prereqs %}
+            <div class="small fw-bold text-muted text-uppercase mt-3 mb-1" style="letter-spacing:.05em;">Prerequisites</div>
+            <div class="d-flex flex-wrap gap-1">
+              {% for p in row.prereqs %}
+              <span class="badge bg-light text-dark border">{{ p.prereqdpt }} {{ p.prereqnum }}</span>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="small text-muted mt-2">No prerequisites</div>
             {% endif %}
-            </details>
-            
-        {% endfor %}
-
-        {% if session['user']['role'] == 'faculty' %}
-            <p><a href="{{ url_for('faculty') }}">
-                <button type="button">Faculty Dashboard </button><br>
+          </div>
+        </div>
+        {% if session['user']['role'] == 'student' %}
+        <div class="mt-3">
+          {% if row.retake %}
+            <a href="/course/{{ row.department }}/{{ row.course_number }}" class="btn btn-sm btn-success fw-semibold">
+              <i class="bi bi-arrow-repeat me-1"></i>Retake / Enroll
             </a>
+          {% elif row.enrolledIn and not row.passed %}
+            <a href="/course/{{ row.department }}/{{ row.course_number }}" class="btn btn-sm btn-outline-danger fw-semibold">
+              <i class="bi bi-x-circle me-1"></i>Unenroll
+            </a>
+          {% elif not row.passed %}
+            <a href="/course/{{ row.department }}/{{ row.course_number }}" class="btn btn-sm fw-semibold" style="background:#002147;color:#F2C75C;">
+              <i class="bi bi-plus-circle me-1"></i>Enroll
+            </a>
+          {% else %}
+            <span class="badge bg-success"><i class="bi bi-check-lg me-1"></i>Completed</span>
+          {% endif %}
+        </div>
         {% endif %}
-        {% if session['user']['role'] == 'secretary' %}
-            <p><a href="{{ url_for('secretary') }}">Secretary Dashboard</a></p>
-        {% endif %}
-        {% if session['user']['role'] == 'admin' %}
-            <p><a href="{{ url_for('admin') }}"> Admin Dashboard</a></p>
-        {% endif %}
-        {% if session['user']['role'] == 'student' %}
-            <p><a href="{{ url_for('student') }}"> Student Dashboard</a></p>
-        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="p-4 text-center text-muted">No courses match your search.</div>
+  {% endfor %}
+</div>
 
-        {% if session['user']['role'] == 'student' %}
-        <h2>View Schedule</h2>
-            {% set rows = {'1500-1730':0, '1530-1800':1, '1600-1830':2, '1800-2030':6} %}
-        {% set labels = [
-            '3:00pm - 3:30pm', '3:30pm - 4:00pm', '4:00pm - 4:30pm', '4:30pm - 5:00pm', '5:00pm - 5:30pm', '5:30pm - 6:00pm', '6:00pm - 6:30pm', '6:30pm - 7:00pm', '7:00pm - 7:30pm', '7:30pm - 8:00pm', '8:00pm - 8:30pm'] %}
-        {% set week = ['M', 'T', 'W', 'R', 'F'] %}
-       
-        <table style="border-collapse: collapse;">
+{% if session['user']['role'] == 'student' %}
+  </div><!-- end col-lg-7 -->
+
+  <!-- Right: Schedule (sticky) -->
+  <div class="col-lg-5">
+    <div class="card shadow-sm" style="position:sticky;top:20px;">
+      <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">📅 Your Schedule</div>
+      <div class="card-body p-0 overflow-auto">
+        <table class="table table-bordered mb-0 text-center" style="min-width:320px;font-size:.82rem;">
+          <thead class="table-dark">
             <tr>
-                <th style="border: 2px solid black; padding: 8px;"></th>
-                <th style="border: 2px solid black; padding: 8px;">Monday</th>
-                <th style="border: 2px solid black; padding: 8px;">Tuesday</th>
-                <th style="border: 2px solid black; padding: 8px;">Wednesday</th>
-                <th style="border: 2px solid black; padding: 8px;">Thursday</th>
-                <th style="border: 2px solid black; padding: 8px;">Friday</th>
+              <th style="width:80px;">Time</th>
+              {% for d in week %}<th>{{ days_full[d] }}</th>{% endfor %}
             </tr>
+          </thead>
+          <tbody>
+            {% for row in range(11) %}
             <tr>
-                {% for row in range(11): %}
-                <tr style="border: 2px solid black;">
-                    <th>{{labels[row]}}</th>
-                    {% for day in week %}
-                        {% for class in schedule if class['day'] == day and rows[class['time']] == row %}
-                                <td rowspan="5" style="border: 2px solid black; padding: 8px; background-color: rgb(59, 3, 71); color: white;">{{class['department']}} {{class['course_number']}}</td>
-                            {% else %}
-                                {% for class in schedule if class['day'] == day and row > rows[class['time']] and rows[class['time']]+5 > row %}
-                                {% else %}
-                                    <td style="border: 0px"></td>
-                                {% endfor %}
-                        {% endfor %}
-                    {% endfor %}
-                </tr>
+              <td class="text-muted fw-semibold" style="white-space:nowrap;font-size:.75rem;">{{ labels[row] }}</td>
+              {% for day in week %}
+                {% for class in schedule if class['day'] == day and rows[class['time']] == row %}
+                  <td rowspan="5" style="background:#002147;color:#F2C75C;font-weight:600;vertical-align:middle;font-size:.8rem;">
+                    {{ class['department'] }} {{ class['course_number'] }}
+                  </td>
+                {% else %}
+                  {% for class in schedule if class['day'] == day and row > rows[class['time']] and rows[class['time']]+5 > row %}
+                  {% else %}
+                    <td style="border:0;"></td>
+                  {% endfor %}
                 {% endfor %}
+              {% endfor %}
             </tr>
+            {% endfor %}
+          </tbody>
         </table>
-        {% endif %}
+      </div>
+    </div>
+  </div>
+</div><!-- end row -->
+{% endif %}
 
-    </body>
-</html>
+{% endblock %}

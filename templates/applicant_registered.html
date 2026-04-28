@@ -1,16 +1,132 @@
-<!DOCTYPE html>
-<html>
-<head><title>Application Submitted</title></head>
-<body>
-  <h1>Application Submitted Successfully!</h1>
-  <p>Your application has been received. Use the credentials below to log in and check your application status.</p>
-  <hr>
-  <h2>Your Login Credentials</h2>
-  <p><strong>Username:</strong> {{ uid }}</p>
-  <p><strong>Password:</strong> pass</p>
-  <hr>
-  <p><strong>Please save these credentials.</strong> You will need them to log back in and check your application status.</p>
-  <br>
-  <a href="{{ url_for('login') }}">Go to Login</a>
-</body>
-</html>
+{% extends "basic.html" %}
+{% block title %}Application Submitted - GWU CS{% endblock %}
+{% block content %}
+<style>
+  /* Animated checkmark */
+  .check-circle { width: 80px; height: 80px; }
+  .check-circle circle {
+    fill: none; stroke: #28a745; stroke-width: 4;
+    stroke-dasharray: 226; stroke-dashoffset: 226;
+    animation: draw-circle 0.6s ease forwards;
+  }
+  .check-circle polyline {
+    fill: none; stroke: #28a745; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 80; stroke-dashoffset: 80;
+    animation: draw-check 0.4s ease 0.5s forwards;
+  }
+  @keyframes draw-circle { to { stroke-dashoffset: 0; } }
+  @keyframes draw-check  { to { stroke-dashoffset: 0; } }
+
+  /* Credentials box */
+  .cred-box {
+    background: #f0f4ff; border: 2px dashed #002147;
+    border-radius: 12px; padding: 20px 28px;
+    font-family: 'Courier New', monospace; font-size: 1.05rem;
+  }
+  .cred-box .label { color: #6c757d; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: 'EB Garamond', serif; }
+  .cred-box .value { font-size: 1.3rem; font-weight: 700; color: #002147; }
+
+  /* Timeline */
+  .timeline { border-left: 3px solid #dee2e6; padding-left: 20px; }
+  .timeline-item { position: relative; margin-bottom: 18px; }
+  .timeline-item::before {
+    content: ''; position: absolute; left: -27px; top: 4px;
+    width: 12px; height: 12px; border-radius: 50%; background: #002147; border: 2px solid #F2C75C;
+  }
+  .timeline-item.done::before { background: #28a745; border-color: #28a745; }
+</style>
+
+<div class="row justify-content-center mt-2">
+  <div class="col-lg-7">
+
+    <!-- Success Banner -->
+    <div class="text-center mb-4">
+      <svg class="check-circle mb-3" viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="36"/>
+        <polyline points="22,42 34,54 58,28"/>
+      </svg>
+      <h2 class="fw-bold" style="color:#002147;">Application Submitted!</h2>
+      <p class="text-muted">Your application to GWU CS Graduate Program has been received.<br>Save your credentials below — you'll need them to log back in.</p>
+    </div>
+
+    <!-- Credentials Card -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">
+        🔐 Your Login Credentials
+      </div>
+      <div class="card-body">
+        <div class="cred-box mb-3">
+          <div class="label mb-1">Username / UID</div>
+          <div class="d-flex align-items-center gap-3">
+            <span class="value" id="uid-val">{{ uid }}</span>
+            <button class="btn btn-sm btn-outline-secondary" onclick="copyUID()" id="copy-btn">
+              <i class="bi bi-clipboard"></i> Copy
+            </button>
+          </div>
+        </div>
+        <div class="cred-box">
+          <div class="label mb-1">Password</div>
+          <div class="value">pass</div>
+        </div>
+        <div class="alert alert-warning mt-3 mb-0 small">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i>
+          <strong>Save these credentials now.</strong> You can change your password after logging in.
+        </div>
+      </div>
+    </div>
+
+    <!-- What happens next -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header fw-semibold" style="background:#002147;color:#F2C75C;">
+        📍 What Happens Next?
+      </div>
+      <div class="card-body">
+        <div class="timeline mt-1">
+          <div class="timeline-item done">
+            <strong>Application submitted</strong>
+            <div class="text-muted small">Your application is in our system.</div>
+          </div>
+          <div class="timeline-item">
+            <strong>Submit transcript &amp; recommendation letters</strong>
+            <div class="text-muted small">Log in to your dashboard to upload your transcript and request letters.</div>
+          </div>
+          <div class="timeline-item">
+            <strong>Faculty review</strong>
+            <div class="text-muted small">Once all materials are received, reviewers will evaluate your application.</div>
+          </div>
+          <div class="timeline-item">
+            <strong>Admissions decision</strong>
+            <div class="text-muted small">You'll see your decision status on your applicant dashboard.</div>
+          </div>
+          <div class="timeline-item">
+            <strong>Accept offer &amp; submit deposit</strong>
+            <div class="text-muted small">If admitted, accept your offer and submit your enrollment deposit.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-grid mb-5">
+      <a href="{{ url_for('login') }}" class="btn btn-lg fw-bold" style="background:#002147;color:#F2C75C;">
+        <i class="bi bi-box-arrow-in-right me-2"></i>Go to Login
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function copyUID() {
+  const uid = document.getElementById('uid-val').innerText;
+  navigator.clipboard.writeText(uid).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.innerHTML = '<i class="bi bi-check-lg"></i> Copied!';
+    btn.classList.replace('btn-outline-secondary', 'btn-success');
+    setTimeout(() => {
+      btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
+      btn.classList.replace('btn-success', 'btn-outline-secondary');
+    }, 2000);
+  });
+}
+</script>
+{% endblock %}
