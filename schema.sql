@@ -253,7 +253,8 @@ INSERT INTO users (uid, username, password, role, fname, lname, email, address) 
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (87654321, '87654321', 'pass','student','Ringo', 'Starr', 'ringostarr@gmail.com', 'Paris');
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (12121212, '12121212', 'pass','faculty','Gabe', 'Parmer', 'gabeparmer@gmail.com', 'Balitmore');
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (21212121, '21212121', 'pass','faculty','Bhagirath', 'Narahari', 'bhagirathnarahari@gmail.com', 'Boston');
-INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (11111112, '11111112', 'pass','faculty','Heller', 'Wood', 'hellerwood@gmail.com', 'Aldie');
+INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (11111112, '11111112', 'pass','faculty','Tim', 'Wood', 'timwood@gmail.com', 'Aldie');
+INSERT INTO users(uid, username, password, role, fname, lname, email, address) VALUES (11111113, '11111113', 'pass','faculty','Rachelle', 'Heller', 'rheller@gmail.com', 'Aldie');
 
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (31313131, '31313131', 'pass','secretary','Bob', 'Smith', 'bobsmith@gmail.com', 'Lawrenceville');
 INSERT INTO users (uid, username, password, role, fname, lname, email, address) VALUES (77777777, '77777777', 'pass','alumni','Eric', 'Clapton', 'ericclapton@gmail.com', 'Richmond');
@@ -263,6 +264,7 @@ INSERT INTO users (uid, username, password, role, fname, lname, email, address) 
 INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (12121212, true, false, true);
 INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (21212121, false, true, true);
 INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (11111112, false, true, true);
+INSERT INTO faculty(uid, cac, reviewer, advisor) VALUES (11111113, false, true, true);
 
 
 -- inserting students from the sample data
