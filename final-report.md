@@ -34,7 +34,10 @@
 **Visual Overview**: Include screenshots, an animated gif, or short video showing a feature from each component included in your project (eg APPs, REGs, ADV). It does not need to be an exhaustive video of your functionality, just enough to remind us of how it works/looks.
 
 https://drive.google.com/file/d/1U0j5063_UbEDANiY5w3zNLejPOPenOdb/view?usp=sharing 
+The video above shows how ADS and APPS works.
 
+https://drive.google.com/file/d/1ciKdVOZnGPrZe3RXt6EKzyDBvNLqKgJ2/view?usp=drive_link
+The video above shows how REGS works.
 
 (add description/video)
 
@@ -54,6 +57,7 @@ Overall, each subsystem maintains its own functionality while remaining connecte
 - PhD suggestion: Added a phd suggestion for master students. This suggestion is based on that students transcript and courses they have taken
 - Auto Enroll: After a students form is approved, they can auto enroll in the courses listed in the form that meet the prerequistes and time conflict or previously taken. 
 - Advising Chat: Students can enter/ask questions they have about potential courses to take, and the chat bot will utilize gemini's AI to look over the schema and recommend classes. 
+- Visual Schedule: Rather than just see classes that a student is enrolled in, they get a visual representation of what it looks like.
 
 **Work Breakdown**: List teammates and specify the aspects of the project they worked on
 - Riya: 

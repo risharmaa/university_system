@@ -1789,9 +1789,16 @@ def form_registration():
     cursor.execute("SELECT * FROM students WHERE uid = %s", (session['user']['uid'],))
     student = cursor.fetchone()
 
+             
+
     for item in courses:
         cursor.execute("SELECT * FROM courses_offered WHERE departmentname = %s AND coursenumber = %s", (item['department'], item['course_number']))
         c = cursor.fetchone()
+        # check if the class is offered this semester
+        if c is None:
+            noCourse = "" + item['department'] + " " + str(item['course_number']) + " is not offered this semester."
+            flash(noCourse, "error")
+            continue
         # checking user's enrollment for the class
         cursor.execute("SELECT * FROM enrollment WHERE department = %s AND course_number = %s AND uid = %s", (item['department'], item['course_number'], session['user']['uid']))
         enrolledIn = cursor.fetchone()
@@ -1823,17 +1830,10 @@ def form_registration():
             if enrolled_course['day'] == c['day']:
                 if enrolled_course['time'] == c['time']:
                     conflict = True
-            if (enrolled_course['time'] in conflicts.get(c['time'])):
-                conflict = True
-                
-
-        # check if the class is offered this semester
-        if c is None:
-            noCourse = "" + item['department'] + " " + str(tem['course_number']) + " is not offered this semester."
-            flash(noCourse, "error")
-            continue    
+            if (enrolled_course['time'] in conflicts.get(c['time']), []):
+                conflict = True   
         # check if the student already passed/is still taking the class
-        elif enrolledIn is not None and enrolledIn['grade'] != 'F':
+        if enrolledIn is not None and enrolledIn['grade'] != 'F':
             if enrolledIn['grade'] == 'IP':
                 taking = "You are already taking " + item['department'] + " " + str(item['course_number']) + "."
                 flash(taking, "error")
