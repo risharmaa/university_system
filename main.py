@@ -1231,11 +1231,16 @@ def confirm_enrollment(uid):
     if not app_row or app_row["status"] != "accepted" or not app_row["deposit_submitted"]:
         flash("Applicant has not accepted or submitted deposit.", "error")
         return redirect(url_for("applications"))
+    # Guard: skip if already enrolled as a student
+    cursor.execute("SELECT uid FROM students WHERE uid=%s", (uid,))
+    if cursor.fetchone():
+        flash(f"{app_row['fname']} {app_row['lname']} is already enrolled as a student.", "error")
+        return redirect(url_for("secretary"))
     cursor.execute("UPDATE users SET role='student' WHERE uid=%s", (uid,))
     cursor.execute("INSERT INTO students (uid, program) VALUES (%s, %s)", (uid, app_row["degree"]))
     mydb.commit()
     flash(f"{app_row['fname']} {app_row['lname']} has been enrolled as a student.", "success")
-    return redirect(url_for("applications"))
+    return redirect(url_for("secretary"))
 
 
 
