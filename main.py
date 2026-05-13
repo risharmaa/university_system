@@ -1035,11 +1035,13 @@ def alumni_update():
     email = request.form.get("email")
     address = request.form.get("address")
     cursor = mydb.cursor(dictionary=True)
-    cursor.execute("UPDATE users SET email = %s, password = %s WHERE uid = %s", (email, password, uid))
-    cursor.execute("UPDATE alumni SET address = %s WHERE uid = %s", (address, uid))
-    flash("Updated Sucessfully!", "success")
+    if password:
+        cursor.execute("UPDATE users SET email = %s, address = %s, password = %s WHERE uid = %s", (email, address, password, uid))
+    else:
+        cursor.execute("UPDATE users SET email = %s, address = %s WHERE uid = %s", (email, address, uid))
+    flash("Updated Successfully!", "success")
     mydb.commit()
-    return redirect(url_for("alumni")) 
+    return redirect(url_for("alumni"))
 
 @app.route('/logout', methods=['GET'])
 def logout():
