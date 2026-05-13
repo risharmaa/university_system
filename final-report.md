@@ -39,8 +39,6 @@ The video above shows how ADS and APPS works.
 https://drive.google.com/file/d/1ciKdVOZnGPrZe3RXt6EKzyDBvNLqKgJ2/view?usp=drive_link
 The video above shows how REGS works.
 
-(add description/video)
-
 **Design Justification**: For Integration projects this should focus on how you connected your components together. For Builder projects it should justify your key design decisions. (0.5 - 1 page)
 
 This project integrates three major subsystems: REGS (course registration), APPS (application and admissions), and ADS (advising and graduation) into a single database. The key design decision was to connect all three systems through a shared users table, using uid as a universal identifier. This allows a person to transition between roles, such as from applicant to student and eventually alumni, without duplicating data. 
