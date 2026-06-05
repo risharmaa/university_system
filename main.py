@@ -23,11 +23,10 @@ UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 mydb = mysql.connector.connect(
-    host="regs26-sharma.ca1y0o4q8i1b.us-east-1.rds.amazonaws.com",
-    user="admin",
-    password="14998riya",
-    database="university",
-    buffered=True
+    host=os.environ.get("DB_HOST"),
+    user=os.environ.get("DB_USER"),
+    password=os.environ.get("DB_PASSWORD"),
+    database=os.environ.get("DB_NAME")
 )
 
 app.debug = True
