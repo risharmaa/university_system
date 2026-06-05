@@ -1,4 +1,9 @@
-**Phase 2 Report - kkr**
+# Project Description
+This Project is a full-stack university management system built with Python Flask, mySQL, and HTML/CSS that handles core academic workflows including student applications, course registration, advising, and graduation processing. Developed collaboratively by a 3-person team with version control via GitHub.
+
+The system features a relational database hosted on AWS RDS, with a complete course registration module covering schema design, backend routing, and registration queries. Additional features include an integrated Gemini AI chatbot interprets the database schema to deliver personalized course recommendations, enhancing the overall student registration experience, an option to auto-register for classes approved to take by an advisor, and a PhD recommendation for graduate students.
+
+# Report
 
 **DB Design**: An ER Diagram updated to reflect your final design and an explanation for what normal form you believe your tables meet
     ER Diagram:
